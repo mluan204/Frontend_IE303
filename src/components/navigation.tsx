@@ -25,8 +25,13 @@ const Navigation = () => {
                         </Link>
                     </li>
                     <li>
-                        <Link to="/so-quy" className="flex items-center hover:underline">
-                            <i className="fas fa-dollar-sign mr-1"></i> Sổ quỹ
+                        <Link to="/hoa-don" className="flex items-center hover:underline">
+                            <i className="fas fa-dollar-sign mr-1"></i> Hóa Đơn
+                        </Link>
+                    </li>
+                    <li>
+                        <Link to="/kho-hang" className="flex items-center hover:underline">
+                            <i className="fas fa-dollar-sign mr-1"></i> Kho hàng
                         </Link>
                     </li>
                     <li>
