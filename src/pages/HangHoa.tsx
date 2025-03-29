@@ -2,9 +2,21 @@ import { Helmet } from "react-helmet";
 import { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
+import ProductDetail from "../components/ProductDetail"; // Đảm bảo đúng đường dẫn
 
 
-const products = Array.from({ length: 30 }, (_, i) => ({
+
+// Định nghĩa kiểu dữ liệu cho product
+interface Product {
+  id: string;
+  name: string;
+  price: string;
+  cost: string;
+  stock: number;
+  image: string;
+}
+// Tạo mảng products với kiểu Product[]
+const products: Product[] = Array.from({ length: 30 }, (_, i) => ({
   id: `SP${String(i + 1).padStart(6, "0")}`,
   name: `Sản phẩm ${i + 1}`,
   price: (100000 + i * 5000).toLocaleString("vi-VN"),
@@ -13,9 +25,11 @@ const products = Array.from({ length: 30 }, (_, i) => ({
   image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg/revision/latest?cb=20210323154547&path-prefix=pt-br"
 }));
 
+
 const ITEMS_PER_PAGE = 10;
 
 function HangHoa() {
+  // Cơ chế phân trang
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -24,6 +38,22 @@ function HangHoa() {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  // MODAL CHI TIẾT SẢN PHẨM
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // Mở modal và truyền thông tin sản phẩm
+  const handleOpenModal = (product: Product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  // Đóng modal
+  const handleCloseModal = () => {
+    setSelectedProduct(null);
+    setIsModalOpen(false);
+  };
   return (
     
     <div className="bg-[#E8EAED]">
@@ -35,6 +65,7 @@ function HangHoa() {
         <div className="flex items-center mb-4">
           <h1 className="text-xl font-bold w-1/5">Hàng hóa</h1>
           <div className="flex items-center justify-between w-4/5">
+          {/* Thanh tìm kiếm */}
             <div className="relative w-2/5 ml-5">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"><FontAwesomeIcon icon={faSearch}></FontAwesomeIcon></span>
               <input
@@ -45,6 +76,8 @@ function HangHoa() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+
+            {/* Các nút chức năng */}
             <div className="space-x-5">
               <button className="bg-green-500 text-white px-4 py-1 rounded"><FontAwesomeIcon icon={faAdd} className="mr-2"/>Nhập hàng</button>
               <button className="bg-green-500 text-white px-4 py-1 rounded"><FontAwesomeIcon icon={faAdd} className="mr-2"/>Thêm mới</button>
@@ -71,6 +104,7 @@ function HangHoa() {
           </div>
 
           {/* Bảng sản phẩm */}
+          {/* LABEL */}
           <div className="w-4/5 ml-5">
             <div className="overflow-y-auto h-100">
               <table className="w-full border-collapse">
@@ -84,9 +118,10 @@ function HangHoa() {
                     <th className="p-2 text-left">Tồn kho</th>
                   </tr>
                 </thead>
+                {/* SẢN PHẨM */}
                 <tbody>
                   {displayedProducts.map((product, index) => (
-                    <tr key={product.id} className={index % 2 === 0 ? "bg-white" : "bg-gray-100 border-b border-[#A6A9AC]"}>
+                    <tr key={product.id} className={ `${index % 2 === 0 ? "bg-white" : "bg-gray-100 border-b border-[#A6A9AC]"} hover:bg-[#E6F1FE]`} onClick={() => handleOpenModal(product)}>
                       <td className="p-2 w-[100px]">
                         <img src={product.image} alt={product.name} className="w-12 h-12" />
                       </td>
@@ -99,6 +134,16 @@ function HangHoa() {
                   ))}
                 </tbody>
               </table>
+
+              {/* Pop-up chi tiết sản phẩm */}
+              {selectedProduct && (
+                <ProductDetail
+                  product={selectedProduct}
+                  isOpen={isModalOpen}
+                  onClose={handleCloseModal}
+                />
+              )}
+
             </div>
             {/* Phân trang */}
             <div className="flex items-center mt-4">
