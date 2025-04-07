@@ -1,18 +1,35 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit} from "@fortawesome/free-solid-svg-icons";
+import { deleteBillById } from "../service/api";
 
 interface Bill {
-  billID: string;
-  time: string;
-  totalCost: string;
-  customerID: string;
-  employeeID: string;
-  afterDiscount: string;
+  id: number;
+  total_cost: number;
+  after_discount: number;
+  customer: {
+    id: number,
+    name: string,
+    phone: string
+  };
+  employee: {
+    id: number,
+    name: string,
+  };
+  isDeleted: boolean;
+  created_at: string;
+  totalQuantity: number;
+  billDetails: {
+    productId: number;
+    price: number;
+    afterDiscount: number | null;
+    quantity: number;
+  }[];
+  notes: string;
 }
 
 interface BillDetailProps {
-  bill: Bill; 
+  bill: Bill | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -20,41 +37,7 @@ interface BillDetailProps {
 
 function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
 
-    
-    const billDetails = [
-    {
-        id: 1,
-        productName: "Thuốc lá Vinataba",
-        unitPrice: 20000,
-        quantity: 2,
-        discount: 0.1,
-        totalPrice: 36000, 
-    },
-    {
-        id: 2,
-        productName: "Sữa Vinamilk",
-        unitPrice: 15000,
-        quantity: 3,
-        discount: 0.05, 
-        totalPrice: 42750, 
-    },
-    {
-        id: 3,
-        productName: "Nước ngọt Coca-Cola",
-        unitPrice: 10000,
-        quantity: 5,
-        discount: 0, 
-        totalPrice: 50000, 
-    },
-    {
-        id: 4,
-        productName: "Kẹo Alpenliebe",
-        unitPrice: 5000,
-        quantity: 10,
-        discount: 0.2, 
-        totalPrice: 40000, 
-    },
-    ];
+  if (!isOpen || !bill) return null; // Kiểm tra nếu modal đóng thì return null
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedBill, setEditedBill] = useState(bill);
@@ -67,6 +50,15 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
   const handleClose = () => {
     setIsEditing(false);
     onClose();
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteBillById(bill.id);
+      onClose(); // Đóng modal sau khi xóa thành công
+    } catch (error) {
+      console.error("Error deleting bill:", error);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,7 +74,7 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
         {/* Thanh tiêu đề */}
         <div className="flex justify-between border-b pt-2 pl-2 bg-[#C3F5DB] mb-5 sticky top-0 z-10">
           <h2 className="text-lg p-1 rounded-t-lg font-semibold bg-white">Chi tiết hóa đơn</h2>
-          <FontAwesomeIcon icon={faClose} className="text-2xl mr-2" onClick={handleClose} color="red" />
+          <FontAwesomeIcon icon={faClose} className="text-2xl mr-2 cursor-pointer" onClick={handleClose} color="red" />
         </div>
         {/* Nội dung có thể cuộn */}
         <div className="overflow-y-auto h-[calc(600px-50px)] p-4">
@@ -139,7 +131,7 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
                   className="border rounded p-1 w-full h-24"
                 />
               ) : (
-                <p></p>
+                <p>{bill.notes}</p>
               )}
             </div>
           </div>
@@ -148,7 +140,7 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
               {/* LABEL */}
               <thead className="bg-[#E6F1FE] sticky top-0">
                 <tr className="border-b border-[#A6A9AC]">
-                  <th className="p-2 text-left">Mã hóa đơn</th>
+                  <th className="p-2 text-left">Mã sản phẩm</th>
                   <th className="p-2 text-left">Tên sản phẩm</th>
                   <th className="p-2 text-left">Đơn giá</th>
                   <th className="p-2 text-left">Số lượng</th>
@@ -157,13 +149,13 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
               </thead>
               {/* HÓA ĐƠN*/}
               <tbody>
-                {billDetails.map((bill, index) => (
-                  <tr key={bill.id} className={ `${index % 2 === 0 ? "bg-white" : "bg-gray-100 border-b border-[#A6A9AC]"} hover:bg-[#E6F1FE]`}>
-                    <td className="p-2">{bill.productName}</td>
-                    <td className="p-2">{bill.unitPrice}</td>
-                    <td className="p-2">{bill.quantity}</td>
-                    <td className="p-2">{bill.discount}</td>
-                    <td className="p-2">{bill.totalPrice}</td>
+                {bill.billDetails.map((billDetails: any, index: number) => (
+                  <tr key={billDetails.productId} className={ `${index % 2 === 0 ? "bg-white" : "bg-gray-100 border-b border-[#A6A9AC]"} hover:bg-[#E6F1FE]`}>
+                    <td className="p-2">SP00{billDetails.productId}</td>
+                    <td className="p-2">{billDetails.productName}</td>
+                    <td className="p-2">{billDetails.price.toLocaleString("vi-VN")}</td>
+                    <td className="p-2">{billDetails.quantity}</td>
+                    <td className="p-2">{(billDetails.price * billDetails.quantity).toLocaleString("vi-VN")}</td>
                   </tr>
                 ))}
               </tbody>
@@ -175,19 +167,19 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Tổng số lượng:</span>
-                <span>4</span>
+                <span>{bill.totalQuantity}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tổng tiền hàng:</span>
-                <span>310000</span>
+                <span>{(bill.total_cost).toLocaleString("vi-VN")}</span>
               </div>
               <div className="flex justify-between">
                 <span>Giảm giá hóa đơn:</span>
-                <span>0</span>
+                <span>{(bill.total_cost - bill.after_discount).toLocaleString("vi-VN")}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tổng cộng:</span>
-                <span>310000</span>
+                <span>{(bill.after_discount).toLocaleString("vi-VN")}</span>
               </div>
             </div>
           </div>
@@ -198,7 +190,7 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
             ) : (
               <button onClick={handleEdit} className="px-4 py-2 bg-blue-500 text-white rounded"><FontAwesomeIcon icon={faEdit} className="mr-2"/>Chỉnh sửa</button>
             )}
-            <button onClick={handleClose} className="px-4 py-2 bg-red-400 text-white rounded"><FontAwesomeIcon icon={faClose} className="mr-2"/>Xóa hóa đơn</button>
+            <button onClick={handleDelete} className="px-4 py-2 bg-red-400 text-white rounded cursor-pointer"><FontAwesomeIcon icon={faClose} className="mr-2"/>Xóa hóa đơn</button>
           </div>
 
         </div>
