@@ -3,12 +3,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit} from "@fortawesome/free-solid-svg-icons";
 
 interface Bill {
-  billID: string;
-  time: string;
-  totalCost: string;
-  customerID: string;
-  employeeID: string;
-  afterDiscount: string;
+  id: number;
+  total_cost: number;
+  after_discount: number;
+  customer_id: number;
+  employee_id: number;
+  billDetails: [];
 }
 
 interface BillDetailProps {
@@ -68,6 +68,35 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
     setIsEditing(false);
     onClose();
   };
+
+  const handleDeleteBill = async () => {
+    if (!bill || !bill.id) return;
+  
+    const confirmDelete = window.confirm("Bạn có chắc chắn muốn xóa hóa đơn này?");
+    if (!confirmDelete) return;
+  
+    try {
+      const token = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJtbHVhbiIsImlhdCI6MTc0MzY3MzM4NCwiZXhwIjoxNzQzNjg3Nzg0fQ.GTCOpVqYT4bEQHN4-MA54hpForB6JfttZA-yElpN5H2sNAytTe2j4fvpHsKxu4Bm";
+      const response = await fetch(`http://localhost:8080/api/bills/delete_error/${bill.id}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error("Lỗi khi xóa hóa đơn");
+      }
+  
+      alert("Xóa hóa đơn thành công!");
+      onClose(); // Đóng modal sau khi xóa
+    } catch (error) {
+      console.error("Lỗi khi xóa hóa đơn:", error);
+      alert("Xóa hóa đơn thất bại!");
+    }
+  };
+  
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -198,7 +227,7 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
             ) : (
               <button onClick={handleEdit} className="px-4 py-2 bg-blue-500 text-white rounded"><FontAwesomeIcon icon={faEdit} className="mr-2"/>Chỉnh sửa</button>
             )}
-            <button onClick={handleClose} className="px-4 py-2 bg-red-400 text-white rounded"><FontAwesomeIcon icon={faClose} className="mr-2"/>Xóa hóa đơn</button>
+            <button onClick={handleDeleteBill} className="px-4 py-2 bg-red-400 text-white rounded"><FontAwesomeIcon icon={faClose} className="mr-2"/>Xóa hóa đơn</button>
           </div>
 
         </div>
