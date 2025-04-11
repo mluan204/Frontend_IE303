@@ -7,6 +7,9 @@ import NhanVien from "../pages/NhanVien";
 import BaoCao from "../pages/BaoCao";
 import KhachHang from "../pages/KhachHang";
 import Login from "../pages/Login";
+import BanHang from "../pages/BanHang";
+import LichsuHoadon from "../pages/LichsuHoadon";
+import DoanhThu from "../pages/DoanhThu";
 
 const Router = () => {
     return (
@@ -20,6 +23,9 @@ const Router = () => {
             <Route path="/bao-cao" element={<BaoCao />} />
             <Route path="/khach-hang" element={<KhachHang />} />
             <Route path="*" element={<Navigate to="/" />} />
+            <Route path="/ban-hang" element={<BanHang />} />
+            <Route path="/lich-su-hoa-don" element={<LichsuHoadon />} />
+            <Route path="/doanh-thu" element={<DoanhThu />} />
         </Routes>
     );
 }
