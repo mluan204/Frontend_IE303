@@ -90,7 +90,7 @@ function HoaDon() {
   }
 
   return (
-    <div className="bg-[#E8EAED] h-screen">
+    <div className="bg-[#E8EAED]">
       <Helmet>
         <title>Sổ quỹ</title>
       </Helmet>
@@ -205,7 +205,7 @@ function HoaDon() {
             </div>
             {/*BẢNG HÓA ĐƠN*/}
             <div className="h-5/6 ml-5">
-              <div className="overflow-y-auto h-80">
+              <div className="overflow-y-auto h-80 scrollbar-hide">
                 <table className="w-full border-collapse">
                  {/* LABEL */}
                   <thead className="bg-[#E6F1FE] sticky top-0">
