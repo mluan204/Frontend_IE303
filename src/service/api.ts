@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL = "http://localhost:8080/api";
-const TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJtbHVhbiIsImlhdCI6MTc0Mzk5MzM4NywiZXhwIjoxNzQ0MDA3Nzg3fQ.6zVGouM8mMqGgPSuIVctd77zi3-pZ0MA_0cmDOL6YmHrlJ4HKDAyQPoHGhvkOFW4";
+const TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJtbHVhbiIsImlhdCI6MTc0NDI2MjYwOSwiZXhwIjoxNzQ0Mjc3MDA5fQ.YijWaWyKkDrasYcDej222B4bOB64Ne9pQZSNhZeNIEpolaHzDDMPR5pLwG8nVhaR";
 
 export const fetchSummary = async () => {
   try {
@@ -18,15 +18,15 @@ export const fetchSummary = async () => {
 };
 
 
-export const fetchBill = async (page = 0, size = 10, keyword = "") => {
+export const fetchBill = async (page = 0, size = 10, keyword = "", startDate = "", endDate = "") => {
   try {
     const response = await axios.get(`${API_URL}/bills/paged`, {
       headers: {
         Authorization: `Bearer ${TOKEN}`,
       },
-      params: {page, size, ...(keyword && { keyword })},
+      params: {page, size, ...(keyword && { keyword }), ...(startDate && { startDate }), ...(endDate && { endDate }) },
     });
-    console.log(page, size, keyword);
+    console.log(page, size, keyword, startDate, endDate);
     return response.data;
   } catch (error) {
     return "Loi khi lay bill";
