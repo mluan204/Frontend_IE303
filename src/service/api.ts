@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL = "http://localhost:8080/api";
-const TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJtbHVhbiIsImlhdCI6MTc0Mzk5MzM4NywiZXhwIjoxNzQ0MDA3Nzg3fQ.6zVGouM8mMqGgPSuIVctd77zi3-pZ0MA_0cmDOL6YmHrlJ4HKDAyQPoHGhvkOFW4";
+const TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJtbHVhbiIsImlhdCI6MTc0NDM3NjY4OCwiZXhwIjoxNzQ0MzkxMDg4fQ.3w7RgT4QF_Tu_56RBxE47yr6E_mlqnFHpZIRrhU9khiza5zpgBolP-ikBufFAiPT";
 
 export const fetchSummary = async () => {
   try {
@@ -101,5 +101,21 @@ export const login = async (username: any, password: any) => {
     return response.data;
   } catch (error) {
     return error;
+  }
+}
+
+
+export const fetchProduct = async (page = 0, size = 10, keyword = "") => {
+  try {
+    const response = await axios.get(`${API_URL}/products/paged`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      },
+      params: {page, size, ...(keyword && { keyword })},
+    });
+    console.log(page, size, keyword);
+    return response.data;
+  } catch (error) {
+    return "Loi khi lay bill";
   }
 }

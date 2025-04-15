@@ -9,7 +9,7 @@ function App() {
 
   return (
     <>
-      {!isLoginPage && <NavigationSale />}
+      {!isLoginPage && <Navigation />}
       <Router />
     </>
   );

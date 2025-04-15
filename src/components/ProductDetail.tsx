@@ -6,9 +6,14 @@ interface Product {
   id: string;
   name: string;
   price: string;
-  cost: string;
-  stock: number;
   image: string;
+  suppliers: string;
+	quantityAvailable: number;
+	dateExpired: Date;
+	salePrice: number;
+	inputPrice: 40000;
+	categoryId: number;
+	categoryName: string;
 }
 
 interface ProductDetailProps {
@@ -65,19 +70,23 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
 
           {/* Cột 2: ID, Tên, Phân loại, Nhà cung cấp, Tồn kho */}
           <div className="col-span-1 space-y-2">
-            {(["id", "name", "category", "supplier", "stock"] as Array<keyof Product>).map((field) => (
+            {(["id", "name", "categoryName", "supplier", "quantityAvailable"] as Array<keyof Product>).map((field) => (
               <div key={field} className={isEditing ? "": "border-b-1"} >
                 <span className="font-medium">{field}: </span>
                 {isEditing ? (
                   <input
                     type="text"
                     name={field}
-                    value={editedProduct[field] || ""}
+                    value={editedProduct[field] instanceof Date
+                      ? editedProduct[field].toLocaleDateString()
+                      : editedProduct[field] || ""}
                     onChange={handleChange}
                     className="border rounded p-1 w-full"
                   />
                 ) : (
-                  <span >{editedProduct[field]}</span>
+                  <span >{editedProduct[field] instanceof Date
+                      ? editedProduct[field].toLocaleDateString()
+                      : editedProduct[field]}</span>
                 )}
               </div>
             ))}
@@ -85,19 +94,27 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
 
           {/* Cột 3: Giá nhập, Giá bán, Hạn sử dụng */}
           <div className="col-span-1 space-y-2">
-            {(["cost", "price", "expiry"] as Array<keyof Product>).map((field) => (
+            {(["inputPrice", "price", "dateExpiry"] as Array<keyof Product>).map((field) => (
               <div key={field} className={isEditing ? "": "border-b-1"}>
                 <span className="font-medium">{field}: </span>
                 {isEditing ? (
                   <input
                     type="text"
                     name={field}
-                    value={editedProduct[field] || ""}
+                    value={editedProduct[field] instanceof Date
+                      ? editedProduct[field].toLocaleDateString()
+                      : editedProduct[field] || ""}
                     onChange={handleChange}
                     className="border rounded p-1 w-full"
                   />
                 ) : (
-                  <span>{editedProduct[field]}</span>
+                  // <span>{editedProduct[field]}</span>
+                  <span>
+                    {editedProduct[field] instanceof Date
+                      ? editedProduct[field].toLocaleDateString()
+                      : editedProduct[field]}
+                  </span>
+
                 )}
               </div>
             ))}
