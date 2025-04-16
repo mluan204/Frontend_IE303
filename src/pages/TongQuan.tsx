@@ -1,11 +1,23 @@
 import { Helmet } from "react-helmet";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDollarSign, faReceipt, faBox, faUsers, faArrowTrendUp, faArrowTrendDown } from "@fortawesome/free-solid-svg-icons";
 import { Bar } from "react-chartjs-2";
 import "chart.js/auto";
+import { cus, fetchSumamry, login } from "./api";
+
 
 function TongQuan() {
+  
+useEffect( () => {
+  const call = async () => {
+    await login("phuongdo", "123123");
+    await fetchSumamry();
+    await cus();
+  }
+  call();
+},[]);
+
   const [timeRange, setTimeRange] = useState("Tháng này");
   const [activeTab, setActiveTab] = useState("Ngày");
 
