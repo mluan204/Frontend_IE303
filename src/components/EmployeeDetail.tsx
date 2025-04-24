@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
+import { deleteEmployeeById, updateEmployeeById } from "../service/employeeApi";
 
 interface Employee {
     id: string;
     name: string;
     address: string;
     birthday: string;
-    create_at: string;
+    created_at: string;
     email: string;
     gender: string;
     image: string;
@@ -20,25 +21,39 @@ interface EmployeeDetailProps {
   employee: Employee;
   isOpen: boolean;
   onClose: () => void;
+  removeEmployee: (id:string) =>void;
 }
 
-type EmployeeField = keyof Employee;
+// type EmployeeField = keyof Employee;
 
-function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
+function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedEmployee, setEditedEmployee] = useState(employee);
 
   const handleEdit = () => setIsEditing(true);
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsEditing(false);
     // Gọi hàm lưu ở đây
+    employee.address = editedEmployee.address;
+    employee.birthday = editedEmployee.birthday;
+    employee.email = editedEmployee.email;
+    employee.gender = editedEmployee.gender;
+    employee.image = editedEmployee.address;
+    employee.name = editedEmployee.name;
+    employee.phone_number = editedEmployee.phone_number;
+    employee.position = editedEmployee.position;
+    employee.salary = editedEmployee.salary;
+    await updateEmployeeById(editedEmployee);
   };
   const handleClose = () => {
     setIsEditing(false);
     onClose();
   };
-  const handleDelete = () => {
+  const handleDelete = async () => {
     // Gọi hàm xóa ở đây
+    await deleteEmployeeById(employee.id);
+    removeEmployee(employee.id);
+    onClose();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -50,7 +65,7 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
 
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
-      <div className="bg-white rounded-2xl w-[800px] shadow-lg">
+      <div className="bg-white rounded-2xl w-[1000px] shadow-lg">
         {/* Thanh tiêu đề */}
         <div className="flex justify-between border-b pt-2 pl-2 bg-[#C3F5DB] mb-5">
           <h2 className="text-lg p-1 rounded-t-lg font-semibold bg-white">Chi tiết nhân viên</h2>
@@ -69,7 +84,7 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
 
           {/* Cột 2: ID, Tên, Chức vụ, Phòng ban */}
           <div className="col-span-1 space-y-2">
-            {(["id", "name", "position", "department"] as Array<keyof Employee>).map((field) => (
+            {(["id", "name", "position", "address"] as Array<keyof Employee>).map((field) => (
               <div key={field}>
                 <span className="font-medium">{field}: </span>
                 {isEditing ? (
@@ -89,7 +104,7 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
 
           {/* Cột 3: Số điện thoại, Email */}
           <div className="col-span-1 space-y-2">
-            {(["phone", "email"] as Array<keyof Employee>).map((field) => (
+            {(["phone_number", "email", "salary", "created_at"] as Array<keyof Employee>).map((field) => (
               <div key={field}>
                 <span className="font-medium">{field}: </span>
                 {isEditing ? (

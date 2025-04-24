@@ -1,7 +1,9 @@
 import axios from "axios";
 
 const API_URL = "http://localhost:8080/api";
-const TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJtbHVhbiIsImlhdCI6MTc0Mzk5MzM4NywiZXhwIjoxNzQ0MDA3Nzg3fQ.6zVGouM8mMqGgPSuIVctd77zi3-pZ0MA_0cmDOL6YmHrlJ4HKDAyQPoHGhvkOFW4";
+
+let TOKEN:string;
+
 
 export const fetchSummary = async () => {
   try {
@@ -13,6 +15,7 @@ export const fetchSummary = async () => {
     
     return response.data;
   } catch (error) {
+    console.log(error);
     return "Loi khi lay sumary";
   }
 };
@@ -29,6 +32,7 @@ export const fetchBill = async (page = 0, size = 10, keyword = "") => {
     console.log(page, size, keyword);
     return response.data;
   } catch (error) {
+    console.log(error);
     return "Loi khi lay bill";
   }
 }
@@ -43,6 +47,7 @@ export const fetchBillById = async (id: number) => {
     
     return response.data;
   } catch (error) {
+    console.log(error);
     return "Loi khi lay bill by id";
   }
 }
@@ -83,7 +88,7 @@ export const deleteBillById = async (id: number) => {
 //   }
 // }
 
-export const login = async (username: any, password: any) => {
+export const login = async (username: string, password: string) => {
   try {
     const response = await axios.post(API_URL + "/v1/login", {
       username: username,
@@ -95,10 +100,15 @@ export const login = async (username: any, password: any) => {
       },
     }
   );
-  console.log('====================================');
-  console.log(response.data);
-  console.log('====================================');
-    return response.data;
+    TOKEN = response.data.token;
+    const item = {
+      token: TOKEN,
+      exp: new Date().getTime() + 3600000
+    }
+
+    localStorage.setItem('token', JSON.stringify(item));
+
+    return TOKEN;
   } catch (error) {
     return error;
   }

@@ -1,8 +1,9 @@
 import { Helmet } from "react-helmet";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
 import EmployeeDetail from "../components/EmployeeDetail"; 
+import { getAllEmployees } from "../service/employeeApi";
 
 // Kiểu dữ liệu cho nhân viên
 interface Employee {
@@ -10,7 +11,7 @@ interface Employee {
   name: string;
   address: string;
   birthday: string;
-  create_at: string;
+  created_at: string;
   email: string;
   gender: string;
   image: string;
@@ -20,23 +21,35 @@ interface Employee {
 }
 
 // Danh sách nhân viên mẫu
-const employees: Employee[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `NV${String(i + 1).padStart(6, "0")}`,
-  name: `Nhân viên ${i + 1}`,
-  address: `Địa chỉ ${i + 1}`,
-  birthday: `199${i % 10}-01-01`,
-  create_at: `2023-0${(i % 9) + 1}-15`,
-  email: `nhanvien${i + 1}@gmail.com`,
-  gender: i % 2 === 0 ? "Nam" : "Nữ",
-  image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg/revision/latest?cb=20210323154547&path-prefix=pt-br",
-  phone_number: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
-  position: i % 2 === 0 ? "Quản lý" : "Nhân viên",
-  salary: 8000000 + i * 250000,
-}));
+// const employees: Employee[] = Array.from({ length: 30 }, (_, i) => ({
+//   id: `NV${String(i + 1).padStart(6, "0")}`,
+//   name: `Nhân viên ${i + 1}`,
+//   address: `Địa chỉ ${i + 1}`,
+//   birthday: `199${i % 10}-01-01`,
+//   created_at: `2023-0${(i % 9) + 1}-15`,
+//   email: `nhanvien${i + 1}@gmail.com`,
+//   gender: i % 2 === 0 ? "Nam" : "Nữ",
+//   image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg/revision/latest?cb=20210323154547&path-prefix=pt-br",
+//   phone_number: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
+//   position: i % 2 === 0 ? "Quản lý" : "Nhân viên",
+//   salary: 8000000 + i * 250000,
+// }));
 
 const ITEMS_PER_PAGE = 10;
 
 function NhanVien() {
+    const [employees, setEmployees] = useState<Employee[]>([]);
+  
+    useEffect( () => {
+      const fetchData = async () => {
+        const result = await getAllEmployees();
+        setEmployees(result);
+        console.log(result);
+      }
+  
+      fetchData();
+    },[])
+
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -58,6 +71,10 @@ function NhanVien() {
   const handleCloseModal = () => {
     setSelectedEmployee(null);
     setIsModalOpen(false);
+  };
+
+  const removeEmployee= (employeeId: string) => {
+    setEmployees(prevE => prevE.filter(employee => employee.id !== employeeId));
   };
 
   return (
@@ -142,6 +159,7 @@ function NhanVien() {
                   employee={selectedEmployee}
                   isOpen={isModalOpen}
                   onClose={handleCloseModal}
+                  removeEmployee={removeEmployee}
                 />
               )}
             </div>
