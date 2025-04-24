@@ -106,8 +106,8 @@ function HangHoa() {
           {/* Bảng sản phẩm */}
           {/* LABEL */}
           <div className="w-4/5 ml-5">
-            <div className="overflow-y-auto h-100">
-              <table className="w-full border-collapse">
+            <div className="overflow-y-auto h-100 scrollbar-hide">
+              <table className="w-full border-collapse ">
                 <thead className="bg-[#E6F1FE] sticky top-0">
                   <tr className="border-b border-[#A6A9AC]">
                     <th className="p-2 text-left w-[100px]"></th>

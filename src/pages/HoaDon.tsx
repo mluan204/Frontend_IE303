@@ -1,27 +1,31 @@
 import { Helmet } from "react-helmet";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
 import BillDetail from "../components/BillDetail"; 
+import { fetchBill, fetchBillById } from "../service/api";
+// import debounce from "lodash.debounce";
+// import { useCallback } from "react";
 
-interface Bill {
-  billID: string;
-  time: string;
-  totalCost: string;
-  customerID: string;
-  employeeID: string;
-  afterDiscount: string;
-}
 
-// Mảng dữ liệu sản phẩm giả định
-const bills: Bill[] = Array.from({ length: 20 }, (_, i) => ({
-  billID: `BILL${String(i + 1).padStart(6, "0")}`, // ID hóa đơn, ví dụ: BILL000001
-  time: new Date(Date.now() - i * 86400000).toLocaleString("vi-VN"), // Thời gian, lùi lại 1 ngày mỗi hóa đơn
-  totalCost: (1000000 + i * 50000).toLocaleString("vi-VN"), // Tổng tiền, tăng dần
-  customerID: `CUS${String((i % 5) + 1).padStart(3, "0")}`, // ID khách hàng (5 khách khác nhau)
-  employeeID: `EMP${String((i % 3) + 1).padStart(3, "0")}`, // ID nhân viên (3 nhân viên khác nhau)
-  afterDiscount: (900000 + i * 45000).toLocaleString("vi-VN"), // Sau giảm giá, tăng dần
-}));
+// interface Bill {
+//   billID: string;
+//   time: string;
+//   totalCost: string;
+//   customerID: string;
+//   employeeID: string;
+//   afterDiscount: string;
+// }
+
+// // Mảng dữ liệu sản phẩm giả định
+// const bills: Bill[] = Array.from({ length: 20 }, (_, i) => ({
+//   billID: `BILL${String(i + 1).padStart(6, "0")}`, // ID hóa đơn, ví dụ: BILL000001
+//   time: new Date(Date.now() - i * 86400000).toLocaleString("vi-VN"), // Thời gian, lùi lại 1 ngày mỗi hóa đơn
+//   totalCost: (1000000 + i * 50000).toLocaleString("vi-VN"), // Tổng tiền, tăng dần
+//   customerID: `CUS${String((i % 5) + 1).padStart(3, "0")}`, // ID khách hàng (5 khách khác nhau)
+//   employeeID: `EMP${String((i % 3) + 1).padStart(3, "0")}`, // ID nhân viên (3 nhân viên khác nhau)
+//   afterDiscount: (900000 + i * 45000).toLocaleString("vi-VN"), // Sau giảm giá, tăng dần
+// }));
 
 
 
@@ -32,20 +36,24 @@ function HoaDon() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalPages = Math.ceil(bills.length / ITEMS_PER_PAGE);
-  const displayedBills = bills.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+
+  const [displayedBills, setDisplayedBills] = useState<any>([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   // // MODAL CHI TIẾT SẢN PHẨM
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBill, setSelectedBill] = useState<Bill | null>(null)
+  const [selectedBill, setSelectedBill] = useState<any>(null)
 
   // // Mở modal và truyền thông tin sản phẩm
-  const handleOpenModal = (bill: Bill) => {
-    setSelectedBill(bill);
-    setIsModalOpen(true);
+  const handleOpenModal = async (billId: number) => {
+    try {
+      const billData = await fetchBillById(billId);
+      setSelectedBill(billData);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Lỗi khi lấy hóa đơn:", error);
+    }
   };
 
   // // Đóng modal
@@ -53,12 +61,36 @@ function HoaDon() {
     setSelectedBill(null);
     setIsModalOpen(false);
   };
+
   const [selectedTime, setSelectedTime] = useState("thisMonth");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  const fetchData = async () => {
+    try {
+      const response = await fetchBill(currentPage - 1, ITEMS_PER_PAGE, search);
+      console.log(response);
+      setDisplayedBills(response.content);
+      setTotalPages(response.totalPages);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  
+  useEffect(() => {
+    fetchData();
+  }
+  , [currentPage]);
+
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
   return (
-    
-    <div className="bg-[#E8EAED] h-screen">
+    <div className="bg-[#E8EAED]">
       <Helmet>
         <title>Sổ quỹ</title>
       </Helmet>
@@ -76,6 +108,12 @@ function HoaDon() {
                 className="border p-1 pl-10 rounded w-full bg-white "
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
+                    fetchData(); // Gọi hàm tìm kiếm
+                  }
+                }}
               />
             </div>
 
@@ -167,7 +205,7 @@ function HoaDon() {
             </div>
             {/*BẢNG HÓA ĐƠN*/}
             <div className="h-5/6 ml-5">
-              <div className="overflow-y-auto h-80">
+              <div className="overflow-y-auto h-80 scrollbar-hide">
                 <table className="w-full border-collapse">
                  {/* LABEL */}
                   <thead className="bg-[#E6F1FE] sticky top-0">
@@ -180,14 +218,23 @@ function HoaDon() {
                   </thead>
                   {/* HÓA ĐƠN*/}
                   <tbody>
-                    {displayedBills.map((bill, index) => (
-                      <tr key={bill.billID} className={ `${index % 2 === 0 ? "bg-white" : "bg-gray-100 border-b border-[#A6A9AC]"} hover:bg-[#E6F1FE]`} onClick={() => handleOpenModal(bill)}>
-                        <td className="p-2">{bill.billID}</td>
-                        <td className="p-2">{bill.time}</td>
-                        <td className="p-2">{bill.employeeID}</td>
-                        <td className="p-2">{bill.totalCost}</td>
+                    {displayedBills.map((bill: any, index: number) => {
+                    const isDeleted = bill.isDeleted;
+                    return (
+                      <tr  key={bill.id} 
+                      className={`
+                        ${isDeleted ? "bg-red-100 text-red-600 line-through" : index % 2 === 0 ? "bg-white" : "bg-gray-100 border-b border-[#A6A9AC]"}
+                        hover:bg-[#E6F1FE] cursor-pointer
+                      `} 
+                      onClick={() => !isDeleted && handleOpenModal(bill.id)} // Ngăn click nếu bill bị xóa
+                      >
+                        <td className="p-2">HD00{bill.id}</td>
+                        <td className="p-2">{bill.createdAt ? new Date(bill.createdAt).toLocaleDateString("vi-VN") : "N/A"}</td>
+                        <td className="p-2">{bill.employee.name}</td>
+                        <td className="p-2">{(bill.after_discount).toLocaleString("vi-VN")} đ</td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
 
