@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
+import { deleteCustomerById, updateCustomer } from "../service/customerApi";
 
 interface Customer {
   id: string;
@@ -8,16 +9,18 @@ interface Customer {
   name: string;
   phone_number: string;
   score: number;
-  create_at: string;
+  created_at: string;
 }
 
 interface CustomerDetailProps {
   customer: Customer;
   isOpen: boolean;
   onClose: () => void;
+  removeCustomer: (id:string) =>void;
 }
 
 type CustomerField = keyof Customer;
+
 
 function CustomerDetail({ customer, isOpen, onClose }: CustomerDetailProps) {
 
@@ -30,19 +33,27 @@ function CustomerDetail({ customer, isOpen, onClose }: CustomerDetailProps) {
     create_at: "Ngày tạo",
   };
 
+
   const [isEditing, setIsEditing] = useState(false);
   const [editedCustomer, setEditedCustomer] = useState(customer);
 
   const handleEdit = () => setIsEditing(true);
-  const handleSave = () => {
+  const handleSave =async() => {
     setIsEditing(false);
+    customer.name = editedCustomer.name;
+    customer.gender = editedCustomer.gender;
+    customer.score = editedCustomer.score;
+    await updateCustomer(customer);
     // Gọi hàm lưu dữ liệu ở đây nếu cần
   };
   const handleClose = () => {
     setIsEditing(false);
     onClose();
   };
-  const handleDelete = () => {
+  const handleDelete = async() => {
+    removeCustomer(customer.id);
+    await deleteCustomerById(customer.id);
+    onClose();
     // Gọi hàm xóa ở đây nếu cần
   };
 
@@ -86,7 +97,7 @@ function CustomerDetail({ customer, isOpen, onClose }: CustomerDetailProps) {
 
           {/* Cột 2 */}
           <div className="space-y-2">
-            {(["phone_number", "score", "create_at"] as Array<CustomerField>).map((field) => (
+            {(["phone_number", "score", "created_at"] as Array<CustomerField>).map((field) => (
               <div key={field}>
                 <span className="font-medium">{customerFieldLabels[field]}: </span>
                 {isEditing ? (

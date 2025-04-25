@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
+import { deleteEmployeeById, updateEmployeeById } from "../service/employeeApi";
 
 interface Employee {
     id: string;
     name: string;
     address: string;
     birthday: string;
-    create_at: string;
+    created_at: string;
     email: string;
     gender: string;
     image: string;
@@ -20,9 +21,10 @@ interface EmployeeDetailProps {
   employee: Employee;
   isOpen: boolean;
   onClose: () => void;
+  removeEmployee: (id:string) =>void;
 }
 
-type EmployeeField = keyof Employee;
+// type EmployeeField = keyof Employee;
 
 function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
 
@@ -40,20 +42,34 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
     salary: "Lương",
   };
   
+
   const [isEditing, setIsEditing] = useState(false);
   const [editedEmployee, setEditedEmployee] = useState(employee);
 
   const handleEdit = () => setIsEditing(true);
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsEditing(false);
     // Gọi hàm lưu ở đây
+    employee.address = editedEmployee.address;
+    employee.birthday = editedEmployee.birthday;
+    employee.email = editedEmployee.email;
+    employee.gender = editedEmployee.gender;
+    employee.image = editedEmployee.address;
+    employee.name = editedEmployee.name;
+    employee.phone_number = editedEmployee.phone_number;
+    employee.position = editedEmployee.position;
+    employee.salary = editedEmployee.salary;
+    await updateEmployeeById(editedEmployee);
   };
   const handleClose = () => {
     setIsEditing(false);
     onClose();
   };
-  const handleDelete = () => {
+  const handleDelete = async () => {
     // Gọi hàm xóa ở đây
+    await deleteEmployeeById(employee.id);
+    removeEmployee(employee.id);
+    onClose();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -84,7 +100,9 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
 
           {/* Cột 2: ID, Tên, Chức vụ, Phòng ban */}
           <div className="col-span-1 space-y-2">
+
             {(["id", "name", "position"] as Array<keyof Employee>).map((field) => (
+
               <div key={field}>
                 <span className="font-medium">{employeeFieldLabels[field]}: </span>
                 {isEditing ? (
@@ -105,6 +123,7 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
           {/* Cột 3: Số điện thoại, Email */}
           <div className="col-span-1 space-y-2">
             {(["phone_number", "email"] as Array<keyof Employee>).map((field) => (
+
               <div key={field}>
                 <span className="font-medium">{employeeFieldLabels[field]}: </span>
                 {isEditing ? (
