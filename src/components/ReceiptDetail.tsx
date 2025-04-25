@@ -19,7 +19,14 @@ interface ReceiptDetailProps {
 
 function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
 
-    
+  const receipFieldLabels: Record<keyof Receipt, string> = {
+    receiptID: "Mã phiếu nhập",
+    time: "Thời gian",
+    totalCost: "Tổng tiền",
+    employeeID: "Nhân viên",
+    note: "Ghi chú",
+  }
+
     const receiptDetails = [
     {
         id: 1,
@@ -77,7 +84,7 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
 
   return (
     <div className= "fixed inset-0 bg-black/30 flex justify-center items-center">
-      <div className="bg-white rounded-2xl w-[800px] max-h-[600px] shadow-lg overflow-hidden">
+      <div className="bg-white w-4/5 max-h-[600px] shadow-lg overflow-hidden">
         {/* Thanh tiêu đề */}
         <div className="flex justify-between border-b pt-2 pl-2 bg-[#C3F5DB] mb-5 sticky top-0 z-10">
           <h2 className="text-lg p-1 rounded-t-lg font-semibold bg-white">Chi tiết phiếu nhập</h2>
@@ -89,9 +96,9 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
           <div className="grid grid-cols-3 gap-4">
             {/* Cột 1: */}
             <div className="col-span-1 space-y-2">
-              {["id", "time", "supplier"].map((field) => (
-                <div key={field} className={isEditing ? "": "border-b-1"} >
-                  <span className="font-medium">{field}: </span>
+              {["receiptID", "time", "totalCost"].map((field) => (
+                <div key={field}>
+                  <span className="font-medium">{receipFieldLabels[field as keyof Receipt]}: </span>
                   {isEditing ? (
                     <input
                       type="text"
@@ -109,9 +116,9 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
 
             {/* Cột 2 */}
             <div className="col-span-1 space-y-2">
-              {["employee"].map((field) => (
-                <div key={field} className={isEditing ? "": "border-b-1"}>
-                  <span className="font-medium">{field}: </span>
+              {["employeeID"].map((field) => (
+                <div key={field} >
+                  <span className="font-medium">{receipFieldLabels[field as keyof Receipt]}: </span>
                   {isEditing ? (
                     <input
                       type="text"
@@ -143,7 +150,7 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
             </div>
           </div>
           
-          <table className="mt-5 h-40 mx-auto w-190  border-collapse">
+          <table className="mt-5 h-40 mx-auto w-full  border-collapse">
               {/* LABEL */}
               <thead className="bg-[#E6F1FE] sticky top-0">
                 <tr className="border-b border-[#A6A9AC]">

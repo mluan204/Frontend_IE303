@@ -65,7 +65,7 @@ function KhachHang() {
 
       <div className="p-6">
         {/* Tiêu đề và thanh tìm kiếm */}
-        <div className="flex items-center mb-4">
+        <div className="flex items-center pb-13">
           <h1 className="text-xl font-bold w-1/5">Khách hàng</h1>
           <div className="flex items-center justify-between w-4/5">
             {/* Thanh tìm kiếm */}
