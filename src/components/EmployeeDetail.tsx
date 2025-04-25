@@ -122,8 +122,7 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
 
           {/* Cột 3: Số điện thoại, Email */}
           <div className="col-span-1 space-y-2">
-            {(["phone_number", "email"] as Array<keyof Employee>).map((field) => (
-
+            {(["phone_number", "email", "salary"] as Array<keyof Employee>).map((field) => (
               <div key={field}>
                 <span className="font-medium">{employeeFieldLabels[field]}: </span>
                 {isEditing ? (
