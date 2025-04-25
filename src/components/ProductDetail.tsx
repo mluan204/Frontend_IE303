@@ -7,8 +7,13 @@ interface Product {
   name: string;
   price: string;
   cost: string;
+  category: string;
   stock: number;
   image: string;
+  supplier: string;
+  expiry: string;
+  notes: string;
+
 }
 
 interface ProductDetailProps {
@@ -20,6 +25,21 @@ interface ProductDetailProps {
 type ProductField = keyof Product;
 
 function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
+
+  const productFieldLabels: Record<keyof Product, string> = {
+    id: "Mã sản phẩm",
+    name: "Tên sản phẩm",
+    price: "Giá bán",
+    cost: "Giá nhập",
+    stock: "Tồn kho",
+    image: "Ảnh",
+    category: "Phân loại",
+    supplier: "Nhà cung cấp",
+    expiry: "Hạn sử dụng",
+    notes: "Ghi chú",
+  };
+
+  
   const [isEditing, setIsEditing] = useState(false);
   const [editedProduct, setEditedProduct] = useState(product);
 
@@ -45,7 +65,7 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
 
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
-      <div className="bg-white rounded-2xl w-[800px] shadow-lg">
+      <div className="bg-white w-4/5 shadow-lg">
         {/* Thanh tiêu đề */}
         <div className="flex justify-between border-b pt-2 pl-2 bg-[#C3F5DB] mb-5">
           <h2 className="text-lg p-1 rounded-t-lg font-semibold bg-white">Chi tiết sản phẩm</h2>
@@ -53,8 +73,8 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
         </div>
 
         {/* Thông tin sản phẩm */}
-        <div className="grid grid-cols-4 gap-4">
-          {/* Cột 1: Ảnh */}
+        <div className="grid grid-cols-4 gap-4 pr-5">
+          {/* Cột 1: Ảnh */} 
           <div className="col-span-1 flex flex-col justify-center items-center">
             <img src={editedProduct.image} alt={editedProduct.name} className="mb-5 w-32 h-32 object-cover" />
             <label htmlFor="image-upload" className="bg-blue-500 text-white px-3 py-1 rounded cursor-pointer hover:bg-blue-600">
@@ -66,8 +86,8 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
           {/* Cột 2: ID, Tên, Phân loại, Nhà cung cấp, Tồn kho */}
           <div className="col-span-1 space-y-2">
             {(["id", "name", "category", "supplier", "stock"] as Array<keyof Product>).map((field) => (
-              <div key={field} className={isEditing ? "": "border-b-1"} >
-                <span className="font-medium">{field}: </span>
+              <div key={field}>
+                <span className="font-medium">{productFieldLabels[field]}: </span>
                 {isEditing ? (
                   <input
                     type="text"
@@ -86,8 +106,8 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
           {/* Cột 3: Giá nhập, Giá bán, Hạn sử dụng */}
           <div className="col-span-1 space-y-2">
             {(["cost", "price", "expiry"] as Array<keyof Product>).map((field) => (
-              <div key={field} className={isEditing ? "": "border-b-1"}>
-                <span className="font-medium">{field}: </span>
+              <div key={field}>
+                <span className="font-medium">{productFieldLabels[field]}: </span>
                 {isEditing ? (
                   <input
                     type="text"

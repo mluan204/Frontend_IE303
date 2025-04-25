@@ -21,18 +21,19 @@ interface CustomerDetailProps {
 
 type CustomerField = keyof Customer;
 
-function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerDetailProps) {
-  
-  useEffect(() => {
-    setEditedCustomer((prev) => ({ ...prev,gender: customer.gender=="true"? "Nam" : "Nữ",created_at: new Date(customer.created_at).toLocaleDateString('vi-VN',
-      {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      })
-    }));
 
-  },[]);
+function CustomerDetail({ customer, isOpen, onClose }: CustomerDetailProps) {
+
+  const customerFieldLabels: Record<CustomerField, string> = {
+    id: "Mã KH",
+    gender: "Giới tính",
+    name: "Họ tên",
+    phone_number: "Số điện thoại",
+    score: "Điểm tích lũy",
+    create_at: "Ngày tạo",
+  };
+
+
   const [isEditing, setIsEditing] = useState(false);
   const [editedCustomer, setEditedCustomer] = useState(customer);
 
@@ -65,7 +66,7 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
 
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
-      <div className="bg-white rounded-2xl w-[600px] shadow-lg">
+      <div className="bg-white w-3/5 shadow-lg">
         {/* Thanh tiêu đề */}
         <div className="flex justify-between border-b pt-2 pl-2 bg-[#C3F5DB] mb-5">
           <h2 className="text-lg p-1 rounded-t-lg font-semibold bg-white">Chi tiết khách hàng</h2>
@@ -78,7 +79,7 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
           <div className="space-y-2">
             {(["id", "name", "gender"] as Array<CustomerField>).map((field) => (
               <div key={field}>
-                <span className="font-medium capitalize">{field}: </span>
+                <span className="font-medium">{customerFieldLabels[field]}: </span>
                 {isEditing ? (
                   <input
                     type="text"
@@ -98,7 +99,7 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
           <div className="space-y-2">
             {(["phone_number", "score", "created_at"] as Array<CustomerField>).map((field) => (
               <div key={field}>
-                <span className="font-medium capitalize">{field.replace("_", " ")}: </span>
+                <span className="font-medium">{customerFieldLabels[field]}: </span>
                 {isEditing ? (
                   <input
                     type="text"

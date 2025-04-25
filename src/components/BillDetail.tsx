@@ -36,6 +36,22 @@ interface BillDetailProps {
 
 
 function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
+  const billFieldLabels: Record<keyof Bill | string, string> = {
+    id: "Mã hóa đơn",
+    total_cost: "Tổng tiền",
+    after_discount: "Sau giảm giá",
+    created_at: "Ngày lập",
+    isDeleted: "Đã xóa?",
+    totalQuantity: "Tổng số lượng",
+    notes: "Ghi chú",
+    // Các field lồng bên trong
+    "customer.id": "Mã khách hàng",
+    "customer.name": "Tên khách hàng",
+    "customer.phone": "SĐT khách hàng",
+    "employee.id": "Mã nhân viên",
+    "employee.name": "Tên nhân viên",
+    "billDetails": "Chi tiết sản phẩm",
+  };
 
   if (!isOpen || !bill) return null; // Kiểm tra nếu modal đóng thì return null
 
@@ -70,7 +86,7 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
 
   return (
     <div className= "fixed inset-0 bg-black/30 flex justify-center items-center">
-      <div className="bg-white rounded-2xl w-[800px] max-h-[600px] shadow-lg overflow-hidden">
+      <div className="bg-white rounded-2xl w-4/5 max-h-[600px] shadow-lg overflow-hidden">
         {/* Thanh tiêu đề */}
         <div className="flex justify-between border-b pt-2 pl-2 bg-[#C3F5DB] mb-5 sticky top-0 z-10">
           <h2 className="text-lg p-1 rounded-t-lg font-semibold bg-white">Chi tiết hóa đơn</h2>
@@ -79,12 +95,12 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
         {/* Nội dung có thể cuộn */}
         <div className="overflow-y-auto h-[calc(600px-50px)] p-4 scrollbar-hide">
           {/* Thông tin hóa đơn*/}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4 pr-5">
             {/* Cột 1: */}
             <div className="col-span-1 space-y-2">
-              {["id", "name", "category", "supplier", "stock"].map((field) => (
+              {["id", "total_cost", "after_discount", "totalQuantity"].map((field) => (
                 <div key={field} className={isEditing ? "": "border-b-1"} >
-                  <span className="font-medium">{field}: </span>
+                  <span className="font-medium">{billFieldLabels[field] || field}: </span>
                   {isEditing ? (
                     <input
                       type="text"
@@ -102,9 +118,9 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
 
             {/* Cột 2 */}
             <div className="col-span-1 space-y-2">
-              {["cost", "price", "expiry"].map((field) => (
-                <div key={field} className={isEditing ? "": "border-b-1"}>
-                  <span className="font-medium">{field}: </span>
+             {["created_at", "isDeleted", "customer.name", "employee.name"].map((field) => (
+                <div key={field}>
+                  <span className="font-medium">{billFieldLabels[field] || field}: </span>
                   {isEditing ? (
                     <input
                       type="text"
@@ -122,7 +138,7 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
 
             {/* Cột 3: Ghi chú */}
             <div className="col-span-1 border-l-1 pl-2">
-              <span className="font-medium">Ghi chú: </span>
+              <span className="font-medium">{billFieldLabels["notes"]}: </span>
               {isEditing ? (
                 <textarea
                   name="notes"
