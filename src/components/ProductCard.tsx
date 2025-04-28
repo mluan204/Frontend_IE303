@@ -16,7 +16,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, addTo
       onClick={() => addToCart({ id, name, price, image })}
     >
       {/* Hình ảnh sản phẩm */}
-      <img className="w-48 h-28 object-cover" src={image} alt={name} />
+      <img className="w-48 h-32 object-cover" src={image} alt={name} />
 
       {/* Thông tin sản phẩm */}
       <div className="text-center mt-2">

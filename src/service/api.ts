@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL = "http://localhost:8080/api";
-const TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJtbHVhbiIsImlhdCI6MTc0NDM3NjY4OCwiZXhwIjoxNzQ0MzkxMDg4fQ.3w7RgT4QF_Tu_56RBxE47yr6E_mlqnFHpZIRrhU9khiza5zpgBolP-ikBufFAiPT";
+const TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJtbHVhbiIsImlhdCI6MTc0NTU4ODUyNCwiZXhwIjoxNzQ1NjAyOTI0fQ.BOK0COeffNsZe6-wqaEmroLP_EGpcpGU5om7zEPRcSKUV_HF5CnB1tWXMsvk375Q";
 
 export const fetchSummary = async () => {
   try {
@@ -116,6 +116,34 @@ export const fetchProduct = async (page = 0, size = 10, keyword = "") => {
     console.log(page, size, keyword);
     return response.data;
   } catch (error) {
-    return "Loi khi lay bill";
+    return "Loi khi lay san pham";
+  }
+}
+
+export const fetchAllProduct = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/products`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    return "Loi khi lay tat ca san pham";
+  }
+}
+
+export const fetchAllBill = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/bills/get-all-bills`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    return "Loi khi lay tat ca hoa don";
   }
 }

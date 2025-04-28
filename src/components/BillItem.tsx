@@ -34,7 +34,7 @@ const BillItem: React.FC<CartItemProps> = ({ index, id, name, price, quantity, o
   };
 
   return (
-    <div className="flex items-center border-b border-gray-300 p-3 w-full justify-between">
+    <div className="flex items-center border-b border-gray-300 p-3 w-full justify-between my-1">
       {/* Số thứ tự & Xóa */}
       <div className="flex w-1/12 items-center justify-end mr-1">
         <span className="text-gray-600 mr-2">{index}</span>
@@ -57,7 +57,7 @@ const BillItem: React.FC<CartItemProps> = ({ index, id, name, price, quantity, o
       </div>
 
       {/* Tổng tiền */}
-      <span className="w-2/12 font-bold">{(price * currentQuantity).toLocaleString("vi-VN")}đ</span>
+      <span className="w-2/12 font-bold text-right">{(price * currentQuantity).toLocaleString("vi-VN")}đ</span>
     </div>
   );
 };

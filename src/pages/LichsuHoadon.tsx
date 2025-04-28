@@ -1,63 +1,120 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEllipsisV, faPrint, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsisV, faPrint, faTrash, faBan } from "@fortawesome/free-solid-svg-icons";
+import { deleteBillById, fetchAllBill } from "../service/api";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import { Helmet } from "react-helmet";
+import { set } from "date-fns";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface Invoice {
   id: string;
-  date: string;
+  date: string; // or use Date if the date is a JavaScript Date object
   total: number;
   customerName: string;
   staffName: string;
   paymentMethod: string;
   discount: number;
-  items: { name: string; quantity: number; price: number, discount: number }[];
+  isDelete: boolean;
+  items: {
+    productId: number;
+    productName: string;
+    price: number;
+    after_discount: number;
+    quantity: number;
+  }[];
 }
 
-const invoicesData: Invoice[] = [
-  {
-    id: 'HD001',
-    date: '2025-04-10',
-    customerName: 'Nguyễn Văn A', // hoặc null / undefined
-    staffName: 'Trần Thị B',
-    paymentMethod: 'Tiền mặt' ,
-    discount: 10000, // số tiền giảm giá
-    total: 150000,
-    items: [
-      { name: "Sản phẩm dsds ds hfsd vshdgfv snbvhsgvc csvcyhsd sdhvsghcs sgcvA", quantity: 2, discount:145000, price: 150000 },
-      { name: "Sản phẩm B", quantity: 1, price: 200000, discount:195000 },
-      { name: "Sản phẩm A", quantity: 2, price: 150000, discount:145000 },
-      
-    ],
-  },
-  {
-    id: 'HD002',
-    date: '2025-04-10',
-    customerName: 'Nguyễn Văn A', // hoặc null / undefined
-    staffName: 'Trần Thị B',
-    paymentMethod: 'Tiền mặt' ,
-    discount: 10000, // số tiền giảm giá
-    total: 150000,
-    items: [{ name: "Sản phẩm C", quantity: 3, price: 250000, discount:195000 }],
-  },
-  
-];
 
 function LishsuHoadon() {
-  const [invoices, setInvoices] = useState<Invoice[]>(invoicesData);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(invoices[0]);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleDelete = (id: string) => {
-    setInvoices(invoices.filter((invoice) => invoice.id !== id));
-    if (selectedInvoice?.id === id) setSelectedInvoice(null);
-  };
+
+  // const handleDelete = (id: string) => {
+  //   setInvoices(invoices.filter((invoice) => invoice.id !== id));
+  //   if (selectedInvoice?.id === id) setSelectedInvoice(null);
+  // };
 
   const handlePrint = (id: string) => {
     alert(`Đang in hóa đơn ${id}...`);
   };
 
+  const fetchData = async () => {
+        try {
+          const result = await fetchAllBill(); // trả về mảng any[]
+            
+          // map sang Product để hiển thị
+          const mapped: Invoice[] = result.map((item: any) => ({
+            id: item.id.toString(),
+            date: item.createdAt, // chú ý: đúng key là `createdAt` chứ không phải `createAt`
+            total: item.after_discount,
+            customerName: item.customer?.name || "Không rõ",
+            staffName: item.employee?.name || "Không rõ",
+            paymentMethod: "Tiền mặt",
+            isDelete: item.isDeleted,
+            discount: item.total_cost - item.after_discount,
+            items: item.billDetails.map((d: any) => ({
+              productId: d.productId,
+              productName: d.productName,
+              price: d.price,
+              after_discount: d.afterDiscount ?? d.price, // fallback nếu null
+              quantity: d.quantity,
+            })),
+          }));
+          setInvoices(mapped);        
+          console.log(result);
+          setLoading(false);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      };
+
+      const deleteInvoiceById = async (id: string) => {
+        try {
+          const result = await deleteBillById(Number(id));
+          console.log("Xóa thành công:", result);
+      
+          setInvoices(prev =>
+            prev.map(invoice =>
+              invoice.id === id ? { ...invoice, isDelete: true } : invoice
+            )
+          );
+      
+          if (selectedInvoice?.id === id) {
+            setSelectedInvoice({ ...selectedInvoice, isDelete: true });
+          }
+        } catch (error) {
+          console.error("Xóa thất bại:", error);
+          alert("Xóa hóa đơn thất bại. Vui lòng thử lại!");
+        } finally {
+          setConfirmDeleteId(null);
+        }
+      };
+      
+  
+    useEffect(() => {
+      fetchData();
+    }, []);
+
   return (
-    <div onMouseDown={()=>setMenuOpen(null)} className="flex h-[calc(100vh-2.5rem)] bg-gray-100 overflow-y-hidden">
+
+    <div onClick={(e) => {
+      // nếu click bên ngoài popup menu
+      if (!(e.target as HTMLElement).closest(".menu-popup")) {
+        setMenuOpen(null);
+      }
+    }} className="flex h-[calc(100vh-2.5rem)] bg-gray-100 overflow-y-hidden">
+      <Helmet>
+        Lịch sử hóa đơn
+      </Helmet>
       {/* Danh sách hóa đơn */}
       <div className="w-1/3 bg-white border-r-2 border-gray-300 flex flex-col h-[calc(100vh-2.5rem)]">
             {/* Tiêu đề cố định */}
@@ -67,55 +124,64 @@ function LishsuHoadon() {
 
             {/* Danh sách hóa đơn có thể cuộn */}
             <ul className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-                {invoices.map((invoice) => (
+                {invoices.sort((a, b) => b.date.localeCompare(a.date)).map((invoice) => (
                 <li key={invoice.id} className="border-b border-gray-300">
                     <div
-                    className={`cursor-pointer ${
-                        selectedInvoice?.id === invoice.id ? "bg-blue-100" : "hover:bg-gray-200"
-                    } p-3 flex justify-between items-center`}
-                    onClick={() => setSelectedInvoice(invoice)}
+                      className={`cursor-pointer ${
+                          selectedInvoice?.id === invoice.id ? "bg-blue-100" : "hover:bg-gray-200"
+                      } p-3 flex justify-between items-center`}
+                      onClick={() => setSelectedInvoice(invoice)}
                     >
-                    <div className="flex flex-col">
-                        <p className="font-semibold">Mã: {invoice.id}</p>
-                        <div className="flex justify-between space-x-6 mt-1 text-base">
-                        <p>Ngày: {invoice.date}</p>
-                        <p>Số lượng: {invoice.items.length}</p>
-                        <p className="font-medium">Tổng tiền: {invoice.total.toLocaleString()}đ</p>
+                        <div className="flex flex-col">
+                            <p className="font-semibold">Số hóa đơn: {invoice.id}</p>
+                            <div className="flex justify-between space-x-6 mt-1 text-base">
+                            <p>Ngày: {dayjs(invoice.date).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY HH:mm:ss').slice(0,10)}</p>
+                            <p>Số lượng: {invoice.items.length}</p>
+                            <p className="font-medium">Tổng tiền: {invoice.total.toLocaleString()}đ</p>
+                            </div>
                         </div>
-                    </div>
-
-                    {/* Icon More (⋮) */}
-                    <div className="relative">
-                        <button
-                        className="text-gray-500 hover:bg-gray-200 rounded-full p-2"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setMenuOpen(menuOpen === invoice.id ? null : invoice.id);
-                        }}
-                        >
-                        <FontAwesomeIcon icon={faEllipsisV} />
-                        </button>
-
-                        {/* Popup menu */}
-                        {menuOpen === invoice.id && (
-                        <div className="absolute right-0 top-full mt-2 min-w-[150px] bg-white shadow-lg rounded-lg border p-2 z-10">
+                        <div className="relative">
+                        {invoice.isDelete ? (
+                          <div className="text-red-500 flex items-center gap-1">
+                            <FontAwesomeIcon icon={faBan} />
+                          </div>
+                        ) : (
+                          <>
                             <button
-                            className="flex items-center px-4 py-2 text-sm hover:bg-gray-200 w-full"
-                            onClick={() => handlePrint(invoice.id)}
+                              className="text-gray-500 hover:bg-gray-200 rounded-full p-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMenuOpen(menuOpen === invoice.id ? null : invoice.id);
+                              }}
                             >
-                            <FontAwesomeIcon icon={faPrint} className="mr-2" />
-                            In hóa đơn
+                              <FontAwesomeIcon icon={faEllipsisV} />
                             </button>
-                            <button
-                            className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-200 w-full"
-                            onClick={() => handleDelete(invoice.id)}
-                            >
-                            <FontAwesomeIcon icon={faTrash} className="mr-2" />
-                            Xóa hóa đơn
-                            </button>
-                        </div>
+
+                            {/* Popup menu */}
+                            {menuOpen === invoice.id && (
+                              <div className=" menu-popup absolute right-0 top-full mt-2 min-w-[150px] bg-white shadow-lg rounded-lg border p-2 z-10">
+                                <button
+                                  className="flex items-center px-4 py-2 text-sm hover:bg-gray-200 w-full"
+                                  onClick={() => handlePrint(invoice.id)}
+                                >
+                                  <FontAwesomeIcon icon={faPrint} className="mr-2" />
+                                  In hóa đơn
+                                </button>
+                                <button
+                                  className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-200 w-full"
+                                  onClick={() => {setConfirmDeleteId(invoice.id)
+                                    setMenuOpen(null); // Đóng menu sau khi chọn xóa
+                                  }}
+                                  disabled={invoice.isDelete}
+                                >
+                                  <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                                  Xóa hóa đơn
+                                </button>
+                              </div>
+                            )}
+                          </>
                         )}
-                    </div>
+                      </div>                        
                     </div>
                 </li>
                 ))}
@@ -139,14 +205,14 @@ function LishsuHoadon() {
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-500 mx-10"></div>
                   </div>
-                  <h2 className="relative bg-white px-4 text-xl font-bold text-gray-800">
-                    Hóa đơn {selectedInvoice.id}
+                  <h2 className={`relative bg-white px-4 text-xl  text-gray-800 ${selectedInvoice.isDelete ? "text-red-500 font-medium" : "font-bold"}`}>
+                    Hóa đơn {selectedInvoice.id} {selectedInvoice.isDelete && <span className="text-red-500">đã bị hủy</span>}
                   </h2>
                 </div>              
 
                 {/* Thông tin khách hàng và nhân viên */}
                 <div className="mt-2  text-base  mx-10">
-                  <p className="my-3 py-1 flex justify-between border-b border-gray-400"><span >Thời gian</span> <span >{selectedInvoice.date}</span></p>
+                  <p className="my-3 py-1 flex justify-between border-b border-gray-400"><span >Thời gian</span> <span >{dayjs(selectedInvoice.date).tz('Asia/Ho_Chi_Minh').format('HH:mm:ss DD/MM/YYYY')}</span></p>
                   <p className="my-3 py-1 flex justify-between border-b border-gray-400"><span >Khách hàng</span> <span >{selectedInvoice.customerName}</span></p>
                   <p className="my-3 py-1 flex justify-between border-b border-gray-400"><span >Nhân viên</span> <span >{selectedInvoice.staffName}</span></p>
                   <p className="my-3 py-1 flex justify-between border-b border-gray-400"><span >Giảm giá</span> <span >{selectedInvoice.discount.toLocaleString()}</span></p>
@@ -172,11 +238,11 @@ function LishsuHoadon() {
                     {selectedInvoice.items.map((item, index) => (
                       <li key={index} className="flex justify-between p-2 mx-10 border-b border-gray-400 text-sm">
                         <span className="w-1/12 text-center">{index + 1}</span>
-                        <span className="w-4/12 truncate">{item.name}</span>
+                        <span className="w-4/12 truncate">{item.productName}</span>
                         <span className="w-2/12 text-center">{item.price.toLocaleString()}đ</span>  
                         <span className="w-1/12 text-center">{item.quantity}</span>
-                        <span className="w-2/12 text-center">{item.discount.toLocaleString()}đ</span>
-                        <span className="w-2/12 text-right">{(item.discount * item.quantity).toLocaleString()}đ</span>
+                        <span className="w-2/12 text-center">{(item.price-item.after_discount).toLocaleString()}đ</span>
+                        <span className="w-2/12 text-right">{(item.after_discount * item.quantity).toLocaleString()}đ</span>
                       </li>
                     ))}
                   </ul>
@@ -188,12 +254,15 @@ function LishsuHoadon() {
                 </div>
 
                 {/* Nút xóa */}
-                <div className="mt-4 text-right font-bold mx-10">
-                  <button className="text-white bg-red-600 p-2 text-sm rounded mt-2">
+                {!selectedInvoice.isDelete ? (
+                  <div className="mt-4 text-right font-bold mx-10">
+                  <button onClick={() => setConfirmDeleteId(selectedInvoice.id)}
+                  disabled={selectedInvoice.isDelete} 
+                  className="text-white bg-red-600 p-2 text-sm rounded mt-2">
                     <FontAwesomeIcon icon={faTrash} className="mr-2" />
                     Xóa hóa đơn
                   </button>
-                </div>
+                </div>):""}
               </>
             ) : (
               <p className="text-center text-gray-500">Chọn một hóa đơn để xem chi tiết</p>
@@ -201,6 +270,31 @@ function LishsuHoadon() {
           </div>
 
         </div>
+
+        {confirmDeleteId && (
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="absolute inset-0 bg-black opacity-30 backdrop-blur-sm z-20"></div>
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[90%] max-w-md z-50">
+              <h2 className="text-lg font-semibold mb-4">Xác nhận xóa hóa đơn</h2>
+              <p className="mb-6">Bạn có chắc chắn muốn xóa  <strong>hóa đơn {confirmDeleteId}</strong> không? Hành động này không thể hoàn tác.</p>
+              <div className="flex justify-end gap-4">
+                <button
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                  onClick={() => setConfirmDeleteId(null)}
+                >
+                  Hủy
+                </button>
+                <button
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                  onClick={() => deleteInvoiceById(confirmDeleteId)}
+                >
+                  Xác nhận xóa
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
 
     </div>
   )
