@@ -12,8 +12,12 @@ interface Product {
   name: string;
   price: string;
   cost: string;
+  category: string;
   stock: number;
   image: string;
+  supplier: string;
+  expiry: string;
+  notes: string;
 }
 // Tạo mảng products với kiểu Product[]
 const products: Product[] = Array.from({ length: 30 }, (_, i) => ({
@@ -21,10 +25,13 @@ const products: Product[] = Array.from({ length: 30 }, (_, i) => ({
   name: `Sản phẩm ${i + 1}`,
   price: (100000 + i * 5000).toLocaleString("vi-VN"),
   cost: (95000 + i * 5000).toLocaleString("vi-VN"),
+  category: ["Thực phẩm", "Đồ gia dụng", "Thời trang", "Thiết bị điện"][i % 4],
   stock: 300 - i * 10,
-  image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg/revision/latest?cb=20210323154547&path-prefix=pt-br"
+  image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg/revision/latest?cb=20210323154547&path-prefix=pt-br",
+  supplier: `Nhà cung cấp ${i % 5 + 1}`,
+  expiry: `2025-${(i % 12 + 1).toString().padStart(2, "0")}-15`,
+  notes: `Ghi chú cho sản phẩm ${i + 1}`
 }));
-
 
 const ITEMS_PER_PAGE = 10;
 
@@ -62,7 +69,7 @@ function HangHoa() {
       </Helmet>
       <div className="p-6">
         {/* Header */}
-        <div className="flex items-center mb-4">
+        <div className="flex items-center pb-15">
           <h1 className="text-xl font-bold w-1/5">Hàng hóa</h1>
           <div className="flex items-center justify-between w-4/5">
           {/* Thanh tìm kiếm */}
@@ -106,8 +113,8 @@ function HangHoa() {
           {/* Bảng sản phẩm */}
           {/* LABEL */}
           <div className="w-4/5 ml-5">
-            <div className="overflow-y-auto h-100">
-              <table className="w-full border-collapse">
+            <div className="overflow-y-auto h-100 scrollbar-hide">
+              <table className="w-full border-collapse ">
                 <thead className="bg-[#E6F1FE] sticky top-0">
                   <tr className="border-b border-[#A6A9AC]">
                     <th className="p-2 text-left w-[100px]"></th>

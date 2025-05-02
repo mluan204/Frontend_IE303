@@ -1,7 +1,12 @@
 import axios from "axios";
 
 const API_URL = "http://localhost:8080/api";
-const TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJtbHVhbiIsImlhdCI6MTc0NjE2NDAxNCwiZXhwIjoxNzQ2MTc4NDE0fQ.jzD04-AwFTwXeWllIVvd3X-xi1KdJkXk39mULbqDBGrEKUE9WTrXZDreUT-MlpAV"
+
+let TOKEN:string;
+
+const tokenStr = localStorage.getItem('token');
+const parsedToken = tokenStr ? JSON.parse(tokenStr) : null;
+TOKEN = parsedToken.token;
 
 // Cấu hình axios mặc định
 axios.defaults.withCredentials = true;
@@ -16,6 +21,7 @@ export const fetchSummary = async () => {
     
     return response.data;
   } catch (error) {
+    console.log(error);
     return "Loi khi lay sumary";
   }
 };
@@ -32,6 +38,7 @@ export const fetchBill = async (page = 0, size = 10, keyword = "", startDate = "
     console.log(`API URL called: ${API_URL}/bills/paged?page=${page}&size=${size}${keyword ? '&keyword=' + keyword : ''}${startDate ? '&startDate=' + startDate : ''}${endDate ? '&endDate=' + endDate : ''}`);
     return response.data;
   } catch (error) {
+    console.log(error);
     return "Loi khi lay bill";
   }
 }
@@ -46,6 +53,7 @@ export const fetchBillById = async (id: number) => {
     
     return response.data;
   } catch (error) {
+    console.log(error);
     return "Loi khi lay bill by id";
   }
 }
@@ -70,7 +78,7 @@ export const deleteBillById = async (id: number) => {
 };
 
 
-export const login = async (username: any, password: any) => {
+export const login = async (username: string, password: string) => {
   try {
     const response = await axios.post(API_URL + "/v1/login", {
       username: username,
@@ -82,18 +90,66 @@ export const login = async (username: any, password: any) => {
       },
     }
   );
-  console.log('====================================');
-  console.log(response.data);
-  console.log('====================================');
-    return response.data;
+    TOKEN = response.data.token;
+    const item = {
+      token: TOKEN,
+      exp: new Date().getTime() + 3600000
+    }
+
+    localStorage.setItem('token', JSON.stringify(item));
+
+    return TOKEN;
   } catch (error) {
     return error;
   }
 }
 
+
+export const fetchProduct = async (page = 0, size = 10, keyword = "") => {
+  try {
+    const response = await axios.get(`${API_URL}/products/paged`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      },
+      params: {page, size, ...(keyword && { keyword })},
+    });
+    console.log(page, size, keyword);
+    return response.data;
+  } catch (error) {
+    return "Loi khi lay san pham";
+  }
+}
+
+export const fetchAllProduct = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/products`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    return "Loi khi lay tat ca san pham";
+  }
+}
+
+export const fetchAllBill = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/bills/get-all-bills`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    return "Loi khi lay tat ca hoa don";
+  }
+}
+
 export const fetchSalesChart = async (type: string, startDate: string, endDate: string) => {
   try {
-    console.log(TOKEN);
     const response = await axios.get(`${API_URL}/sales/chart`, {
       headers: {
         Authorization: `Bearer ${TOKEN}`,

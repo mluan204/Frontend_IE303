@@ -1,9 +1,16 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Router from "./router/router";
-import Navigation from "./components/navigation";
 import NavigationSale from "./components/NavigationSale";
+import Navigation from "./components/navigation";
+import { useEffect } from "react";
 
-export function App() {
+function App() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) navigate("/login");
+  }, []);
+
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
   const isSalesPage =

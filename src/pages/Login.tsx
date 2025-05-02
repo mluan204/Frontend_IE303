@@ -1,12 +1,37 @@
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
 import bgLogo from "../assets/login-bg-update.png"
+import { useState } from "react";
+import { login } from "../service/api";
 
 function Login() {
   const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleManageClick = () => {
-    navigate('/');
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+  };
+
+  const handleManageClick = async () => {
+    const result = await login(username,password);
+    console.log(result);
+    
+    if(result){
+      navigate('/');
+    }
+  };
+
+  const handleEmployeeClick = async () => {
+    const result = await login(username,password);
+    if(result){
+      navigate('/ban-hang');
+    }
+    
   };
 
   return (
@@ -18,12 +43,12 @@ function Login() {
         <h1 className="text-2xl text-center text-[#1E4B7F] font-bold mb-4">Super Store UIT</h1>
         <form>
           <div className="mb-4">
-            <label className="block text-gray-700">Số điện thoại</label>
-            <input type="text" className="w-full px-3 py-2 border rounded-lg" />
+            <label className="block text-gray-700">Tài khoản</label>
+            <input type="text" value={username} onChange={handleUsernameChange} className="w-full px-3 py-2 border rounded-lg" />
           </div>
           <div className="mb-4">
             <label className="block text-gray-700">Mật khẩu</label>
-            <input type="password" className="w-full px-3 py-2 border rounded-lg" />
+            <input type="password" value={password} onChange={handlePasswordChange} className="w-full px-3 py-2 border rounded-lg" />
           </div>
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -38,7 +63,7 @@ function Login() {
                                 transition ">
               <i className="fas fa-home mr-2"></i> Quản lý
             </button>
-            <button type="button" className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 hover:scale-[1.02] hover:shadow-md
+            <button type="button" onClick={handleEmployeeClick} className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 hover:scale-[1.02] hover:shadow-md
                                 outline-none ring-indigo-500/70 ring-offset-2 focus-visible:ring-2 active:scale-[0.98] 
                                 transition">
               <i className="fas fa-shopping-cart mr-2"></i> Bán hàng

@@ -17,7 +17,7 @@ const NavigationSale = () => {
 
         {/* Logo UIT Store */}
         <div className="absolute left-1/2 transform -translate-x-1/2 font-bold text-xl text-white">
-          UIT Store
+          JDK Store
         </div>
       </nav>
 

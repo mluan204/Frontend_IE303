@@ -29,6 +29,7 @@ import { fetchSummary, fetchSalesChart } from "../service/api";
 // };
 
 function TongQuan() {
+
   const [timeRange, setTimeRange] = useState("Tháng này");
   const [activeTab, setActiveTab] = useState("Theo ngày");
   const [sumary, setSummary] = useState<any>(null);

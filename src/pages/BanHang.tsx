@@ -1,9 +1,11 @@
 import { Helmet } from "react-helmet";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import BillItem from "../components/BillItem";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import PopupThanhToan from "./PopupThanhToan";
+import { fetchAllProduct } from "../service/api";
 
 // Định nghĩa kiểu dữ liệu cho product
 interface Product {
@@ -14,19 +16,18 @@ interface Product {
   quantity: number;
 }
 
-// Tạo danh sách sản phẩm
-const products: Product[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `SP${String(i + 1).padStart(6, "0")}`,
-  name: `Sản phẩm vhhjsd djhdshusd hc sđs ssd shsyudyuds  sdhgghds${i + 1}`,
-  price: 100000 + i * 5000,
-  image: "https://i.pinimg.com/736x/e8/48/0b/e8480bf7fb0d44e678db430af23723ec.jpg",
-  quantity: 1 
-}));
 
 function BanHang() {
+  
+  // State để quản lý giỏ hàng và tìm kiếm
+  const [loading, setLoading] = useState(true);
+  const [rawProductList, setRawProductList] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {
@@ -56,45 +57,73 @@ function BanHang() {
     return cart.reduce((total, product) => total + product.price * product.quantity, 0);
   };
 
+
+  const fetchData = async () => {
+      try {
+        const result = await fetchAllProduct(); // trả về mảng any[]
+        setRawProductList(result); // giữ nguyên tất cả dữ liệu backend trả về
+
+        // map sang Product để hiển thị
+        const mapped: Product[] = result.map((item: any) => ({
+          id: item.id.toString(),
+          name: item.name,
+          price: item.price ?? 100000,
+          image: item.image,
+          quantity: 0
+        }));
+        setProducts(mapped);        
+        console.log(result);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
-    <div onClick={()=>setIsSearchOpen(false)}  className="flex h-[calc(100vh-2.5rem)] bg-gray-100 ">
+    <div   className="flex h-[calc(100vh-2.5rem)] bg-gray-100 ">
       <Helmet>
         <title>Bán hàng</title>
       </Helmet>
       <div className="flex flex-col w-2/3 h-[calc(100vh-2.5rem)]">
         {/* Thanh tìm kiếm nằm bên trong danh sách, có nền trắng để dễ nhìn hơn */}
-        <div className="absolute z-10">
-      {/* Icon Tìm Kiếm */}
-      {!isSearchOpen ? (
-        <button 
-          onMouseEnter={() => setIsSearchOpen(true)}
-          onClick={() => setIsSearchOpen(true)}
-          className="py-2 px-3 bg-white rounded-br-lg shadow-md"
-        >
-          <FontAwesomeIcon icon={faSearch} className="text-gray-600" />
-        </button>
-      ) : (
-        /* Thanh Tìm Kiếm */
-        <div className="relative w-96 bg-white shadow-lg rounded-md flex items-center">
-          <span className="absolute pl-2 text-gray-400 ">
-            <FontAwesomeIcon icon={faSearch} />
-          </span>
-          <input
-            type="text"
-            placeholder="Tìm kiếm..."
-            className="w-full pl-8 py-2 bg-white rounded-md"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            
-          />          
+        <div className="absolute z-10" onMouseLeave={()=> setIsSearchOpen(false)}>
+          {/* Icon Tìm Kiếm */}
+          {!isSearchOpen ? (
+            <button 
+              onMouseEnter={() => setIsSearchOpen(true)}
+              
+              onClick={() => setIsSearchOpen(true)}
+              className="py-2 px-3 bg-white rounded-br-lg shadow-md"
+            >
+              <FontAwesomeIcon icon={faSearch} className="text-gray-600" />
+            </button>
+          ) : (
+            /* Thanh Tìm Kiếm */
+            <div className="relative w-96 bg-white shadow-lg rounded-md flex items-center focus:outline-none focus:ring">
+              <span className="absolute pl-2 text-gray-400 ">
+                <FontAwesomeIcon icon={faSearch} />
+              </span>
+              <input
+                type="text"
+                placeholder="Tìm kiếm..."
+                className="w-full pl-8 py-2 bg-white rounded-md focus:outline-none "
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                
+              />          
+            </div>
+          )}
         </div>
-      )}
-    </div>
 
         {/* Danh sách sản phẩm có thể cuộn */}
-        <div className="flex-1 overflow-y-auto p-4" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        <div className="flex-1 overflow-y-auto p-4 mt-2" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
           <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {products.map((product) => (
+            {products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+             .sort((a, b) => a.name.localeCompare(b.name)).map((product) => (
               <li key={product.id}>
                 <ProductCard {...product} addToCart={() => addToCart(product)} />
               </li>
@@ -124,9 +153,19 @@ function BanHang() {
               <div className="font-bold w-full text-right">
                 Tổng tiền: {calculateTotal().toLocaleString("vi-VN")}đ
               </div>
-            <button className="w-full bg-blue-500 text-white py-2 px-4 rounded mt-2">Thanh toán</button>
+            <button className="w-full bg-blue-500 text-white py-2 px-4 rounded mt-2"
+               onClick={() => setShowPopup(true)}
+            >Thanh toán</button>
           </div>
       </div>
+      {showPopup && (
+                <div 
+                    className="fixed inset-0 bg-black opacity-60 backdrop-blur-sm z-10"
+                    onClick={() => setShowPopup(false)}
+                ></div>
+            )}
+      {showPopup && <PopupThanhToan total={calculateTotal()} cart={cart} onClose={() => setShowPopup(false)} />}
+    
     </div>
   );
 }
