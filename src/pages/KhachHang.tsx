@@ -1,8 +1,9 @@
 import { Helmet } from "react-helmet";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
 import CustomerDetail from "../components/CustomerDetail"; 
+import { getAllCustomer } from "../service/customerApi";
 
 // Kiểu dữ liệu cho khách hàng
 interface Customer {
@@ -11,22 +12,33 @@ interface Customer {
   name: string;
   phone_number: string;
   score: number;
-  create_at: string;
+  created_at: string;
 }
 
 // Danh sách khách hàng mẫu
-const customers: Customer[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `KH${String(i + 1).padStart(6, "0")}`,
-  gender: i % 2 === 0 ? "Nam" : "Nữ",
-  name: `Khách hàng ${i + 1}`,
-  phone_number: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
-  score: Math.floor(Math.random() * 1000),
-  create_at: `2023-0${(i % 9) + 1}-15`,
-}));
+// const customers: Customer[] = Array.from({ length: 30 }, (_, i) => ({
+//   id: `KH${String(i + 1).padStart(6, "0")}`,
+//   gender: i % 2 === 0 ? "Nam" : "Nữ",
+//   name: `Khách hàng ${i + 1}`,
+//   phone_number: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
+//   score: Math.floor(Math.random() * 1000),
+//   created_at: `2023-0${(i % 9) + 1}-15`,
+// }));
 
 const ITEMS_PER_PAGE = 10;
 
 function KhachHang() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+
+  useEffect( () => {
+    const fetchData = async () => {
+      const result = await getAllCustomer();
+      setCustomers(result);
+    }
+
+    fetchData();
+  },[])
+
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -48,6 +60,7 @@ function KhachHang() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   const handleOpenModal = (customer: Customer) => {
+    
     setSelectedCustomer(customer);
     setIsModalOpen(true);
   };
@@ -57,6 +70,21 @@ function KhachHang() {
     setIsModalOpen(false);
   };
 
+  const formatDate = (timestamp: string) => {
+    return new Date(timestamp).toLocaleDateString('vi-VN',
+      {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      }
+      );
+  }
+  
+const removeCustomer = (customerId: string) => {
+  setCustomers(prevCustomers => prevCustomers.filter(customer => customer.id !== customerId));
+};
+  
+
   return (
     <div className="bg-[#E8EAED]">
       <Helmet>
@@ -65,7 +93,7 @@ function KhachHang() {
 
       <div className="p-6">
         {/* Tiêu đề và thanh tìm kiếm */}
-        <div className="flex items-center mb-4">
+        <div className="flex items-center pb-13">
           <h1 className="text-xl font-bold w-1/5">Khách hàng</h1>
           <div className="flex items-center justify-between w-4/5">
             {/* Thanh tìm kiếm */}
@@ -130,7 +158,7 @@ function KhachHang() {
                       <td className="p-2">{customer.gender}</td>
                       <td className="p-2">{customer.phone_number}</td>
                       <td className="p-2">{customer.score}</td>
-                      <td className="p-2">{customer.create_at}</td>
+                      <td className="p-2">{formatDate(customer.created_at)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -142,6 +170,7 @@ function KhachHang() {
                   customer={selectedCustomer}
                   isOpen={isModalOpen}
                   onClose={handleCloseModal}
+                  removeCustomer={removeCustomer}
                 />
               )}
             </div>
