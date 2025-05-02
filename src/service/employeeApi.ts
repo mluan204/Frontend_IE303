@@ -3,11 +3,12 @@ import axios from "axios";
 const API_URL = "http://localhost:8080/api";
 
 let TOKEN : string = "";
+const tokenStr = localStorage.getItem('token');
+const parsedToken = tokenStr ? JSON.parse(tokenStr) : null;
+TOKEN = parsedToken.token;
 
 export const getAllEmployees = async () => {
-  const tokenStr = localStorage.getItem('token');
-  const parsedToken = tokenStr ? JSON.parse(tokenStr) : null;
-  TOKEN = parsedToken.token;
+
     try {
       const response = await axios.get(`${API_URL}/v1/employees`, {
         headers: {
@@ -21,7 +22,7 @@ export const getAllEmployees = async () => {
     }
   };
 
-export const updateEmployeeById = async (employee) => {
+export const updateEmployeeById = async (employee: any) => {
   console.log(employee);
   
   try {

@@ -4,6 +4,12 @@ const API_URL = "http://localhost:8080/api";
 
 let TOKEN:string;
 
+const tokenStr = localStorage.getItem('token');
+const parsedToken = tokenStr ? JSON.parse(tokenStr) : null;
+TOKEN = parsedToken.token;
+
+// Cấu hình axios mặc định
+axios.defaults.withCredentials = true;
 
 export const fetchSummary = async () => {
   try {
@@ -21,15 +27,15 @@ export const fetchSummary = async () => {
 };
 
 
-export const fetchBill = async (page = 0, size = 10, keyword = "") => {
+export const fetchBill = async (page = 0, size = 10, keyword = "", startDate = "", endDate = "") => {
   try {
     const response = await axios.get(`${API_URL}/bills/paged`, {
       headers: {
         Authorization: `Bearer ${TOKEN}`,
       },
-      params: {page, size, ...(keyword && { keyword })},
+      params: {page, size, ...(keyword && { keyword }), ...(startDate && { startDate }), ...(endDate && { endDate }) },
     });
-    console.log(page, size, keyword);
+    console.log(`API URL called: ${API_URL}/bills/paged?page=${page}&size=${size}${keyword ? '&keyword=' + keyword : ''}${startDate ? '&startDate=' + startDate : ''}${endDate ? '&endDate=' + endDate : ''}`);
     return response.data;
   } catch (error) {
     console.log(error);
@@ -71,22 +77,6 @@ export const deleteBillById = async (id: number) => {
   }
 };
 
-// export const createCustomer = async () => {
-//   try {
-//     const response = await axios.post(`${API_URL}/customer`, 
-//       {
-//       headers: {
-//         Authorization: `Bearer ${TOKEN}`,
-//       },
-
-//     });
-
-//     return response;
-//   }
-//   catch (error) {
-//     return "Loi khi tao customer";
-//   }
-// }
 
 export const login = async (username: string, password: string) => {
   try {
@@ -157,3 +147,19 @@ export const fetchAllBill = async () => {
     return "Loi khi lay tat ca hoa don";
   }
 }
+
+export const fetchSalesChart = async (type: string, startDate: string, endDate: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/sales/chart`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      },
+      params: { type, startDate, endDate },
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu biểu đồ:", error);
+    return null;
+  }
+};
