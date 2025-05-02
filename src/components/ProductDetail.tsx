@@ -92,12 +92,16 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
                   <input
                     type="text"
                     name={field}
-                    value={editedProduct[field] || ""}
+                    value={editedProduct[field] instanceof Date
+                      ? editedProduct[field].toLocaleDateString()
+                      : editedProduct[field] || ""}
                     onChange={handleChange}
                     className="border rounded p-1 w-full"
                   />
                 ) : (
-                  <span >{editedProduct[field]}</span>
+                  <span >{editedProduct[field] instanceof Date
+                      ? editedProduct[field].toLocaleDateString()
+                      : editedProduct[field]}</span>
                 )}
               </div>
             ))}
@@ -105,19 +109,27 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
 
           {/* Cột 3: Giá nhập, Giá bán, Hạn sử dụng */}
           <div className="col-span-1 space-y-2">
-            {(["cost", "price", "expiry"] as Array<keyof Product>).map((field) => (
+            {(["inputPrice", "price", "dateExpiry"] as Array<keyof Product>).map((field) => (
               <div key={field}>
                 <span className="font-medium">{productFieldLabels[field]}: </span>
                 {isEditing ? (
                   <input
                     type="text"
                     name={field}
-                    value={editedProduct[field] || ""}
+                    value={editedProduct[field] instanceof Date
+                      ? editedProduct[field].toLocaleDateString()
+                      : editedProduct[field] || ""}
                     onChange={handleChange}
                     className="border rounded p-1 w-full"
                   />
                 ) : (
-                  <span>{editedProduct[field]}</span>
+                  // <span>{editedProduct[field]}</span>
+                  <span>
+                    {editedProduct[field] instanceof Date
+                      ? editedProduct[field].toLocaleDateString()
+                      : editedProduct[field]}
+                  </span>
+
                 )}
               </div>
             ))}

@@ -113,3 +113,47 @@ export const login = async (username: string, password: string) => {
     return error;
   }
 }
+
+
+export const fetchProduct = async (page = 0, size = 10, keyword = "") => {
+  try {
+    const response = await axios.get(`${API_URL}/products/paged`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      },
+      params: {page, size, ...(keyword && { keyword })},
+    });
+    console.log(page, size, keyword);
+    return response.data;
+  } catch (error) {
+    return "Loi khi lay san pham";
+  }
+}
+
+export const fetchAllProduct = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/products`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    return "Loi khi lay tat ca san pham";
+  }
+}
+
+export const fetchAllBill = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/bills/get-all-bills`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    return "Loi khi lay tat ca hoa don";
+  }
+}

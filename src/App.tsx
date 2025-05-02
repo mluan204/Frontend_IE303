@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import Router from "./router/router";
 import NavigationSale from './components/NavigationSale';
+import Navigation from './components/Navigation'
 import { useEffect } from 'react';
 
 function App() {
@@ -16,7 +17,7 @@ function App() {
 
   return (
     <>
-      {!isLoginPage && <NavigationSale />}
+      {!isLoginPage && <Navigation />}
       <Router />
     </>
   );
