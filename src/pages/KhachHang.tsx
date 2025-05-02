@@ -4,7 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
 import CustomerDetail from "../components/CustomerDetail"; 
 import { getAllCustomer } from "../service/customerApi";
-
+import { fetchAllBill } from "../service/api";
+import {CommonUtils} from "../utils/CommonUtils";
 // Kiểu dữ liệu cho khách hàng
 interface Customer {
   id: string;
@@ -84,6 +85,19 @@ const removeCustomer = (customerId: string) => {
   setCustomers(prevCustomers => prevCustomers.filter(customer => customer.id !== customerId));
 };
   
+const handleOnClickExport = async () => {
+    try {
+      const res = await getAllCustomer();
+      if (res && res.length > 0) {
+        await CommonUtils.exportExcel(res, "Danh sách khách hàng", "Danh sách khách hàng");
+        console.log(res);
+      }
+    } catch (error) {
+      console.error("Error exporting category list:", error);
+      alert("Đã xảy ra lỗi khi xuất file!");
+    }
+  };
+  
 
   return (
     <div className="bg-[#E8EAED]">
@@ -119,7 +133,9 @@ const removeCustomer = (customerId: string) => {
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded">
+              <button className="bg-green-500 text-white px-4 py-1 rounded"
+                onClick={handleOnClickExport}
+              >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
                 Xuất file
               </button>

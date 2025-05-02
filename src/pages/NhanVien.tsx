@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
 import EmployeeDetail from "../components/EmployeeDetail"; 
 import { getAllEmployees } from "../service/employeeApi";
-
+import { CommonUtils } from "../utils/CommonUtils";
 // Kiểu dữ liệu cho nhân viên
 interface Employee {
   id: string;
@@ -77,6 +77,19 @@ function NhanVien() {
     setEmployees(prevE => prevE.filter(employee => employee.id !== employeeId));
   };
 
+  const handleOnClickExport = async () => {
+      try {
+        const res = await getAllEmployees();
+        if (res && res.length > 0) {
+          await CommonUtils.exportExcel(res, "Danh sách nhân viên", "Danh sách nhân viên");
+          console.log(res);
+        }
+      } catch (error) {
+        console.error("Error exporting category list:", error);
+        alert("Đã xảy ra lỗi khi xuất file!");
+      }
+    };
+
   return (
     <div className="bg-[#E8EAED]">
       <Helmet>
@@ -108,7 +121,9 @@ function NhanVien() {
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded">
+              <button className="bg-green-500 text-white px-4 py-1 rounded"
+                onClick={handleOnClickExport}
+              >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
                 Xuất file
               </button>

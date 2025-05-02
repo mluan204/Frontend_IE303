@@ -3,17 +3,18 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit} from "@fortawesome/free-solid-svg-icons";
 
 interface Product {
-  id: string;
-  name: string;
-  price: string;
-  cost: string;
-  category: string;
-  stock: number;
-  image: string;
-  supplier: string;
-  expiry: string;
-  notes: string;
-
+  categoryId: number,
+  categoryName: string,
+  dateExpired: Date,
+  description: string,
+  id: number,
+  image: string,
+  inputPrice: number,
+  name: string,
+  price: number,
+  quantityAvailable: number,
+  salePrice: string,
+  suppliers: string
 }
 
 interface ProductDetailProps {
@@ -30,14 +31,17 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
     id: "Mã sản phẩm",
     name: "Tên sản phẩm",
     price: "Giá bán",
-    cost: "Giá nhập",
-    stock: "Tồn kho",
+    inputPrice: "Giá nhập",
+    quantityAvailable: "Tồn kho",
     image: "Ảnh",
-    category: "Phân loại",
-    supplier: "Nhà cung cấp",
-    expiry: "Hạn sử dụng",
-    notes: "Ghi chú",
+    categoryName: "Phân loại",
+    categoryId: "Mã phân loại",         // <-- Bổ sung
+    suppliers: "Nhà cung cấp",
+    salePrice: "Giá khuyến mãi",        // <-- Bổ sung
+    dateExpired: "Hạn sử dụng",
+    description: "Ghi chú",
   };
+  
 
   
   const [isEditing, setIsEditing] = useState(false);
@@ -85,7 +89,7 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
 
           {/* Cột 2: ID, Tên, Phân loại, Nhà cung cấp, Tồn kho */}
           <div className="col-span-1 space-y-2">
-            {(["id", "name", "category", "supplier", "stock"] as Array<keyof Product>).map((field) => (
+            {(["id", "name", "categoryName", "suppliers", "quantityAvailable"] as Array<keyof Product>).map((field) => (
               <div key={field}>
                 <span className="font-medium">{productFieldLabels[field]}: </span>
                 {isEditing ? (
@@ -109,7 +113,7 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
 
           {/* Cột 3: Giá nhập, Giá bán, Hạn sử dụng */}
           <div className="col-span-1 space-y-2">
-            {(["inputPrice", "price", "dateExpiry"] as Array<keyof Product>).map((field) => (
+            {(["inputPrice", "price", "dateExpired"] as Array<keyof Product>).map((field) => (
               <div key={field}>
                 <span className="font-medium">{productFieldLabels[field]}: </span>
                 {isEditing ? (
@@ -140,7 +144,7 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
             <span className="font-medium">Ghi chú: </span>
             {isEditing ? (
               <textarea
-                name="notes"
+                name="description"
                 value={""}
                 // onChange={handleChange}
                 className="border rounded p-1 w-full h-24"
