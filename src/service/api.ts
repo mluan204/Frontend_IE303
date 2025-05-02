@@ -1,7 +1,10 @@
 import axios from "axios";
 
 const API_URL = "http://localhost:8080/api";
-const TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJtbHVhbiIsImlhdCI6MTc0NDI2MjYwOSwiZXhwIjoxNzQ0Mjc3MDA5fQ.YijWaWyKkDrasYcDej222B4bOB64Ne9pQZSNhZeNIEpolaHzDDMPR5pLwG8nVhaR";
+const TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJtbHVhbiIsImlhdCI6MTc0NjE2NDAxNCwiZXhwIjoxNzQ2MTc4NDE0fQ.jzD04-AwFTwXeWllIVvd3X-xi1KdJkXk39mULbqDBGrEKUE9WTrXZDreUT-MlpAV"
+
+// Cấu hình axios mặc định
+axios.defaults.withCredentials = true;
 
 export const fetchSummary = async () => {
   try {
@@ -26,7 +29,7 @@ export const fetchBill = async (page = 0, size = 10, keyword = "", startDate = "
       },
       params: {page, size, ...(keyword && { keyword }), ...(startDate && { startDate }), ...(endDate && { endDate }) },
     });
-    console.log(page, size, keyword, startDate, endDate);
+    console.log(`API URL called: ${API_URL}/bills/paged?page=${page}&size=${size}${keyword ? '&keyword=' + keyword : ''}${startDate ? '&startDate=' + startDate : ''}${endDate ? '&endDate=' + endDate : ''}`);
     return response.data;
   } catch (error) {
     return "Loi khi lay bill";
@@ -66,22 +69,6 @@ export const deleteBillById = async (id: number) => {
   }
 };
 
-// export const createCustomer = async () => {
-//   try {
-//     const response = await axios.post(`${API_URL}/customer`, 
-//       {
-//       headers: {
-//         Authorization: `Bearer ${TOKEN}`,
-//       },
-
-//     });
-
-//     return response;
-//   }
-//   catch (error) {
-//     return "Loi khi tao customer";
-//   }
-// }
 
 export const login = async (username: any, password: any) => {
   try {
@@ -103,3 +90,20 @@ export const login = async (username: any, password: any) => {
     return error;
   }
 }
+
+export const fetchSalesChart = async (type: string, startDate: string, endDate: string) => {
+  try {
+    console.log(TOKEN);
+    const response = await axios.get(`${API_URL}/sales/chart`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      },
+      params: { type, startDate, endDate },
+    });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu biểu đồ:", error);
+    return null;
+  }
+};

@@ -12,22 +12,25 @@ import LichsuHoadon from "../pages/LichsuHoadon";
 import DoanhThu from "../pages/DoanhThu";
 
 const Router = () => {
-    return (
-        <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<TongQuan />} />
-            <Route path="/hang-hoa" element={<HangHoa />} />
-            <Route path="/hoa-don" element={<HoaDon />} />
-            <Route path="/kho-hang" element={<KhoHang />} />
-            <Route path="/nhan-vien" element={<NhanVien />} />
-            <Route path="/bao-cao" element={<BaoCao />} />
-            <Route path="/khach-hang" element={<KhachHang />} />
-            <Route path="*" element={<Navigate to="/" />} />
-            <Route path="/ban-hang" element={<BanHang />} />
-            <Route path="/lich-su-hoa-don" element={<LichsuHoadon />} />
-            <Route path="/doanh-thu" element={<DoanhThu />} />
-        </Routes>
-    );
-}
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<TongQuan />} />
+      <Route path="*" element={<Navigate to="/" />} />
+      {/* Admin  */}
+      <Route path="/hang-hoa" element={<HangHoa />} />
+      <Route path="/hoa-don" element={<HoaDon />} />
+      <Route path="/kho-hang" element={<KhoHang />} />
+      <Route path="/nhan-vien" element={<NhanVien />} />
+      <Route path="/bao-cao" element={<BaoCao />} />
+      <Route path="/khach-hang" element={<KhachHang />} />
+
+      {/* Sale  */}
+      <Route path="/ban-hang" element={<BanHang />} />
+      <Route path="/lich-su-hoa-don" element={<LichsuHoadon />} />
+      <Route path="/doanh-thu" element={<DoanhThu />} />
+    </Routes>
+  );
+};
 
 export default Router;

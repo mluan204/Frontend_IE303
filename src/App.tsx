@@ -1,15 +1,19 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation } from "react-router-dom";
 import Router from "./router/router";
 import Navigation from "./components/navigation";
-import NavigationSale from './components/NavigationSale';
+import NavigationSale from "./components/NavigationSale";
 
-function App() {
+export function App() {
   const location = useLocation();
-  const isLoginPage = location.pathname === '/login';
+  const isLoginPage = location.pathname === "/login";
+  const isSalesPage =
+    location.pathname.startsWith("/ban-hang") ||
+    location.pathname.startsWith("/lich-su-hoa-don") ||
+    location.pathname.startsWith("/doanh-thu");
 
   return (
     <>
-      {!isLoginPage && <NavigationSale />}
+      {!isLoginPage && (isSalesPage ? <NavigationSale /> : <Navigation />)}
       <Router />
     </>
   );

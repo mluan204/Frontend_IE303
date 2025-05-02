@@ -5,62 +5,74 @@ import {
   faSearch,
   faAdd,
   faFileExport,
+  faSpinner,
+  faEye,
+  faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import BillDetail from "../components/BillDetail";
-import { fetchBill, fetchBillById } from "../service/api";
-// import debounce from "lodash.debounce";
-// import { useCallback } from "react";
-
-// interface Bill {
-//   billID: string;
-//   time: string;
-//   totalCost: string;
-//   customerID: string;
-//   employeeID: string;
-//   afterDiscount: string;
-// }
-
-// // Mảng dữ liệu sản phẩm giả định
-// const bills: Bill[] = Array.from({ length: 20 }, (_, i) => ({
-//   billID: `BILL${String(i + 1).padStart(6, "0")}`, // ID hóa đơn, ví dụ: BILL000001
-//   time: new Date(Date.now() - i * 86400000).toLocaleString("vi-VN"), // Thời gian, lùi lại 1 ngày mỗi hóa đơn
-//   totalCost: (1000000 + i * 50000).toLocaleString("vi-VN"), // Tổng tiền, tăng dần
-//   customerID: `CUS${String((i % 5) + 1).padStart(3, "0")}`, // ID khách hàng (5 khách khác nhau)
-//   employeeID: `EMP${String((i % 3) + 1).padStart(3, "0")}`, // ID nhân viên (3 nhân viên khác nhau)
-//   afterDiscount: (900000 + i * 45000).toLocaleString("vi-VN"), // Sau giảm giá, tăng dần
-// }));
+import { fetchBill, fetchBillById, deleteBillById } from "../service/api";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 
 const ITEMS_PER_PAGE = 10;
 
+interface BillDetail {
+  productId: number;
+  productName: string;
+  price: number;
+  afterDiscount: number | null;
+  quantity: number;
+}
+
+interface Customer {
+  id: number;
+  name: string;
+  phone_number: string;
+}
+
+interface Employee {
+  id: number;
+  name: string;
+  phone_number: string;
+}
+
+interface Bill {
+  id: number;
+  total_cost: number;
+  after_discount: number;
+  customer: Customer;
+  employee: Employee;
+  isDeleted: boolean;
+  billDetails: BillDetail[];
+  createdAt: string;
+  totalQuantity: number;
+  notes: string | null;
+  pointsToUse: number | null;
+  is_error: boolean;
+}
+
+interface BillResponse {
+  content: Bill[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+  empty: boolean;
+}
+
 function HoaDon() {
-  // Cơ chế phân trang
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const [displayedBills, setDisplayedBills] = useState<any>([]);
-  const [totalPages, setTotalPages] = useState(0);
+  const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // // MODAL CHI TIẾT SẢN PHẨM
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBill, setSelectedBill] = useState<any>(null);
-
-  // // Mở modal và truyền thông tin sản phẩm
-  const handleOpenModal = async (billId: number) => {
-    try {
-      const billData = await fetchBillById(billId);
-      setSelectedBill(billData);
-      setIsModalOpen(true);
-    } catch (error) {
-      console.error("Lỗi khi lấy hóa đơn:", error);
-    }
-  };
-
-  // // Đóng modal
-  const handleCloseModal = () => {
-    setSelectedBill(null);
-    setIsModalOpen(false);
-  };
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [billToDelete, setBillToDelete] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const [selectedTime, setSelectedTime] = useState("allTime");
   const [startDate, setStartDate] = useState("");
@@ -68,22 +80,73 @@ function HoaDon() {
   const [tempStartDate, setTempStartDate] = useState("");
   const [tempEndDate, setTempEndDate] = useState("");
 
-  const fetchData = async () => {
+  useEffect(() => {
+    fetchBills();
+  }, [currentPage, startDate, endDate]);
+
+  const fetchBills = async () => {
     try {
+      setLoading(true);
+      console.log("Request params:", {
+        page: currentPage,
+        size: ITEMS_PER_PAGE,
+        search: searchTerm,
+        startDate,
+        endDate,
+      });
+
       const response = await fetchBill(
-        currentPage - 1,
+        currentPage,
         ITEMS_PER_PAGE,
-        search,
+        searchTerm,
         startDate,
         endDate
       );
-      console.log(response);
-      setDisplayedBills(response.content);
+
+      console.log("API Response:", response);
+
+      if (!response || !response.content) {
+        console.error("Invalid response format:", response);
+        setError("Dữ liệu trả về không đúng định dạng");
+        return;
+      }
+
+      setBills(response.content);
       setTotalPages(response.totalPages);
+      setTotalElements(response.totalElements);
+      setError(null);
+    } catch (err) {
+      console.error("API Error:", err);
+      setError("Không thể tải dữ liệu hóa đơn. Vui lòng thử lại sau.");
+    } finally {
       setLoading(false);
-    } catch (error) {
-      console.error("Error fetching data:", error);
     }
+  };
+
+  const handleOpenModal = async (bill: Bill) => {
+    try {
+      const billData = await fetchBillById(bill.id);
+      setSelectedBill(billData);
+      setIsModalOpen(true);
+    } catch (error) {
+      setError("Không thể tải chi tiết hóa đơn. Vui lòng thử lại sau.");
+    }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedBill(null);
+    setIsModalOpen(false);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), "dd/MM/yyyy HH:mm", { locale: vi });
   };
 
   const onClickButton = () => {
@@ -105,12 +168,8 @@ function HoaDon() {
 
     setStartDate(tempStartDate);
     setEndDate(tempEndDate);
-    setCurrentPage(1);
+    setCurrentPage(0);
   };
-
-  useEffect(() => {
-    fetchData();
-  }, [currentPage, startDate, endDate]);
 
   useEffect(() => {
     if (selectedTime === "thisMonth") {
@@ -128,29 +187,87 @@ function HoaDon() {
 
       setStartDate(formatDate(firstDay));
       setEndDate(formatDate(lastDay));
-      setCurrentPage(1);
+      setCurrentPage(0);
     } else if (selectedTime === "allTime") {
       setStartDate("");
       setEndDate("");
       setTempStartDate("");
       setTempEndDate("");
-      setCurrentPage(1);
+      setCurrentPage(0);
     }
   }, [selectedTime]);
 
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setCurrentPage(0);
+      fetchBills();
+    }
+  };
+
+  const handleDeleteClick = (billId: number) => {
+    setBillToDelete(billId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!billToDelete) return;
+
+    try {
+      setDeleteLoading(true);
+      await deleteBillById(billToDelete);
+      setIsDeleteModalOpen(false);
+      setBillToDelete(null);
+      // Refresh the bills list
+      fetchBills();
+    } catch (err) {
+      console.error("Delete Error:", err);
+      setError("Không thể xóa hóa đơn. Vui lòng thử lại sau.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
+    setBillToDelete(null);
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-4xl text-blue-500 animate-spin mb-4"
+          />
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={fetchBills}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#E8EAED] h-screen">
+    <div className="min-h-screen bg-gray-50">
       <Helmet>
-        <title>Sổ quỹ</title>
+        <title>Hóa đơn</title>
       </Helmet>
+
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center mb-4">
@@ -164,15 +281,10 @@ function HoaDon() {
               <input
                 type="text"
                 placeholder="Tìm kiếm..."
-                className="border p-1 pl-10 rounded w-full bg-white "
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
-                    fetchData(); // Gọi hàm tìm kiếm
-                  }
-                }}
+                className="border p-1 pl-10 rounded w-full bg-white"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleSearch}
               />
             </div>
 
@@ -253,7 +365,7 @@ function HoaDon() {
                       }
                       onChange={(e) => {
                         const [year, month, day] = e.target.value.split("-");
-                        setTempStartDate(`${day}-${month}-${year}`); // set theo format dd-MM-yyyy
+                        setTempStartDate(`${day}-${month}-${year}`);
                       }}
                       className="border p-1 rounded w-full"
                     />
@@ -272,136 +384,396 @@ function HoaDon() {
                       }
                       onChange={(e) => {
                         const [year, month, day] = e.target.value.split("-");
-                        setTempEndDate(`${day}-${month}-${year}`); // set theo format dd-MM-yyyy
+                        setTempEndDate(`${day}-${month}-${year}`);
                       }}
                       className="border p-1 rounded w-full"
                     />
                   </div>
 
-                  <div className="flex justify-end mt-4 transition-all duration-200 outline-none  ring-offset-2 focus-visible:ring-2  active:scale-[0.98]">
-                    <div className="inline-block bg-[#0070f4] hover:bg-[#0400f4] rounded">
-                      <button
-                        className="px-6 py-1 cursor-pointer text-white "
-                        onClick={onClickButton}
-                      >
-                        Áp dụng
-                      </button>
-                    </div>
+                  <div className="flex justify-end mt-4">
+                    <button
+                      className="px-6 py-1 cursor-pointer text-white bg-[#0070f4] hover:bg-[#0400f4] rounded transition-all duration-200 outline-none ring-offset-2 focus-visible:ring-2 active:scale-[0.98]"
+                      onClick={onClickButton}
+                    >
+                      Áp dụng
+                    </button>
                   </div>
                 </div>
               )}
             </ul>
           </div>
-          {/* DANH SÁCH HÓA ĐƠN */}
-          {/* TỔNG THU CHI */}
-          <div className="w-4/5">
-            <div className="h-1/6 bg-white ml-5 mb-3 p-5">
-              <div className="flex justify-end gap-20 text-center">
-                <div className="flex flex-col">
-                  <span className="font-bold">Quỹ đầu kỳ</span>
-                  <span className="text-black">0</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold">Tổng thu</span>
-                  <span className="text-blue-600">8,919,000</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold">Tổng chi</span>
-                  <span className="text-red-600">-8,910,000</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold">Tồn quỹ</span>
-                  <span className="text-green-600">9,000</span>
-                </div>
-              </div>
-            </div>
-            {/*BẢNG HÓA ĐƠN*/}
-            <div className="h-5/6 ml-5">
-              <div className="overflow-y-auto h-80">
-                <table className="w-full border-collapse">
-                  {/* LABEL */}
-                  <thead className="bg-[#E6F1FE] sticky top-0">
-                    <tr className="border-b border-[#A6A9AC]">
-                      <th className="p-2 text-left">Mã hóa đơn</th>
-                      <th className="p-2 text-left">Thời gian</th>
-                      <th className="p-2 text-left">Nhân viên</th>
-                      <th className="p-2 text-left">Tổng tiền</th>
-                    </tr>
-                  </thead>
-                  {/* HÓA ĐƠN*/}
-                  <tbody>
-                    {displayedBills.map((bill: any, index: number) => {
-                      const isDeleted = bill.isDeleted;
-                      return (
-                        <tr
-                          key={bill.id}
-                          className={`
-                        ${
-                          isDeleted
-                            ? "bg-red-100 text-red-600 line-through"
-                            : index % 2 === 0
-                            ? "bg-white"
-                            : "bg-gray-100 border-b border-[#A6A9AC]"
-                        }
-                        hover:bg-[#E6F1FE] cursor-pointer
-                      `}
-                          onClick={() => !isDeleted && handleOpenModal(bill.id)} // Ngăn click nếu bill bị xóa
-                        >
-                          <td className="p-2">HD00{bill.id}</td>
-                          <td className="p-2">
-                            {bill.createdAt
-                              ? new Date(bill.createdAt).toLocaleDateString(
-                                  "vi-VN"
-                                )
-                              : "N/A"}
-                          </td>
-                          <td className="p-2">{bill.employee.name}</td>
-                          <td className="p-2">
-                            {bill.after_discount.toLocaleString("vi-VN")} đ
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              {/* Phân trang */}
-              <div className="flex items-center mt-4 ">
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  className="p-2 disabled:opacity-50"
-                  disabled={currentPage === 1}
-                >
-                  ◀
-                </button>
-                <span>
-                  Trang {currentPage} / {totalPages}
-                </span>
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  className="p-2  disabled:opacity-50"
-                  disabled={currentPage === totalPages}
-                >
-                  ▶
-                </button>
-              </div>
 
-              {/* Pop-up chi tiết hóa đơn */}
-              {selectedBill && (
-                <BillDetail
-                  bill={selectedBill}
-                  isOpen={isModalOpen}
-                  onClose={handleCloseModal}
-                />
-              )}
-            </div>
+          {/* Main Content */}
+          <div className="w-4/5 ml-5">
+            {loading ? (
+              <div className="flex justify-center items-center h-80">
+                <div className="text-center">
+                  <FontAwesomeIcon
+                    icon={faSpinner}
+                    className="text-4xl text-blue-500 animate-spin mb-4"
+                  />
+                  <p className="text-gray-600">Đang tải dữ liệu...</p>
+                </div>
+              </div>
+            ) : error ? (
+              <div className="flex justify-center items-center h-80">
+                <div className="text-center">
+                  <p className="text-red-500 mb-4">{error}</p>
+                  <button
+                    onClick={fetchBills}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  >
+                    Thử lại
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                {bills.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    Không có hóa đơn nào
+                  </div>
+                ) : (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Mã HĐ
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Khách hàng
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Nhân viên
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Ngày tạo
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Tổng tiền
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Trạng thái
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Thao tác
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {bills.map((bill) => (
+                            <tr key={bill.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                #{bill.id}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {bill.customer.name}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {bill.customer.phone_number}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {bill.employee.name}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {bill.employee.phone_number}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {formatDate(bill.createdAt)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {formatCurrency(bill.after_discount)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span
+                                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                    bill.isDeleted
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-green-100 text-green-800"
+                                  }`}
+                                >
+                                  {bill.isDeleted ? "Đã xóa" : "Hoàn thành"}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
+                                <button
+                                  onClick={() => handleOpenModal(bill)}
+                                  className="text-blue-600 hover:text-blue-900 cursor-pointer"
+                                >
+                                  <FontAwesomeIcon
+                                    icon={faEye}
+                                    className="mr-1"
+                                  />
+                                  Chi tiết
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteClick(bill.id)}
+                                  className="text-red-600 hover:text-red-900 cursor-pointer"
+                                  disabled={bill.isDeleted}
+                                >
+                                  <FontAwesomeIcon
+                                    icon={faTrash}
+                                    className="mr-1"
+                                  />
+                                  Xóa
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination */}
+                    <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                      <div className="flex-1 flex justify-between sm:hidden">
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) => Math.max(0, prev - 1))
+                          }
+                          disabled={currentPage === 0}
+                          className="cursor-pointer relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        >
+                          Trang trước
+                        </button>
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) =>
+                              Math.min(totalPages - 1, prev + 1)
+                            )
+                          }
+                          disabled={currentPage === totalPages - 1}
+                          className="cursor-pointer ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        >
+                          Trang sau
+                        </button>
+                      </div>
+                      <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm text-gray-700">
+                            Hiển thị{" "}
+                            <span className="font-medium">
+                              {currentPage * 10 + 1}
+                            </span>{" "}
+                            đến{" "}
+                            <span className="font-medium">
+                              {Math.min(
+                                (currentPage + 1) * ITEMS_PER_PAGE,
+                                totalElements
+                              )}
+                            </span>{" "}
+                            của{" "}
+                            <span className="font-medium">{totalElements}</span>{" "}
+                            kết quả
+                          </p>
+                        </div>
+                        <div>
+                          <nav
+                            className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                            aria-label="Pagination"
+                          >
+                            <button
+                              onClick={() =>
+                                setCurrentPage((prev) => Math.max(0, prev - 1))
+                              }
+                              disabled={currentPage === 0}
+                              className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                            >
+                              Trang trước
+                            </button>
+                            {[...Array(totalPages)].map((_, index) => (
+                              <button
+                                key={index}
+                                onClick={() => setCurrentPage(index)}
+                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
+                                  currentPage === index
+                                    ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                                    : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                                }`}
+                              >
+                                {index + 1}
+                              </button>
+                            ))}
+                            <button
+                              onClick={() =>
+                                setCurrentPage((prev) =>
+                                  Math.min(totalPages - 1, prev + 1)
+                                )
+                              }
+                              disabled={currentPage === totalPages - 1}
+                              className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                            >
+                              Trang sau
+                            </button>
+                          </nav>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Xác nhận xóa hóa đơn
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Bạn có chắc chắn muốn xóa hóa đơn #{billToDelete}? Hành động này
+              không thể hoàn tác.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleteLoading}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+              >
+                {deleteLoading ? (
+                  <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                ) : (
+                  "Xác nhận xóa"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Existing Bill Detail Modal */}
+      {isModalOpen && selectedBill && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Chi tiết hóa đơn #{selectedBill.id}
+                </h3>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-500 cursor-pointer"
+                >
+                  <span className="sr-only">Đóng</span>
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">
+                    Thông tin khách hàng
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedBill.customer.name}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {selectedBill.customer.phone_number}
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">
+                    Thông tin nhân viên
+                  </h4>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedBill.employee.name}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {selectedBill.employee.phone_number}
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">
+                    Chi tiết sản phẩm
+                  </h4>
+                  <div className="mt-2 border-t border-gray-200">
+                    {selectedBill.billDetails.map((detail, index) => (
+                      <div key={index} className="py-2 flex justify-between">
+                        <div>
+                          <p className="text-sm text-gray-900">
+                            {detail.productName}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Số lượng: {detail.quantity}
+                          </p>
+                        </div>
+                        <p className="text-sm text-gray-900">
+                          {formatCurrency(detail.price * detail.quantity)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex justify-between text-sm">
+                    <p className="text-gray-500">Tổng số lượng:</p>
+                    <p className="text-gray-900">
+                      {selectedBill.totalQuantity}
+                    </p>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <p className="text-gray-500">Tổng tiền:</p>
+                    <p className="text-gray-900">
+                      {formatCurrency(selectedBill.total_cost)}
+                    </p>
+                  </div>
+                  {selectedBill.after_discount !== selectedBill.total_cost && (
+                    <div className="flex justify-between text-sm">
+                      <p className="text-gray-500">Sau giảm giá:</p>
+                      <p className="text-gray-900">
+                        {formatCurrency(selectedBill.after_discount)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {selectedBill.notes && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">
+                      Ghi chú
+                    </h4>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedBill.notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

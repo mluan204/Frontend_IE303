@@ -1,58 +1,64 @@
-import { Link } from 'react-router-dom';
-import Logo from '../assets/logoTest.jpg'
-
+import { Link, useLocation } from "react-router-dom";
+import Logo from "../assets/Logo.svg";
 
 const Navigation = () => {
-    return (
-        <div>
-            <nav className="flex items-center py-2 px-6">
-                <div className="flex items-center mr-auto">
-                    <img src={Logo} alt="Logo" className="h-10 mr-2" />
-                    <span className="font-bold text-lg">UIT Store</span>
-                </div>
-            </nav>
+  const location = useLocation();
 
-            <nav className='flex bg-[#0070F4] items-center py-2 px-6'>
-                <ul className="flex space-x-10 text-white ">
-                    <li>
-                        <Link to="/" className="flex items-center hover:underline">
-                            <i className="fas fa-eye mr-1"></i> Tổng quan
-                        </Link>
-                    </li>
-                    <li>
-                        <Link to="/hang-hoa" className="flex items-center hover:underline">
-                            <i className="fas fa-box mr-1"></i> Hàng hóa
-                        </Link>
-                    </li>
-                    <li>
-                        <Link to="/hoa-don" className="flex items-center hover:underline">
-                            <i className="fas fa-dollar-sign mr-1"></i> Hóa Đơn
-                        </Link>
-                    </li>
-                    <li>
-                        <Link to="/kho-hang" className="flex items-center hover:underline">
-                            <i className="fas fa-dollar-sign mr-1"></i> Kho hàng
-                        </Link>
-                    </li>
-                    <li>
-                        <Link to="/nhan-vien" className="flex items-center hover:underline">
-                            <i className="fas fa-users mr-1"></i> Nhân viên
-                        </Link>
-                    </li>
-                    <li>
-                        <Link to="/bao-cao" className="flex items-center hover:underline">
-                            <i className="fas fa-chart-bar mr-1"></i> Báo cáo
-                        </Link>
-                    </li>
-                    <li>
-                        <Link to="/khach-hang" className="flex items-center hover:underline">
-                            <i className="fas fa-user mr-1"></i> Khách hàng
-                        </Link>
-                    </li>
-                </ul>
-            </nav>
+  const navItems = [
+    { path: "/", icon: "fas fa-eye", label: "Tổng quan" },
+    { path: "/hang-hoa", icon: "fas fa-box", label: "Hàng hóa" },
+    { path: "/hoa-don", icon: "fas fa-receipt", label: "Hóa đơn" },
+    { path: "/kho-hang", icon: "fas fa-warehouse", label: "Kho hàng" },
+    { path: "/nhan-vien", icon: "fas fa-users", label: "Nhân viên" },
+    { path: "/bao-cao", icon: "fas fa-chart-bar", label: "Báo cáo" },
+    { path: "/khach-hang", icon: "fas fa-user", label: "Khách hàng" },
+  ];
+
+  return (
+    <div className="bg-white shadow-md">
+      {/* Top navigation bar */}
+      <nav className="flex items-center justify-between py-3 px-8 border-b border-gray-100">
+        <div className="flex items-center space-x-3">
+          <img
+            src={Logo}
+            alt="UIT Store Logo"
+            className="h-10 w-10 object-contain"
+          />
+          <span className="font-bold text-xl text-gray-800">UIT Store</span>
         </div>
-    );
+        <div className="flex items-center space-x-4">
+          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <i className="fas fa-cog text-gray-600"></i>
+          </button>
+        </div>
+      </nav>
+
+      {/* Main navigation */}
+      <nav className="bg-[#0070F4] px-8">
+        <ul className="flex space-x-8">
+          {navItems.map((item) => (
+            <li key={item.path}>
+              <Link
+                to={item.path}
+                className={`flex items-center py-4 text-white transition-colors relative group
+                  ${
+                    location.pathname === item.path
+                      ? "font-semibold"
+                      : "hover:text-blue-100"
+                  }`}
+              >
+                <i className={`${item.icon} mr-2 text-sm`}></i>
+                {item.label}
+                {location.pathname === item.path && (
+                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white"></span>
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+  );
 };
 
 export default Navigation;
