@@ -4,10 +4,6 @@ const API_URL = "http://localhost:8080/api";
 
 let TOKEN:string;
 
-const tokenStr = localStorage.getItem('token');
-const parsedToken = tokenStr ? JSON.parse(tokenStr) : null;
-TOKEN = parsedToken.token;
-
 // Cấu hình axios mặc định
 axios.defaults.withCredentials = true;
 
