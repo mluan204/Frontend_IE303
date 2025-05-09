@@ -1,14 +1,27 @@
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
 import bgLogo from "../assets/login-bg-update.png"
-import { useState } from "react";
-import { login } from "../service/api";
+import { useEffect, useState } from "react";
+import { login } from "../service/mainApi";
+import { useAuth } from "../context/AuthContext";
+import { toast } from 'react-toastify';
 
 function Login() {
+  const {handleLogin} = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
+  useEffect(() => {
+    const expired = localStorage.getItem("sessionExpired");
+    if (expired === "true") {
+      toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",{
+        autoClose: 1500
+      });
+      localStorage.removeItem("sessionExpired");
+    }
+  }, []);
+  
+  
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
   };
@@ -19,8 +32,7 @@ function Login() {
 
   const handleManageClick = async () => {
     const result = await login(username,password);
-    console.log(result);
-    
+    handleLogin();
     if(result){
       navigate('/');
     }

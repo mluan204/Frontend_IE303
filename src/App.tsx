@@ -3,12 +3,16 @@ import Router from "./router/router";
 import NavigationSale from "./components/NavigationSale";
 import Navigation from "./components/navigation";
 import { useEffect } from "react";
+import { useAuth } from "./context/AuthContext";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const navigate = useNavigate();
+  const {isAuthenticated} = useAuth();
+
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) navigate("/login");
+    if (isAuthenticated) navigate("/login");
   }, []);
 
   const location = useLocation();
@@ -20,6 +24,7 @@ function App() {
 
   return (
     <>
+      <ToastContainer />
       {!isLoginPage && (isSalesPage ? <NavigationSale /> : <Navigation />)}
       <Router />
     </>
