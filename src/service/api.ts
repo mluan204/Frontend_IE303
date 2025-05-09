@@ -3,6 +3,9 @@ import axios from "axios";
 const API_URL = "http://localhost:8080/api";
 
 let TOKEN:string;
+const tokenStr = localStorage.getItem('token');
+const parsedToken = tokenStr ? JSON.parse(tokenStr) : null;
+TOKEN = parsedToken.token;
 
 // Cấu hình axios mặc định
 axios.defaults.withCredentials = true;
@@ -146,6 +149,7 @@ export const fetchAllBill = async () => {
 
 export const fetchSalesChart = async (type: string, startDate: string, endDate: string) => {
   try {
+    console.log(type, startDate, endDate);
     const response = await axios.get(`${API_URL}/sales/chart`, {
       headers: {
         Authorization: `Bearer ${TOKEN}`,

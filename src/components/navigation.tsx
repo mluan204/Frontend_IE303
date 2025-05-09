@@ -1,8 +1,14 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Logo from "../assets/Logo.svg";
 
 const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
 
   const navItems = [
     { path: "/", icon: "fas fa-eye", label: "Tổng quan" },
@@ -29,6 +35,12 @@ const Navigation = () => {
         <div className="flex items-center space-x-4">
           <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <i className="fas fa-cog text-gray-600"></i>
+          </button>
+          <button
+            onClick={handleLogout}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <i className="fas fa-sign-out-alt text-gray-600"></i>
           </button>
         </div>
       </nav>
