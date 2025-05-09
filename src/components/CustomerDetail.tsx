@@ -22,7 +22,7 @@ interface CustomerDetailProps {
 type CustomerField = keyof Customer;
 
 
-function CustomerDetail({ customer, isOpen, onClose }: CustomerDetailProps) {
+function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerDetailProps) {
 
   const customerFieldLabels: Record<CustomerField, string> = {
     id: "Mã KH",
@@ -30,7 +30,7 @@ function CustomerDetail({ customer, isOpen, onClose }: CustomerDetailProps) {
     name: "Họ tên",
     phone_number: "Số điện thoại",
     score: "Điểm tích lũy",
-    create_at: "Ngày tạo",
+    created_at: "Ngày tạo",
   };
 
 

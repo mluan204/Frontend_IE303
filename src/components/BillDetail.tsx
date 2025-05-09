@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit} from "@fortawesome/free-solid-svg-icons";
-import { deleteBillById } from "../service/api";
+import { deleteBillById } from "../service/mainApi";
 
 interface Bill {
   id: number;

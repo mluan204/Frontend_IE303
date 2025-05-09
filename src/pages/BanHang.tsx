@@ -5,7 +5,7 @@ import BillItem from "../components/BillItem";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import PopupThanhToan from "./PopupThanhToan";
-import { fetchAllProduct } from "../service/api";
+import { fetchAllProduct } from "../service/mainApi";
 
 // Định nghĩa kiểu dữ liệu cho product
 interface Product {
