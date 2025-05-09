@@ -34,7 +34,7 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
     position: "Chức vụ",
     address: "Địa chỉ",
     birthday: "Ngày sinh",
-    created_at: "Ngày tạo",
+    // create_at: "Ngày tạo",
     email: "Email",
     gender: "Giới tính",
     image: "Ảnh đại diện",
@@ -68,7 +68,7 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
   const handleDelete = async () => {
     // Gọi hàm xóa ở đây
     await deleteEmployeeById(employee.id);
-    removeEmployee(employee.id);
+    // removeEmployee(employee.id);
     onClose();
   };
 

@@ -4,6 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
 import CustomerDetail from "../components/CustomerDetail"; 
 import { getAllCustomer } from "../service/customerApi";
+import AddCustomerModal from "../components/AddCustomerModal";
+
 
 // Kiểu dữ liệu cho khách hàng
 interface Customer {
@@ -70,6 +72,9 @@ function KhachHang() {
     setIsModalOpen(false);
   };
 
+  //Modal thêm mới khách hàng
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleDateString('vi-VN',
       {
@@ -115,7 +120,7 @@ const removeCustomer = (customerId: string) => {
 
             {/* Nút chức năng */}
             <div className="space-x-5">
-              <button className="bg-green-500 text-white px-4 py-1 rounded">
+              <button className="bg-green-500 text-white px-4 py-1 rounded"  onClick={() => setIsAddModalOpen(true)}>
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
@@ -164,7 +169,7 @@ const removeCustomer = (customerId: string) => {
                 </tbody>
               </table>
 
-              {/* Modal chi tiết khách hàng (nếu cần) */}
+              {/* Modal chi tiết khách hàng */}
               {selectedCustomer && (
                 <CustomerDetail
                   customer={selectedCustomer}
@@ -173,6 +178,8 @@ const removeCustomer = (customerId: string) => {
                   removeCustomer={removeCustomer}
                 />
               )}
+
+              
             </div>
 
             {/* Phân trang */}
@@ -198,6 +205,14 @@ const removeCustomer = (customerId: string) => {
           </div>
         </div>
       </div>
+      {/* MODAL THÊM MỚI KHÁCH HÀNG */}
+      <AddCustomerModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onCustomerAdded={(newCustomer) => {
+          setCustomers((prev) => [...prev, newCustomer]);
+        }}
+      />
     </div>
   );
 }

@@ -51,7 +51,7 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
     onClose();
   };
   const handleDelete = async() => {
-    removeCustomer(customer.id);
+    // removeCustomer(customer.id);
     await deleteCustomerById(customer.id);
     onClose();
     // Gọi hàm xóa ở đây nếu cần

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
 import ReceiptDetail from "../components/ReceiptDetail";
+import AddReceiptModal from "../components/AddReceiptModal";
 
 interface Receipt {
   receiptID: string;
@@ -13,7 +14,7 @@ interface Receipt {
 
 }
 
-// Mảng dữ liệu sản phẩm giả định
+// Mảng dữ liệu phiếu nhập giả định
 const receipts: Receipt[] = Array.from({ length: 20 }, (_, i) => ({
   receiptID: `REC${String(i + 1).padStart(6, "0")}`, // ID hóa đơn, ví dụ: BILL000001
   time: new Date(Date.now() - i * 86400000).toLocaleString("vi-VN"), // Thời gian, lùi lại 1 ngày mỗi hóa đơn
@@ -22,8 +23,31 @@ const receipts: Receipt[] = Array.from({ length: 20 }, (_, i) => ({
   note: `CUS${String((i % 5) + 1).padStart(3, "0")}`, // ID khách hàng (5 khách khác nhau)
 }));
 
+interface Product {
+  id: string;
+  name: string;
+  price: string;
+  cost: string;
+  category: string;
+  stock: number;
+  image: string;
+  supplier: string;
+  expiry: string;
+  notes: string;
+}
 
-
+const products: Product[] = Array.from({ length: 30 }, (_, i) => ({
+  id: `SP${String(i + 1).padStart(6, "0")}`,
+  name: `Sản phẩm ${i + 1}`,
+  price: (100000 + i * 5000).toLocaleString("vi-VN"),
+  cost: (95000 + i * 5000).toLocaleString("vi-VN"),
+  category: ["Thực phẩm", "Đồ gia dụng", "Thời trang", "Thiết bị điện"][i % 4],
+  stock: 300 - i * 10,
+  image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg/revision/latest?cb=20210323154547&path-prefix=pt-br",
+  supplier: `Nhà cung cấp ${i % 5 + 1}`,
+  expiry: `2025-${(i % 12 + 1).toString().padStart(2, "0")}-15`,
+  notes: `Ghi chú cho sản phẩm ${i + 1}`
+}));
 const ITEMS_PER_PAGE = 10;
 
 function KhoHang() {
@@ -55,7 +79,11 @@ function KhoHang() {
   const [selectedTime, setSelectedTime] = useState("thisMonth");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  //MODAL THÊM MỚI
+  const [openModalAdd, setOpenModalAdd] = useState(false);
   return (
+    
     
     <div className="bg-[#E8EAED]">
       <Helmet>
@@ -80,7 +108,7 @@ function KhoHang() {
 
             {/* Các nút chức năng */}
             <div className="space-x-5">
-              <button className="bg-green-500 text-white px-4 py-1 rounded"><FontAwesomeIcon icon={faAdd} className="mr-2"/>Thêm mới</button>
+              <button className="bg-green-500 text-white px-4 py-1 rounded" onClick={() => setOpenModalAdd(true)}><FontAwesomeIcon icon={faAdd} className="mr-2"/>Thêm mới</button>
               <button className="bg-green-500 text-white px-4 py-1 rounded"><FontAwesomeIcon icon={faFileExport} className="mr-2"/> Xuất file</button>
             </div>
           </div>
@@ -229,6 +257,11 @@ function KhoHang() {
 
         </div>
       </div>
+      <AddReceiptModal
+        isOpen={openModalAdd}
+        onClose={() => setOpenModalAdd(false)}
+        products={products}
+      />
     </div>
   );
 }

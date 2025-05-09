@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
 import EmployeeDetail from "../components/EmployeeDetail"; 
+import AddEmployeeModal from "../components/AddEmployeeModal";
 import { getAllEmployees } from "../service/employeeApi";
 
 // Kiểu dữ liệu cho nhân viên
@@ -76,6 +77,8 @@ function NhanVien() {
   const removeEmployee= (employeeId: string) => {
     setEmployees(prevE => prevE.filter(employee => employee.id !== employeeId));
   };
+  // MODAL THÊM NHÂN VIÊN
+  const [showAddModal, setShowAddModal] = useState(false);
 
   return (
     <div className="bg-[#E8EAED]">
@@ -104,7 +107,7 @@ function NhanVien() {
 
             {/* Nút chức năng */}
             <div className="space-x-5">
-              <button className="bg-green-500 text-white px-4 py-1 rounded">
+              <button className="bg-green-500 text-white px-4 py-1 rounded" onClick={() => setShowAddModal(true)}>
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
@@ -187,6 +190,7 @@ function NhanVien() {
           </div>
         </div>
       </div>
+      <AddEmployeeModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} />
     </div>
   );
 }

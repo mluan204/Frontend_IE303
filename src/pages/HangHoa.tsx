@@ -2,8 +2,8 @@ import { Helmet } from "react-helmet";
 import { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
-import ProductDetail from "../components/ProductDetail"; // Đảm bảo đúng đường dẫn
-
+import ProductDetail from "../components/ProductDetail"; 
+import AddProductModal from "../components/AddProductModal";
 
 
 // Định nghĩa kiểu dữ liệu cho product
@@ -61,6 +61,10 @@ function HangHoa() {
     setSelectedProduct(null);
     setIsModalOpen(false);
   };
+
+  //Modal thêm sản phẩm mới
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
   return (
     
     <div className="bg-[#E8EAED]">
@@ -86,8 +90,7 @@ function HangHoa() {
 
             {/* Các nút chức năng */}
             <div className="space-x-5">
-              <button className="bg-green-500 text-white px-4 py-1 rounded"><FontAwesomeIcon icon={faAdd} className="mr-2"/>Nhập hàng</button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded"><FontAwesomeIcon icon={faAdd} className="mr-2"/>Thêm mới</button>
+              <button className="bg-green-500 text-white px-4 py-1 rounded"  onClick={() => setIsAddModalOpen(true)}><FontAwesomeIcon icon={faAdd} className="mr-2" />Thêm mới</button>
               <button className="bg-green-500 text-white px-4 py-1 rounded"><FontAwesomeIcon icon={faFileExport} className="mr-2"/> Xuất file</button>
             </div>
           </div>
@@ -150,6 +153,7 @@ function HangHoa() {
                   onClose={handleCloseModal}
                 />
               )}
+              
 
             </div>
             {/* Phân trang */}
@@ -176,6 +180,16 @@ function HangHoa() {
           
         </div>
       </div>
+      {/* Pop-up thêm mới sản phẩm */}
+      {isAddModalOpen && (
+        <AddProductModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSave={(newProduct) => {
+            products.unshift(newProduct); // hoặc gọi API thêm sản phẩm
+          }}
+        />
+      )}
     </div>
   );
 }
