@@ -76,19 +76,21 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
         {/* Body */}
         <div className="overflow-y-auto h-[calc(440px-48px)] px-6 pb-4 scrollbar-hide">
           <div className="grid grid-cols-4 gap-6">
-            {["id", "name", "gender", "phone_number"].map((field) => (
+            {(["id", "name", "gender", "phone_number"] as (keyof Customer)[]).map((field) => (
               <div key={field}>
-                <label className="text-sm font-medium text-gray-500 block mb-1">{customerFieldLabels[field]}</label>
+                <label className="text-sm font-medium text-gray-500 block mb-1">
+                  {customerFieldLabels[field]}
+                </label>
                 {isEditing ? (
                   <input
                     type="text"
                     name={field}
-                    value={(editedCustomer as any)[field] || ""}
+                    value={editedCustomer[field] ?? ""}
                     onChange={handleChange}
                     className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
                   />
                 ) : (
-                  <div className="text-gray-900 text-sm">{(editedCustomer as any)[field]}</div>
+                  <div className="text-gray-900 text-sm">{editedCustomer[field]}</div>
                 )}
               </div>
             ))}

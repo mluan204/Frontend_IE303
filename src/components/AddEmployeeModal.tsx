@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave } from "@fortawesome/free-solid-svg-icons";
 
 interface Employee {
+  id: string;
   name: string;
   address: string;
   birthday: string;
@@ -20,6 +21,7 @@ interface AddEmployeeModalProps {
 }
 
 const defaultEmployee: Employee = {
+  id: "",
   name: "",
   address: "",
   birthday: "",
@@ -30,7 +32,18 @@ const defaultEmployee: Employee = {
   position: "",
   salary: 0,
 };
-
+const labelMapping: Record<keyof Employee, string> = {
+  id: "Mã nhân viên",
+  name: "Họ và tên",
+  address: "Địa chỉ",
+  birthday: "Ngày sinh",
+  email: "Email",
+  gender: "Giới tính",
+  image: "Ảnh đại diện",
+  phone_number: "Số điện thoại",
+  position: "Chức vụ",
+  salary: "Lương"
+};
 function AddEmployeeModal({ isOpen, onClose }: AddEmployeeModalProps) {
   const [newEmployee, setNewEmployee] = useState<Employee>(defaultEmployee);
 
@@ -78,38 +91,28 @@ function AddEmployeeModal({ isOpen, onClose }: AddEmployeeModalProps) {
 
             {/* Column 2 */}
             <div className="space-y-4">
-              {["name", "position", "address", "id"].map((field) => (
-                <div key={field}>
-                  <label className="text-sm font-medium text-gray-500 block mb-1">
-                    {{
-                      name: "Họ và tên",
-                      position: "Chức vụ",
-                      address: "Địa chỉ",
-                      id: "Mã nhân viên"
-                    }[field as keyof Employee]}
-                  </label>
-                  <input
-                    type="text"
-                    name={field}
-                    value={(newEmployee as any)[field] || ""}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
-                  />
-                </div>
-              ))}
+            {(["id", "name", "position", "address"] as (keyof Employee)[]).map((field) => (
+              <div key={field}>
+                <label className="text-sm font-medium text-gray-500 block mb-1">
+                  {labelMapping[field]}
+                </label>
+                <input
+                  type="text"
+                  name={field}
+                  value={String(newEmployee[field])}
+                  onChange={handleChange}
+                  className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                />
+              </div>
+            ))}
             </div>
 
             {/* Column 3 */}
             <div className="space-y-4">
-              {["phone_number", "email", "salary", "birthday"].map((field) => (
+              {(["phone_number", "email", "salary", "birthday"] as (keyof Employee)[]).map((field) => (
                 <div key={field}>
                   <label className="text-sm font-medium text-gray-500 block mb-1">
-                    {{
-                      phone_number: "Số điện thoại",
-                      email: "Email",
-                      salary: "Lương",
-                      birthday: "Ngày sinh"
-                    }[field as keyof Employee]}
+                   {labelMapping[field]}
                   </label>
                   <input
                     type={field === "salary" ? "number" : field === "birthday" ? "date" : "text"}

@@ -111,94 +111,36 @@ function HoaDon() {
   }, [currentPage, startDate, endDate]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // const fetchBills = async () => {
-  //   try {
-  //     setLoading(true);
-  //     console.log("Request params:", {
-  //       page: currentPage,
-  //       size: ITEMS_PER_PAGE,
-  //       search: searchTerm,
-  //       startDate,
-  //       endDate,
-  //     });
-
-  //     const response = await fetchBill(
-  //       currentPage,
-  //       ITEMS_PER_PAGE,
-  //       searchTerm,
-  //       startDate,
-  //       endDate
-  //     );
-
-  //     console.log("API Response:", response);
-
-  //     if (!response || !response.content) {
-  //       console.error("Invalid response format:", response);
-  //       setError("Dữ liệu trả về không đúng định dạng");
-  //       return;
-  //     }
-
-  //     setBills(response.content);
-  //     setTotalPages(response.totalPages);
-  //     setTotalElements(response.totalElements);
-  //     setError(null);
-  //   } catch (err) {
-  //     console.error("API Error:", err);
-  //     setError("Không thể tải dữ liệu hóa đơn. Vui lòng thử lại sau.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const fetchBills = async () => {
     try {
       setLoading(true);
-  
-      // Dữ liệu mẫu
-      const mockBills: Bill[] = [
-        {
-          id: 1,
-          total_cost: 200000,
-          after_discount: 180000,
-          customer: {
-            id: 1,
-            name: "Nguyễn Văn A",
-            phone_number: "0909123456",
-          },
-          employee: {
-            id: 2,
-            name: "Trần Thị B",
-            phone_number: "0909988776",
-          },
-          isDeleted: false,
-          billDetails: [
-            {
-              productId: 101,
-              productName: "Sản phẩm 1",
-              price: 100000,
-              afterDiscount: null,
-              quantity: 2,
-            },
-          ],
-          createdAt: new Date().toISOString(),
-          totalQuantity: 2,
-          notes: "Khách quen",
-          pointsToUse: null,
-          is_error: false,
-        },
-      ];
-  
-      const mockResponse: BillResponse = {
-        content: mockBills,
-        totalPages: 1,
-        totalElements: 1,
-        size: 10,
-        number: 0,
-        empty: false,
-      };
-  
-      setBills(mockResponse.content);
-      setTotalPages(mockResponse.totalPages);
-      setTotalElements(mockResponse.totalElements);
+      console.log("Request params:", {
+        page: currentPage,
+        size: ITEMS_PER_PAGE,
+        search: searchTerm,
+        startDate,
+        endDate,
+      });
+
+      const response = await fetchBill(
+        currentPage,
+        ITEMS_PER_PAGE,
+        searchTerm,
+        startDate,
+        endDate
+      );
+
+      console.log("API Response:", response);
+
+      if (!response || !response.content) {
+        console.error("Invalid response format:", response);
+        setError("Dữ liệu trả về không đúng định dạng");
+        return;
+      }
+
+      setBills(response.content);
+      setTotalPages(response.totalPages);
+      setTotalElements(response.totalElements);
       setError(null);
     } catch (err) {
       console.error("API Error:", err);
@@ -207,37 +149,11 @@ function HoaDon() {
       setLoading(false);
     }
   };
-  // const handleOpenModal = async (bill: Bill) => {
-  //   try {
-  //     const billData = await fetchBillById(bill.id);
-  //     setSelectedBill(billData);
-  //     setIsModalOpen(true);
-  //   } catch (error) {
-  //     setError("Không thể tải chi tiết hóa đơn. Vui lòng thử lại sau.");
-  //   }
-  // };
+ 
   const handleOpenModal = async (bill: Bill) => {
     try {
-      const mockDetail = {
-        ...bill,
-        billDetails: [
-          {
-            productId: 1,
-            productName: "Sản phẩm A",
-            price: 100000,
-            afterDiscount: null,
-            quantity: 2,
-          },
-          {
-            productId: 2,
-            productName: "Sản phẩm B",
-            price: 150000,
-            afterDiscount: null,
-            quantity: 1,
-          },
-        ],
-      };
-      setSelectedBill(mockDetail);
+      const billData = await fetchBillById(bill.id);
+      setSelectedBill(billData);
       setIsModalOpen(true);
     } catch (error) {
       setError("Không thể tải chi tiết hóa đơn. Vui lòng thử lại sau.");

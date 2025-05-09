@@ -100,19 +100,19 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
 
             {/* Column 2 */}
             <div className="space-y-4">
-              {["id", "name", "position", "address"].map((field) => (
+              {(["id", "name", "position", "address"] as (keyof Employee)[]).map((field) => (
                 <div key={field}>
                   <label className="text-sm font-medium text-gray-500 block mb-1">{employeeFieldLabels[field]}</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name={field}
-                      value={(editedEmployee as any)[field] || ""}
+                      value={editedEmployee[field]?.toString() ?? ""}
                       onChange={handleChange}
                       className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
                     />
                   ) : (
-                    <div className="text-gray-900 text-sm">{(editedEmployee as any)[field]}</div>
+                    <div className="text-gray-900 text-sm">{editedEmployee[field]}</div>
                   )}
                 </div>
               ))}
@@ -120,19 +120,19 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
 
             {/* Column 3 */}
             <div className="space-y-4">
-              {["phone_number", "email", "salary", "birthday"].map((field) => (
+              {(["phone_number", "email", "salary", "birthday"] as (keyof Employee)[]).map((field) => (
                 <div key={field}>
                   <label className="text-sm font-medium text-gray-500 block mb-1">{employeeFieldLabels[field]}</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name={field}
-                      value={(editedEmployee as any)[field] || ""}
+                      value={editedEmployee[field]?.toString() ?? ""}
                       onChange={handleChange}
                       className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
                     />
                   ) : (
-                    <div className="text-gray-900 text-sm">{(editedEmployee as any)[field]}</div>
+                    <div className="text-gray-900 text-sm">{editedEmployee[field]}</div>
                   )}
                 </div>
               ))}
@@ -140,19 +140,19 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
 
             {/* Column 4 */}
             <div className="space-y-4">
-              {["gender"].map((field) => (
+              {(["gender"] as (keyof Employee)[]).map((field) => (
                 <div key={field}>
                   <label className="text-sm font-medium text-gray-500 block mb-1">{employeeFieldLabels[field]}</label>
                   {isEditing ? (
                     <input
                       type="text"
                       name={field}
-                      value={(editedEmployee as any)[field] || ""}
+                      value={editedEmployee[field]?.toString() ?? ""}
                       onChange={handleChange}
                       className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
                     />
                   ) : (
-                    <div className="text-gray-900 text-sm">{(editedEmployee as any)[field]}</div>
+                    <div className="text-gray-900 text-sm">{editedEmployee[field]}</div>
                   )}
                 </div>
               ))}

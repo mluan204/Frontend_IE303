@@ -24,8 +24,6 @@ function App() {
 
   return (
     <>
-      {/* {!isLoginPage && (isSalesPage ? <NavigationSale /> : <Navigation />)} */}
-      <Navigation />
       <ToastContainer />
       {!isLoginPage && (isSalesPage ? <NavigationSale /> : <Navigation />)}
       <Router />

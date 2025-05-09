@@ -3,17 +3,26 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faSave, faTrash } from "@fortawesome/free-solid-svg-icons";
 
 interface Product {
-  id: number;
-  name: string;
-  price: number;
-}
+    id: string;
+    name: string;
+    price: string;
+    cost: string;
+    category: string;
+    stock: number;
+    image: string;
+    supplier: string;
+    expiry: string;
+    notes: string;
+  }
+  
 
-interface SelectedProduct {
-  productId: number;
-  productName: string;
-  price: number;
-  quantity: number;
-}
+  interface SelectedProduct {
+    id: string;
+    name: string;
+    cost: number;
+    quantity: number;
+    discount: number;
+  }
 
 interface AddBillModalProps {
   isOpen: boolean;
@@ -34,30 +43,39 @@ export default function AddBillModal({ isOpen, onClose, products, onSave }: AddB
   const filteredProducts = useMemo(() =>
     products.filter(p =>
       p.name.toLowerCase().includes(search.toLowerCase()) &&
-      !selectedProducts.some(sp => sp.productId === p.id)
+      !selectedProducts.some(sp => sp.id === p.id)
     ), [search, products, selectedProducts]);
 
-  const handleAddProduct = (product: Product) => {
-    setSelectedProducts([...selectedProducts, {
-      productId: product.id,
-      productName: product.name,
-      price: product.price,
-      quantity: 1,
-    }]);
-  };
+    const handleAddProduct = (product: Product) => {
+        if (!selectedProducts.find((p) => p.id === product.id)) {
+          setSelectedProducts([
+            ...selectedProducts,
+            {
+              id: product.id,
+              name: product.name,
+              cost: parseInt(product.price.replace(/\D/g, "")), // hoặc product.cost
+              quantity: 1,
+              discount: 0,
+            },
+          ]);
+        }
+    };
 
-  const handleRemoveProduct = (id: number) => {
-    setSelectedProducts(selectedProducts.filter(p => p.productId !== id));
-  };
-
-  const handleChange = (id: number, value: number) => {
-    setSelectedProducts(prev =>
-      prev.map(p => (p.productId === id ? { ...p, quantity: value } : p))
-    );
-  };
+    const handleRemoveProduct = (id: string) => {
+        setSelectedProducts(selectedProducts.filter(p => p.id !== id));
+    };
+    
+    const handleChange = (id: string, value: number) => {
+        setSelectedProducts(prev =>
+            prev.map(p => (p.id === id ? { ...p, quantity: value } : p))
+        );
+    };
 
   const totalQuantity = selectedProducts.reduce((sum, p) => sum + p.quantity, 0);
-  const totalCost = selectedProducts.reduce((sum, p) => sum + p.quantity * p.price * 1000, 0);
+  const totalCost = selectedProducts.reduce(
+    (sum, p) => sum + p.quantity * p.cost * (1 - p.discount / 100),
+    0
+  );
 
   const handleSubmit = () => {
     onSave({
@@ -91,38 +109,38 @@ export default function AddBillModal({ isOpen, onClose, products, onSave }: AddB
               className="w-full border border-gray-300 p-2 rounded mb-4 text-sm"
             />
             <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-500">
-                <tr>
-                  <th className="px-4 py-2 text-left">Mã</th>
-                  <th className="px-4 py-2 text-left">Tên SP</th>
-                  <th className="px-4 py-2 text-left">Đơn giá</th>
-                  <th className="px-4 py-2 text-left">Số lượng</th>
-                  <th className="px-4 py-2 text-left">Thành tiền</th>
-                  <th className="px-4 py-2"></th>
-                </tr>
-              </thead>
+                <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                    <tr>
+                    <th className="px-4 py-2 text-left">STT</th> 
+                    <th className="px-4 py-2 text-left">Tên SP</th>
+                    <th className="px-4 py-2 text-left">Đơn giá</th>
+                    <th className="px-4 py-2 text-left">Số lượng</th>
+                    <th className="px-4 py-2 text-left">Thành tiền</th>
+                    <th className="px-4 py-2"></th>
+                    </tr>
+                </thead>
               <tbody>
-                {selectedProducts.map((p, index) => (
-                  <tr key={p.productId} className="hover:bg-gray-100">
-                    <td className="px-4 py-2">SP00{p.productId}</td>
-                    <td className="px-4 py-2">{p.productName}</td>
-                    <td className="px-4 py-2">{p.price.toLocaleString("vi-VN")}</td>
-                    <td className="px-4 py-2">
-                      <input
+              {selectedProducts.map((p, index) => (
+                <tr key={p.id} className="hover:bg-gray-100">
+                    <td className="px-4 py-2 text-sm">SP00{p.id}</td>
+                    <td className="px-4 py-2 text-sm">{p.name}</td>
+                    <td className="px-4 py-2 text-sm">{p.cost.toLocaleString("vi-VN")}</td>
+                    <td className="px-4 py-2 text-sm">
+                    <input
                         type="number"
                         min="1"
                         value={p.quantity}
-                        onChange={(e) => handleChange(p.productId, +e.target.value)}
+                        onChange={(e) => handleChange(p.id, +e.target.value)}
                         className="w-16 border rounded text-sm"
-                      />
+                    />
                     </td>
-                    <td className="px-4 py-2">{(p.price * 1000  * p.quantity).toLocaleString("vi-VN")} đ</td>
-                    <td className="px-4 py-2">
-                      <button onClick={() => handleRemoveProduct(p.productId)}>
+                    <td className="px-4 py-2 text-sm">{(p.quantity * p.cost).toLocaleString("vi-VN")} đ</td>
+                    <td className="px-4 py-2 text-sm">
+                    <button onClick={() => handleRemoveProduct(p.id)}>
                         <FontAwesomeIcon icon={faTrash} className="text-red-500" />
-                      </button>
+                    </button>
                     </td>
-                  </tr>
+                </tr>
                 ))}
                 {filteredProducts.map((p) => (
                   <tr key={p.id} className="hover:bg-blue-50 cursor-pointer" onClick={() => handleAddProduct(p)}>
