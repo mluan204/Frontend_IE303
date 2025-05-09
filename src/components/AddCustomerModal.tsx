@@ -19,7 +19,7 @@ interface AddCustomerModalProps {
 
 function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModalProps) {
   const [newCustomer, setNewCustomer] = useState<Customer>({
-    id: "", 
+    id: "",
     gender: "",
     name: "",
     phone_number: "",
@@ -35,66 +35,70 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
     }));
   };
 
-  const handleSave = async () => {
-  
+  const handleSave = () => {
+    if (!newCustomer.name.trim()) {
+      alert("Tên khách hàng không được để trống!");
+      return;
+    }
+    onCustomerAdded(newCustomer);
+    setNewCustomer({
+      id: "",
+      gender: "",
+      name: "",
+      phone_number: "",
+      score: 0,
+      created_at: new Date().toISOString(),
+    });
+    onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
-      <div className="bg-white w-3/5 shadow-lg">
-        <div className="flex justify-between border-b pt-2 pl-2 bg-[#C3F5DB] mb-5">
-          <h2 className="text-lg p-1 rounded-t-lg font-semibold bg-white">Thêm khách hàng</h2>
-          <FontAwesomeIcon icon={faClose} className="text-2xl mr-2 cursor-pointer" onClick={onClose} color="red" />
+    <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
+      <div className="bg-white rounded-2xl w-4/5 max-h-[360px] shadow-lg overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-between items-start px-4 py-3 bg-white mb-4 sticky top-0 z-10">
+          <h2 className="text-lg font-semibold text-gray-800">Thêm khách hàng</h2>
+          <FontAwesomeIcon icon={faClose} className="text-2xl text-gray-500 cursor-pointer" onClick={onClose} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4 px-4">
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Họ tên</label>
-              <input type="text" name="name"
-                value={newCustomer.name} onChange={handleChange}
-                className="border rounded p-1 w-full" />
-            </div>
+        {/* Form */}
+        <div className="overflow-y-auto px-6 pb-4 scrollbar-hide">
+          <div className="grid grid-cols-4 gap-6">
+            {[
+              { name: "id", label: "Mã KH" },
+              { name: "name", label: "Họ tên" },
+              { name: "gender", label: "Giới tính" },
+              { name: "phone_number", label: "Số điện thoại" },
+              { name: "score", label: "Điểm tích lũy" },
+            ].map((field) => (
+              <div key={field.name}>
+                <label className="text-sm font-medium text-gray-500 block mb-1">{field.label}</label>
+                <input
+                  type={field.name === "score" ? "number" : "text"}
+                  name={field.name}
+                  value={(newCustomer as any)[field.name]}
+                  onChange={handleChange}
+                  className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                />
+              </div>
+            ))}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Giới tính</label>
-              <input type="text" name="gender"
-                value={newCustomer.gender} onChange={handleChange}
-                className="border rounded p-1 w-full" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
-              <input type="text" name="phone_number"
-                value={newCustomer.phone_number} onChange={handleChange}
-                className="border rounded p-1 w-full" />
+              <label className="text-sm font-medium text-gray-500 block mb-1">Ngày tạo</label>
+              <div className="text-gray-900 text-sm">
+                {new Date(newCustomer.created_at).toLocaleDateString("vi-VN")}
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Điểm tích lũy</label>
-              <input type="number" name="score"
-                value={newCustomer.score === 0 ? "" : newCustomer.score}
-                onChange={handleChange}
-                className="border rounded p-1 w-full" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Ngày tạo</label>
-              <input type="text" name="created_at" disabled
-                value={new Date(newCustomer.created_at).toLocaleDateString('vi-VN')}
-                className="border rounded p-1 w-full bg-gray-100" />
-            </div>
+          {/* Action */}
+          <div className="flex justify-end gap-3 mt-4">
+            <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
+              <FontAwesomeIcon icon={faSave} className="mr-1" /> Thêm mới
+            </button>
           </div>
-        </div>
-
-        <div className="flex justify-end mt-4 mb-8 mr-8">
-          <button onClick={handleSave} className="px-4 py-2 bg-green-500 text-white rounded">
-            <FontAwesomeIcon icon={faSave} className="mr-2" />Thêm mới
-          </button>
         </div>
       </div>
     </div>

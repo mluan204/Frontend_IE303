@@ -66,70 +66,64 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
 
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
-      <div className="bg-white w-3/5 shadow-lg">
-        {/* Thanh tiêu đề */}
-        <div className="flex justify-between border-b pt-2 pl-2 bg-[#C3F5DB] mb-5">
-          <h2 className="text-lg p-1 rounded-t-lg font-semibold bg-white">Chi tiết khách hàng</h2>
-          <FontAwesomeIcon icon={faClose} className="text-2xl mr-2" onClick={handleClose} color="red" />
+      <div className="bg-white rounded-2xl w-4/5 max-h-[340px] shadow-lg overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-between items-start px-4 py-3 bg-white mb-4 sticky top-0 z-10">
+          <h2 className="text-lg font-semibold text-gray-800">Chi tiết khách hàng</h2>
+          <FontAwesomeIcon icon={faClose} className="text-2xl text-gray-500 cursor-pointer" onClick={handleClose} />
         </div>
 
-        {/* Thông tin khách hàng */}
-        <div className="grid grid-cols-2 gap-4 px-4">
-          {/* Cột 1 */}
-          <div className="space-y-2">
-            {(["id", "name", "gender"] as Array<CustomerField>).map((field) => (
+        {/* Body */}
+        <div className="overflow-y-auto h-[calc(440px-48px)] px-6 pb-4 scrollbar-hide">
+          <div className="grid grid-cols-4 gap-6">
+            {["id", "name", "gender", "phone_number"].map((field) => (
               <div key={field}>
-                <span className="font-medium">{customerFieldLabels[field]}: </span>
+                <label className="text-sm font-medium text-gray-500 block mb-1">{customerFieldLabels[field]}</label>
                 {isEditing ? (
                   <input
                     type="text"
                     name={field}
-                    value={editedCustomer[field]?.toString() || ""}
+                    value={(editedCustomer as any)[field] || ""}
                     onChange={handleChange}
-                    className="border rounded p-1 w-full"
+                    className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
                   />
                 ) : (
-                  <span>{editedCustomer[field]}</span>
+                  <div className="text-gray-900 text-sm">{(editedCustomer as any)[field]}</div>
                 )}
               </div>
             ))}
+            <div>
+              <label className="text-sm font-medium text-gray-500 block mb-1">{customerFieldLabels["score"]}</label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  name="score"
+                  value={editedCustomer.score.toString()}
+                  onChange={handleChange}
+                  className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                />
+              ) : (
+                <div className="text-gray-900 text-sm">{editedCustomer.score}</div>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500 block mb-1">{customerFieldLabels["created_at"]}</label>
+              <div className="text-gray-900 text-sm">{editedCustomer.created_at}</div>
+            </div>
           </div>
 
-          {/* Cột 2 */}
-          <div className="space-y-2">
-            {(["phone_number", "score", "created_at"] as Array<CustomerField>).map((field) => (
-              <div key={field}>
-                <span className="font-medium">{customerFieldLabels[field]}: </span>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    name={field}
-                    value={editedCustomer[field]?.toString() || ""}
-                    onChange={handleChange}
-                    className="border rounded p-1 w-full"
-                  />
-                ) : (
-                  <span>{editedCustomer[field]}</span>
-                )}
-              </div>
-            ))}
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 mt-4">
+            {isEditing ? (
+              <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
+                <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu
+              </button>
+            ) : (
+              <button onClick={handleEdit} className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded">
+                <FontAwesomeIcon icon={faEdit} className="mr-1" /> Chỉnh sửa
+              </button>
+            )}
           </div>
-        </div>
-
-        {/* Nút điều khiển */}
-        <div className="flex justify-end gap-10 mt-4 mb-8 mr-8">
-          {isEditing ? (
-            <button onClick={handleSave} className="px-4 py-2 bg-green-500 text-white rounded">
-              <FontAwesomeIcon icon={faSave} className="mr-2" />Lưu
-            </button>
-          ) : (
-            <button onClick={handleEdit} className="px-4 py-2 bg-blue-500 text-white rounded">
-              <FontAwesomeIcon icon={faEdit} className="mr-2" />Chỉnh sửa
-            </button>
-          )}
-          <button onClick={handleDelete} className="px-4 py-2 bg-red-400 text-white rounded">
-            <FontAwesomeIcon icon={faClose} className="mr-2" />Xóa khách hàng
-          </button>
         </div>
       </div>
     </div>

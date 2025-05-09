@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet";
 import { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faAdd, faFileExport, faTrash, faEye } from "@fortawesome/free-solid-svg-icons";
 import ReceiptDetail from "../components/ReceiptDetail";
 import AddReceiptModal from "../components/AddReceiptModal";
 
@@ -83,85 +83,102 @@ function KhoHang() {
   //MODAL THÊM MỚI
   const [openModalAdd, setOpenModalAdd] = useState(false);
   return (
-    
-    
-    <div className="bg-[#E8EAED]">
+    <div className="min-h-screen bg-gray-50">
       <Helmet>
         <title>Kho hàng</title>
       </Helmet>
+  
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center pb-13">
           <h1 className="text-xl font-bold w-1/5">Kho hàng</h1>
           <div className="flex items-center justify-between w-4/5">
-          {/* Thanh tìm kiếm */}
+            {/* Thanh tìm kiếm */}
             <div className="relative w-2/5 ml-6">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"><FontAwesomeIcon icon={faSearch}></FontAwesomeIcon></span>
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <FontAwesomeIcon icon={faSearch} />
+              </span>
               <input
                 type="text"
                 placeholder="Tìm kiếm..."
-                className="border p-1 pl-10 rounded w-full bg-white "
+                className="border p-1 pl-10 rounded w-full bg-white"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-
-            {/* Các nút chức năng */}
+  
+            {/* Nút chức năng */}
             <div className="space-x-5">
-              <button className="bg-green-500 text-white px-4 py-1 rounded" onClick={() => setOpenModalAdd(true)}><FontAwesomeIcon icon={faAdd} className="mr-2"/>Thêm mới</button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded"><FontAwesomeIcon icon={faFileExport} className="mr-2"/> Xuất file</button>
+              <button
+                className="bg-green-500 text-white px-4 py-1 rounded"
+                onClick={() => setOpenModalAdd(true)}
+              >
+                <FontAwesomeIcon icon={faAdd} className="mr-2" />
+                Thêm mới
+              </button>
+              <button className="bg-green-500 text-white px-4 py-1 rounded">
+                <FontAwesomeIcon icon={faFileExport} className="mr-2" /> Xuất file
+              </button>
             </div>
           </div>
         </div>
-
+  
         <div className="flex">
           {/* Sidebar */}
           <div className="w-1/5 p-4 h-full bg-white shadow rounded-lg">
             <h2 className="font-bold mb-2">Thời gian</h2>
             <ul className="space-y-2">
               <li className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  name="timeFilter" 
-                  id="thisMonth" 
-                  value="thisMonth" 
-                  className="cursor-pointer" 
+                <input
+                  type="radio"
+                  name="timeFilter"
+                  id="thisMonth"
+                  value="thisMonth"
+                  className="cursor-pointer"
                   checked={selectedTime === "thisMonth"}
                   onChange={() => setSelectedTime("thisMonth")}
                 />
-                <label htmlFor="thisMonth" className="cursor-pointer">Tháng này</label>
+                <label htmlFor="thisMonth" className="cursor-pointer">
+                  Tháng này
+                </label>
               </li>
               <li className="flex items-start space-x-2">
-                <input 
-                  type="radio" 
-                  name="timeFilter" 
-                  id="customTime" 
-                  value="customTime" 
-                  className="cursor-pointer" 
+                <input
+                  type="radio"
+                  name="timeFilter"
+                  id="customTime"
+                  value="customTime"
+                  className="cursor-pointer"
                   checked={selectedTime === "customTime"}
                   onChange={() => setSelectedTime("customTime")}
                 />
-                <label htmlFor="customTime" className="cursor-pointer">Thời gian khác</label>
+                <label htmlFor="customTime" className="cursor-pointer">
+                  Thời gian khác
+                </label>
               </li>
               {selectedTime === "customTime" && (
                 <div className="pl-6 space-y-2">
                   <div>
-                    <label htmlFor="startDate" className="block text-sm">Từ ngày:</label>
-                    <input 
-                      type="date" 
-                      id="startDate" 
-                      value={startDate} 
-                      onChange={(e) => setStartDate(e.target.value)} 
+                    <label htmlFor="startDate" className="block text-sm">
+                      Từ ngày:
+                    </label>
+                    <input
+                      type="date"
+                      id="startDate"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
                       className="border p-1 rounded w-full"
                     />
                   </div>
                   <div>
-                    <label htmlFor="endDate" className="block text-sm">Đến ngày:</label>
-                    <input 
-                      type="date" 
-                      id="endDate" 
-                      value={endDate} 
-                      onChange={(e) => setEndDate(e.target.value)} 
+                    <label htmlFor="endDate" className="block text-sm">
+                      Đến ngày:
+                    </label>
+                    <input
+                      type="date"
+                      id="endDate"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
                       className="border p-1 rounded w-full"
                     />
                   </div>
@@ -169,94 +186,133 @@ function KhoHang() {
               )}
             </ul>
           </div>
+  
           {/* DANH SÁCH PHIẾU NHẬP */}
-          {/* TỔNG THU CHI */}
-          <div className="w-4/5">
-            <div className="h-1/6 bg-white ml-5 mb-3 p-5">
-              <div className="flex justify-end gap-20 text-center">
-                <div className="flex flex-col">
-                  <span className="font-bold">Quỹ đầu kỳ</span>
-                  <span className="text-black">0</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold">Tổng thu</span>
-                  <span className="text-blue-600">8,919,000</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold">Tổng chi</span>
-                  <span className="text-red-600">-8,910,000</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold">Tồn quỹ</span>
-                  <span className="text-green-600">9,000</span>
-                </div>
-              </div>
-            </div>
-            {/*BẢNG PHIẾU NHẬP*/}
-            <div className="h-5/6 ml-5">
-              <div className="overflow-y-auto h-80 scrollbar-hide">
-                <table className="w-full border-collapse">
-                 {/* LABEL */}
-                  <thead className="bg-[#E6F1FE] sticky top-0">
-                    <tr className="border-b border-[#A6A9AC]">
-                      <th className="p-2 text-left">Mã phiếu nhập</th>
-                      <th className="p-2 text-left">Thời gian</th>
-                      <th className="p-2 text-left">Nhân viên</th>
-                      <th className="p-2 text-left">Tổng tiền</th>
+          <div className="w-4/5 ml-5">
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã phiếu nhập</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thời gian</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nhân viên</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng tiền</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
                     </tr>
                   </thead>
-                  {/* PHIẾU NHẬP*/}
-                  <tbody>
-                    {displayedReceipts.map((receipt, index) => (
-                      <tr key={receipt.receiptID} className={ `${index % 2 === 0 ? "bg-white" : "bg-gray-100 border-b border-[#A6A9AC]"} hover:bg-[#E6F1FE]`} onClick={() => handleOpenModal(receipt)}>
-                        <td className="p-2">{receipt.receiptID}</td>
-                        <td className="p-2">{receipt.time}</td>
-                        <td className="p-2">{receipt.employeeID}</td>
-                        <td className="p-2">{receipt.totalCost}</td>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {displayedReceipts.map((receipt) => (
+                      <tr key={receipt.receiptID} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.receiptID}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.time}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.employeeID}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.totalCost}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
+                          <button
+                            onClick={() => handleOpenModal(receipt)}
+                            className="text-blue-600 hover:text-blue-900 cursor-pointer"
+                          >
+                            <FontAwesomeIcon icon={faEye} className="mr-1" />
+                            Chi tiết
+                          </button>
+                          <button
+                            onClick={() => alert(`Xóa phiếu ${receipt.receiptID}`)}
+                            className="text-red-600 hover:text-red-900 cursor-pointer"
+                          >
+                            <FontAwesomeIcon icon={faTrash} className="mr-1" />
+                            Xóa
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-
-                
-
               </div>
+  
               {/* Phân trang */}
-              <div className="flex items-center mt-4 ">
+              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                {/* MOBILE: Trang trước / sau */}
+                <div className="flex-1 flex justify-between sm:hidden">
                   <button
                     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    className="p-2 disabled:opacity-50"
                     disabled={currentPage === 1}
+                    className="cursor-pointer relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                   >
-                    ◀
+                    Trang trước
                   </button>
-                  <span>
-                    Trang {currentPage} / {totalPages}
-                  </span>
                   <button
                     onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                    className="p-2  disabled:opacity-50"
                     disabled={currentPage === totalPages}
+                    className="cursor-pointer ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                   >
-                    ▶
+                    Trang sau
                   </button>
+                </div>
+
+                {/* DESKTOP: Số trang + điều hướng */}
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <p className="text-sm text-gray-700">
+                    Hiển thị{" "}
+                    <span className="font-medium">
+                      {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                    </span>{" "}
+                    đến{" "}
+                    <span className="font-medium">
+                      {Math.min(currentPage * ITEMS_PER_PAGE, receipts.length)}
+                    </span>{" "}
+                    của{" "}
+                    <span className="font-medium">{receipts.length}</span> kết quả
+                  </p>
+                  <nav
+                    className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                    aria-label="Pagination"
+                  >
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                    >
+                      Trang trước
+                    </button>
+                    {[...Array(totalPages)].map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentPage(index + 1)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
+                          currentPage === index + 1
+                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                        }`}
+                      >
+                        {index + 1}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                    >
+                      Trang sau
+                    </button>
+                  </nav>
+                </div>
               </div>
-                  
-              {/* Pop-up chi tiết hóa đơn */}
-              {selectedReceipt && (
-                <ReceiptDetail
-                  receipt={selectedReceipt}
-                  isOpen={isModalOpen}
-                  onClose={handleCloseModal}
-                />
-              )}
-              
-            </div>       
+            </div>
+  
+            {/* Chi tiết phiếu */}
+            {selectedReceipt && (
+              <ReceiptDetail
+                receipt={selectedReceipt}
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+              />
+            )}
           </div>
-
-
         </div>
       </div>
+  
+      {/* Modal thêm mới */}
       <AddReceiptModal
         isOpen={openModalAdd}
         onClose={() => setOpenModalAdd(false)}

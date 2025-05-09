@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClose, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClose, faTrash, faSave } from "@fortawesome/free-solid-svg-icons";
 
 interface Product {
   id: string;
@@ -39,31 +39,38 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
     note: "",
   });
 
-  const filteredProducts = useMemo(() =>
-    products.filter(p =>
-      p.name.toLowerCase().includes(search.toLowerCase()) &&
-      !selectedProducts.some(sp => sp.id === p.id)
-    ), [search, products, selectedProducts]);
+  const filteredProducts = useMemo(
+    () =>
+      products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(search.toLowerCase()) &&
+          !selectedProducts.some((sp) => sp.id === p.id)
+      ),
+    [search, products, selectedProducts]
+  );
 
   const handleAddProduct = (product: Product) => {
-    if (!selectedProducts.find(p => p.id === product.id)) {
-      setSelectedProducts([...selectedProducts, {
-        id: product.id,
-        name: product.name,
-        cost: parseInt(product.cost.replace(/\D/g, "")),
-        quantity: 1,
-        discount: 0
-      }]);
+    if (!selectedProducts.find((p) => p.id === product.id)) {
+      setSelectedProducts([
+        ...selectedProducts,
+        {
+          id: product.id,
+          name: product.name,
+          cost: parseInt(product.cost.replace(/\D/g, "")),
+          quantity: 1,
+          discount: 0,
+        },
+      ]);
     }
   };
 
   const handleRemoveProduct = (id: string) => {
-    setSelectedProducts(selectedProducts.filter(p => p.id !== id));
+    setSelectedProducts(selectedProducts.filter((p) => p.id !== id));
   };
 
   const handleChange = (id: string, field: keyof SelectedProduct, value: number) => {
-    setSelectedProducts(prev =>
-      prev.map(p => (p.id === id ? { ...p, [field]: value } : p))
+    setSelectedProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, [field]: value } : p))
     );
   };
 
@@ -76,120 +83,116 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
 
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
-      <div className="bg-white w-11/12 h-[90vh] shadow-lg rounded overflow-hidden flex flex-col">
-        {/* Headbar */}
-        <div className="bg-[#C3F5DB] p-2 text-lg font-semibold flex justify-between items-center">
-          <span>Nhập hàng</span>
-          <FontAwesomeIcon icon={faClose} className="cursor-pointer text-xl" onClick={onClose} />
+      <div className="bg-white rounded-2xl w-11/12 max-h-[90vh] shadow-lg overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-between items-center px-4 py-3 bg-white border-b">
+          <h2 className="text-lg font-semibold text-gray-800">Tạo phiếu nhập hàng</h2>
+          <FontAwesomeIcon icon={faClose} className="text-2xl text-gray-500 cursor-pointer" onClick={onClose} />
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left: Products */}
-          <div className="w-2/3 p-4 overflow-hidden flex flex-col">
+        {/* Content */}
+        <div className="flex divide-x h-[calc(90vh-60px)]">
+          {/* Product List */}
+          <div className="w-2/3 p-4 overflow-auto scrollbar-hide">
             <input
               type="text"
-              placeholder="Tìm hàng hóa theo mã hoặc tên"
+              placeholder="Tìm hàng hóa theo tên..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full border border-gray-400 p-2 rounded mb-2"
+              className="w-full border border-gray-300 p-2 rounded mb-4 text-sm"
             />
-            <div className="overflow-auto flex-1 scrollbar-hide rounded border border-gray-300">
-              <table className="w-full text-sm">
-                <thead className="bg-[#E6F1FE] sticky top-0">
-                  <tr>
-                    <th className="p-3 text-left">STT</th>
-                    <th className="p-3 text-left">Mã sản phẩm</th>
-                    <th className="p-3 text-left">Tên sản phẩm</th>
-                    <th className="p-3 text-left">Số lượng</th>
-                    <th className="p-3 text-left">Đơn giá</th>
-                    <th className="p-3 text-left">Thành tiền</th>
-                    <th className="p-3"></th>
+            <table className="min-w-full divide-y divide-gray-200" >
+              <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                <tr>
+                  <th className="px-4 py-2 text-left">STT</th>
+                  <th className="px-4 py-2 text-left">Tên SP</th>
+                  <th className="px-4 py-2 text-left">Giá</th>
+                  <th className="px-4 py-2 text-left">Số lượng</th>
+                  <th className="px-4 py-2 text-left">Thành tiền</th>
+                  <th className="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedProducts.map((p, index) => (
+                  <tr key={p.id} className="hover:bg-gray-100">
+                    <td className="px-4 py-2 text-sm">{index + 1}</td>
+                    <td className="px-4 py-2 text-sm">{p.name}</td>
+                    <td className="px-4 py-2 text-sm">{p.cost.toLocaleString()}</td>
+                    <td className="px-4 py-2 text-sm">
+                      <input
+                        type="number"
+                        value={p.quantity}
+                        min={1}
+                        className="w-16 border rounded text-sm"
+                        onChange={(e) => handleChange(p.id, "quantity", +e.target.value)}
+                      />
+                    </td>
+                    <td className="px-4 py-2 text-sm">
+                      {(p.quantity * p.cost).toLocaleString()}đ
+                    </td>
+                    <td className="px-4 py-2 text-sm">
+                      <button onClick={() => handleRemoveProduct(p.id)}>
+                        <FontAwesomeIcon icon={faTrash} className="text-red-500" />
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {selectedProducts.map((p, idx) => (
-                    <tr key={p.id} className="odd:bg-white even:bg-gray-100">
-                      <td className="p-2 align-middle">{idx + 1}</td>
-                      <td className="p-2 align-middle">{p.id}</td>
-                      <td className="p-2 align-middle">{p.name}</td>
-                      <td className="p-2 align-middle">
-                        <input
-                          type="number"
-                          min="1"
-                          value={p.quantity}
-                          onChange={e => handleChange(p.id, 'quantity', +e.target.value)}
-                          className="w-16 border border-gray-400 rounded"
-                        />
-                      </td>
-                      <td className="p-2 align-middle">{p.cost.toLocaleString()}</td>
-                      {/* <td className="p-2 align-middle">
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={p.discount}
-                          onChange={e => handleChange(p.id, 'discount', +e.target.value)}
-                          className="w-16 border border-gray-400 rounded"
-                        />
-                      </td> */}
-                      <td className="p-2 align-middle">{(p.quantity * p.cost * (1 - p.discount / 100)).toLocaleString()}</td>
-                      <td className="p-2 align-middle">
-                        <button onClick={() => handleRemoveProduct(p.id)}>
-                          <FontAwesomeIcon icon={faTrash} className="text-500" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredProducts.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="text-center py-4 text-gray-500">Không tìm thấy sản phẩm</td>
-                    </tr>
-                  )}
-                  {filteredProducts.map((p, i) => (
-                    <tr key={p.id} className="cursor-pointer hover:bg-blue-100" onClick={() => handleAddProduct(p)}>
-                      <td colSpan={8} className="px-3 py-2 text-gray-700">
-                        + {p.name} <span className="text-sm text-green-600 ml-2"></span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+                {filteredProducts.map((p) => (
+                  <tr key={p.id} className="hover:bg-blue-50 cursor-pointer" onClick={() => handleAddProduct(p)}>
+                    <td colSpan={6} className="px-4 py-2 text-gray-700 text-sm">
+                      + {p.name}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          {/* Right: Receipt Info */}
-          <div className="w-1/3 p-4 border-l overflow-auto space-y-3 bg-white">
+          {/* Receipt Info */}
+          <div className="w-1/3 p-6 overflow-auto space-y-4">
+            {[
+              { label: "Mã phiếu nhập", key: "receiptID" },
+              { label: "Thời gian", key: "time" },
+              { label: "Người nhập", key: "employeeID" },
+            ].map((field) => (
+              <div key={field.key}>
+                <label className="text-sm font-medium text-gray-500 block mb-1">{field.label}</label>
+                <input
+                  type="text"
+                  value={(receiptInfo as any)[field.key]}
+                  onChange={(e) => setReceiptInfo({ ...receiptInfo, [field.key]: e.target.value })}
+                  className="w-full border rounded px-3 py-1 text-sm"
+                />
+              </div>
+            ))}
+
             <div>
-              <label className="block font-semibold mb-1">Mã nhập hàng:</label>
-              <input className="w-full border border-gray-400 rounded p-2" value={receiptInfo.receiptID} onChange={(e) => setReceiptInfo({ ...receiptInfo, receiptID: e.target.value })} />
+              <label className="text-sm font-medium text-gray-500 block mb-1">Tổng tiền hàng</label>
+              <input
+                type="text"
+                readOnly
+                value={totalCost.toLocaleString("vi-VN") + "đ"}
+                className="w-full border rounded px-3 py-1 bg-gray-100 text-sm"
+              />
             </div>
+
             <div>
-              <label className="block font-semibold mb-1">Thời gian:</label>
-              <input className="w-full border border-gray-400 rounded p-2" value={receiptInfo.time} onChange={(e) => setReceiptInfo({ ...receiptInfo, time: e.target.value })} />
+              <label className="text-sm font-medium text-gray-500 block mb-1">Ghi chú</label>
+              <textarea
+                value={receiptInfo.note}
+                onChange={(e) => setReceiptInfo({ ...receiptInfo, note: e.target.value })}
+                className="w-full border rounded px-3 py-1 text-sm h-24"
+              />
             </div>
-            {/* <div>
-              <label className="block font-semibold mb-1">Nhà cung cấp:</label>
-              <input className="w-full border border-gray-400 rounded p-2" placeholder="-- Chưa chọn --" />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Trạng thái:</label>
-              <input className="w-full border border-gray-400 rounded p-2 bg-gray-100" value="Phiếu tạm" readOnly />
-            </div> */}
-            <div>
-              <label className="block font-semibold mb-1">Người nhập:</label>
-              <input className="w-full border border-gray-400 rounded p-2" value={receiptInfo.employeeID} onChange={(e) => setReceiptInfo({ ...receiptInfo, employeeID: e.target.value })} />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Tổng tiền hàng:</label>
-              <input className="w-full border border-gray-400 rounded p-2 bg-gray-100" readOnly value={totalCost.toLocaleString()} />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Ghi chú:</label>
-              <textarea className="w-full border border-gray-400 rounded p-2" value={receiptInfo.note} onChange={(e) => setReceiptInfo({ ...receiptInfo, note: e.target.value })} />
-            </div>
-            <div className="flex justify-end gap-2">
-              <button className="bg-green-500 text-white px-4 py-2 rounded">✅ Hoàn thành</button>
-              <button onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded">❌ Hủy bỏ</button>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button className="px-4 py-2 bg-green-500 text-white text-sm rounded">
+                <FontAwesomeIcon icon={faSave} className="mr-2" />
+                Lưu phiếu
+              </button>
+              <button onClick={onClose} className="px-4 py-2 bg-red-400 text-white text-sm rounded">
+                Hủy bỏ
+              </button>
             </div>
           </div>
         </div>

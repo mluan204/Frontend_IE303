@@ -13,6 +13,8 @@ import BillDetail from "../components/BillDetail";
 import { fetchBill, fetchBillById, deleteBillById } from "../service/mainApi";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import AddBillModal from "../components/AddBillModal";
+
 
 const ITEMS_PER_PAGE = 10;
 
@@ -59,7 +61,31 @@ interface BillResponse {
   number: number;
   empty: boolean;
 }
+interface Product {
+  id: string;
+  name: string;
+  price: string;
+  cost: string;
+  category: string;
+  stock: number;
+  image: string;
+  supplier: string;
+  expiry: string;
+  notes: string;
+}
 
+const products: Product[] = Array.from({ length: 30 }, (_, i) => ({
+  id: `SP${String(i + 1).padStart(6, "0")}`,
+  name: `Sản phẩm ${i + 1}`,
+  price: (100000 + i * 5000).toLocaleString("vi-VN"),
+  cost: (95000 + i * 5000).toLocaleString("vi-VN"),
+  category: ["Thực phẩm", "Đồ gia dụng", "Thời trang", "Thiết bị điện"][i % 4],
+  stock: 300 - i * 10,
+  image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg/revision/latest?cb=20210323154547&path-prefix=pt-br",
+  supplier: `Nhà cung cấp ${i % 5 + 1}`,
+  expiry: `2025-${(i % 12 + 1).toString().padStart(2, "0")}-15`,
+  notes: `Ghi chú cho sản phẩm ${i + 1}`
+}));
 function HoaDon() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,37 +109,96 @@ function HoaDon() {
   useEffect(() => {
     fetchBills();
   }, [currentPage, startDate, endDate]);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  // const fetchBills = async () => {
+  //   try {
+  //     setLoading(true);
+  //     console.log("Request params:", {
+  //       page: currentPage,
+  //       size: ITEMS_PER_PAGE,
+  //       search: searchTerm,
+  //       startDate,
+  //       endDate,
+  //     });
+
+  //     const response = await fetchBill(
+  //       currentPage,
+  //       ITEMS_PER_PAGE,
+  //       searchTerm,
+  //       startDate,
+  //       endDate
+  //     );
+
+  //     console.log("API Response:", response);
+
+  //     if (!response || !response.content) {
+  //       console.error("Invalid response format:", response);
+  //       setError("Dữ liệu trả về không đúng định dạng");
+  //       return;
+  //     }
+
+  //     setBills(response.content);
+  //     setTotalPages(response.totalPages);
+  //     setTotalElements(response.totalElements);
+  //     setError(null);
+  //   } catch (err) {
+  //     console.error("API Error:", err);
+  //     setError("Không thể tải dữ liệu hóa đơn. Vui lòng thử lại sau.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const fetchBills = async () => {
     try {
       setLoading(true);
-      console.log("Request params:", {
-        page: currentPage,
-        size: ITEMS_PER_PAGE,
-        search: searchTerm,
-        startDate,
-        endDate,
-      });
-
-      const response = await fetchBill(
-        currentPage,
-        ITEMS_PER_PAGE,
-        searchTerm,
-        startDate,
-        endDate
-      );
-
-      console.log("API Response:", response);
-
-      if (!response || !response.content) {
-        console.error("Invalid response format:", response);
-        setError("Dữ liệu trả về không đúng định dạng");
-        return;
-      }
-
-      setBills(response.content);
-      setTotalPages(response.totalPages);
-      setTotalElements(response.totalElements);
+  
+      // Dữ liệu mẫu
+      const mockBills: Bill[] = [
+        {
+          id: 1,
+          total_cost: 200000,
+          after_discount: 180000,
+          customer: {
+            id: 1,
+            name: "Nguyễn Văn A",
+            phone_number: "0909123456",
+          },
+          employee: {
+            id: 2,
+            name: "Trần Thị B",
+            phone_number: "0909988776",
+          },
+          isDeleted: false,
+          billDetails: [
+            {
+              productId: 101,
+              productName: "Sản phẩm 1",
+              price: 100000,
+              afterDiscount: null,
+              quantity: 2,
+            },
+          ],
+          createdAt: new Date().toISOString(),
+          totalQuantity: 2,
+          notes: "Khách quen",
+          pointsToUse: null,
+          is_error: false,
+        },
+      ];
+  
+      const mockResponse: BillResponse = {
+        content: mockBills,
+        totalPages: 1,
+        totalElements: 1,
+        size: 10,
+        number: 0,
+        empty: false,
+      };
+  
+      setBills(mockResponse.content);
+      setTotalPages(mockResponse.totalPages);
+      setTotalElements(mockResponse.totalElements);
       setError(null);
     } catch (err) {
       console.error("API Error:", err);
@@ -122,17 +207,42 @@ function HoaDon() {
       setLoading(false);
     }
   };
-
+  // const handleOpenModal = async (bill: Bill) => {
+  //   try {
+  //     const billData = await fetchBillById(bill.id);
+  //     setSelectedBill(billData);
+  //     setIsModalOpen(true);
+  //   } catch (error) {
+  //     setError("Không thể tải chi tiết hóa đơn. Vui lòng thử lại sau.");
+  //   }
+  // };
   const handleOpenModal = async (bill: Bill) => {
     try {
-      const billData = await fetchBillById(bill.id);
-      setSelectedBill(billData);
+      const mockDetail = {
+        ...bill,
+        billDetails: [
+          {
+            productId: 1,
+            productName: "Sản phẩm A",
+            price: 100000,
+            afterDiscount: null,
+            quantity: 2,
+          },
+          {
+            productId: 2,
+            productName: "Sản phẩm B",
+            price: 150000,
+            afterDiscount: null,
+            quantity: 1,
+          },
+        ],
+      };
+      setSelectedBill(mockDetail);
       setIsModalOpen(true);
     } catch (error) {
       setError("Không thể tải chi tiết hóa đơn. Vui lòng thử lại sau.");
     }
   };
-
   const handleCloseModal = () => {
     setSelectedBill(null);
     setIsModalOpen(false);
@@ -290,9 +400,10 @@ function HoaDon() {
 
             {/* Các nút chức năng */}
             <div className="space-x-5">
-              <button className="bg-green-500 text-white px-4 py-1 rounded">
+              <button className="bg-green-500 text-white px-4 py-1 rounded" onClick={() => setIsAddModalOpen(true)}> 
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
+
               </button>
               <button className="bg-green-500 text-white px-4 py-1 rounded">
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" /> Xuất
@@ -774,6 +885,16 @@ function HoaDon() {
           </div>
         </div>
       )}
+      <AddBillModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        products={products}
+        onSave={(newBill) => {
+          // TODO: xử lý lưu bill mới, ví dụ gọi API
+          console.log("Hóa đơn mới:", newBill);
+          setIsAddModalOpen(false);
+        }}
+      />
     </div>
   );
 }

@@ -56,81 +56,91 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
-      <div className="bg-white w-4/5 shadow-lg rounded">
-        <div className="flex justify-between border-b pt-2 pl-2 bg-[#C3F5DB] mb-5">
-          <h2 className="text-lg p-1 rounded-t-lg font-semibold bg-white">Thêm sản phẩm mới</h2>
-          <FontAwesomeIcon icon={faClose} className="text-2xl mr-2 cursor-pointer" onClick={onClose} color="red" />
+      <div className="bg-white rounded-2xl w-4/5 max-h-[540px] shadow-lg overflow-hidden">
+        
+        {/* Header */}
+        <div className="flex justify-between items-start px-4 py-3 bg-white mb-4 sticky top-0 z-10">
+          <h2 className="text-lg font-semibold text-gray-800">Thêm sản phẩm mới</h2>
+          <FontAwesomeIcon icon={faClose} className="text-2xl text-gray-500 cursor-pointer" onClick={onClose} />
         </div>
-        {/* ẢNH SẢN PHẨM */}
-        <div className="grid grid-cols-4 gap-4 pr-5 px-4">
-          <div className="col-span-1 flex flex-col justify-center items-center">
-            <div className="mb-2 w-32 h-32 border border-gray-300 flex items-center justify-center">
-              {newProduct.image ? (
-                <img src={newProduct.image} alt="Preview" className="object-cover w-full h-full" />
-              ) : (
-                <span className="text-gray-400">No Image</span>
-              )}
+  
+        {/* Body */}
+        <div className="overflow-y-auto h-[calc(440px-48px)] px-6 pb-4 scrollbar-hide">
+          <div className="grid grid-cols-4 gap-6">
+            
+            {/* Cột 1 - Ảnh */}
+            <div className="space-y-4">
+              <div className="flex justify-center items-center flex-col h-full">
+                <div className="w-32 h-32 border border-gray-300 flex items-center justify-center rounded">
+                  {newProduct.image ? (
+                    <img src={newProduct.image} alt="Preview" className="object-cover w-full h-full rounded" />
+                  ) : (
+                    <span className="text-gray-400 text-sm">No Image</span>
+                  )}
+                </div>
+                <button
+                  className="mt-2 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                  onClick={() => alert('Thêm ảnh dô')}
+                >
+                  Thêm ảnh
+                </button>
+              </div>
             </div>
-            <label htmlFor="image-upload" className="bg-blue-500 text-white px-3 py-1 rounded cursor-pointer hover:bg-blue-600">
-              Tải ảnh lên
-            </label>
+  
+            {/* Cột 2 */}
+            <div className="space-y-4">
+              {["id", "name", "category", "supplier"].map((field) => (
+                <div key={field}>
+                  <label className="text-sm font-medium text-gray-500 block mb-1">{field === "id" ? "Mã sản phẩm" : field === "name" ? "Tên sản phẩm" : field === "category" ? "Phân loại" : "Nhà cung cấp"}</label>
+                  <input
+                    type="text"
+                    name={field}
+                    value={(newProduct as any)[field] || ""}
+                    onChange={handleChange}
+                    className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+  
+            {/* Cột 3 */}
+            <div className="space-y-4">
+              {["stock", "cost", "price", "expiry"].map((field) => (
+                <div key={field}>
+                  <label className="text-sm font-medium text-gray-500 block mb-1">
+                    {field === "stock" ? "Tồn kho" : field === "cost" ? "Giá nhập" : field === "price" ? "Giá bán" : "Hạn sử dụng"}
+                  </label>
+                  <input
+                    type={field === "expiry" ? "date" : "text"}
+                    name={field}
+                    value={(newProduct as any)[field] || ""}
+                    onChange={handleChange}
+                    className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+  
+            {/* Cột 4 - Ghi chú */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-500 block mb-1">Ghi chú</label>
+                <textarea
+                  name="notes"
+                  value={newProduct.notes}
+                  onChange={handleChange}
+                  className="border rounded px-2 py-1 w-full text-gray-700 text-sm h-24"
+                />
+              </div>
+            </div>
           </div>
-              
-          <div className="col-span-1 space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Mã sản phẩm</label>
-              <input type="text" name="id" value={newProduct.id} onChange={handleChange} className="border rounded p-1 w-full" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Tên sản phẩm</label>
-              <input type="text" name="name" value={newProduct.name} onChange={handleChange} className="border rounded p-1 w-full" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Phân loại</label>
-              <input type="text" name="category" value={newProduct.category} onChange={handleChange} className="border rounded p-1 w-full" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Nhà cung cấp</label>
-              <input type="text" name="supplier" value={newProduct.supplier} onChange={handleChange} className="border rounded p-1 w-full" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Tồn kho</label>
-              <input type="number" name="stock" value={newProduct.stock} onChange={handleChange} className="border rounded p-1 w-full" />
-            </div>
+  
+          {/* Nút Lưu */}
+          <div className="flex justify-end gap-3 mt-4">
+            <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
+              <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu
+            </button>
           </div>
-
-          <div className="col-span-1 space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Giá nhập</label>
-              <input type="text" name="cost" value={newProduct.cost} onChange={handleChange} className="border rounded p-1 w-full" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Giá bán</label>
-              <input type="text" name="price" value={newProduct.price} onChange={handleChange} className="border rounded p-1 w-full" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Hạn sử dụng</label>
-              <input type="date" name="expiry" value={newProduct.expiry} onChange={handleChange} className="border rounded p-1 w-full" />
-            </div>
-          </div>
-
-          <div className="col-span-1 space-y-2 pl-2">
-            <label className="block text-sm font-medium text-gray-700">Ghi chú</label>
-            <textarea name="notes" value={newProduct.notes} onChange={handleChange} className="border rounded p-1 w-full h-32" />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-10 mt-4 mb-8 mr-8">
-          <button onClick={handleSave} className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
-            <FontAwesomeIcon icon={faSave} className="mr-2" />
-            Lưu
-          </button>
         </div>
       </div>
     </div>
