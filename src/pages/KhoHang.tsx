@@ -1,41 +1,28 @@
 import { Helmet } from "react-helmet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport } from "@fortawesome/free-solid-svg-icons";
 import ReceiptDetail from "../components/ReceiptDetail";
+import { fetchAllReciept, fetchReciept } from "../service/api";
+import { CommonUtils } from "../utils/CommonUtils";
 
 interface Receipt {
-  receiptID: string;
-  time: string;
-  totalCost: string;
-  employeeID: string;
+  id: string;
+  created_at: string;
+  total_cost: string;
+  employee_name: string;
   note: string;
 
 }
 
-// Mảng dữ liệu sản phẩm giả định
-const receipts: Receipt[] = Array.from({ length: 20 }, (_, i) => ({
-  receiptID: `REC${String(i + 1).padStart(6, "0")}`, // ID hóa đơn, ví dụ: BILL000001
-  time: new Date(Date.now() - i * 86400000).toLocaleString("vi-VN"), // Thời gian, lùi lại 1 ngày mỗi hóa đơn
-  totalCost: (1000000 + i * 50000).toLocaleString("vi-VN"), // Tổng tiền, tăng dần
-  employeeID: `EMP${String((i % 3) + 1).padStart(3, "0")}`, // ID nhân viên (3 nhân viên khác nhau)
-  note: `CUS${String((i % 5) + 1).padStart(3, "0")}`, // ID khách hàng (5 khách khác nhau)
-}));
-
-
-
 const ITEMS_PER_PAGE = 10;
 
 function KhoHang() {
-  // Cơ chế phân trang
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
-  const totalPages = Math.ceil(receipts.length / ITEMS_PER_PAGE);
-  const displayedReceipts = receipts.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const [totalPages, setTotalPages] = useState(1);
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // // MODAL CHI TIẾT SẢN PHẨM
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,6 +42,45 @@ function KhoHang() {
   const [selectedTime, setSelectedTime] = useState("thisMonth");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  const getReceipts = async () => {
+    setIsLoading(true);
+    const response = await fetchReciept(currentPage - 1, ITEMS_PER_PAGE, search);
+    console.log(response);
+    if (typeof response === "string") {
+      console.error(response);
+    } else {
+      const data = response.data; 
+      setReceipts(data.content || []);
+      setTotalPages(data.totalPages || 1);
+    }
+
+
+    setIsLoading(false);
+  };
+  useEffect(() => {
+    getReceipts();
+  }, [currentPage, search]);
+  
+  const handleOnClickExport = async () => {
+    try {
+      const res = await fetchAllReciept();
+      if (res ) {
+        const mappedData = res.data.map((item: Receipt) => ({
+        "Mã phiếu nhập": item.id,
+        "Thời gian": new Date(item.created_at).toLocaleString("vi-VN"),
+        "Nhân viên": item.employee_name,
+        "Tổng tiền": item.total_cost,
+        "Ghi chú": item.note || "",
+      }));
+      await CommonUtils.exportExcel(mappedData, "Danh sách phiếu nhập", "Phiếu nhập kho");
+
+      }
+    } catch (error) {
+      console.error("Error exporting product list:", error);
+      alert("Đã xảy ra lỗi khi xuất file!");
+    }
+  };
   return (
     
     <div className="bg-[#E8EAED]">
@@ -81,7 +107,10 @@ function KhoHang() {
             {/* Các nút chức năng */}
             <div className="space-x-5">
               <button className="bg-green-500 text-white px-4 py-1 rounded"><FontAwesomeIcon icon={faAdd} className="mr-2"/>Thêm mới</button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded"><FontAwesomeIcon icon={faFileExport} className="mr-2"/> Xuất file</button>
+              <button className="bg-green-500 text-white px-4 py-1 rounded"
+                onClick={handleOnClickExport}
+              ><FontAwesomeIcon icon={faFileExport} className="mr-2"
+              /> Xuất file</button>
             </div>
           </div>
         </div>
@@ -143,27 +172,7 @@ function KhoHang() {
           </div>
           {/* DANH SÁCH PHIẾU NHẬP */}
           {/* TỔNG THU CHI */}
-          <div className="w-4/5">
-            <div className="h-1/6 bg-white ml-5 mb-3 p-5">
-              <div className="flex justify-end gap-20 text-center">
-                <div className="flex flex-col">
-                  <span className="font-bold">Quỹ đầu kỳ</span>
-                  <span className="text-black">0</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold">Tổng thu</span>
-                  <span className="text-blue-600">8,919,000</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold">Tổng chi</span>
-                  <span className="text-red-600">-8,910,000</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold">Tồn quỹ</span>
-                  <span className="text-green-600">9,000</span>
-                </div>
-              </div>
-            </div>
+          <div className="w-4/5">            
             {/*BẢNG PHIẾU NHẬP*/}
             <div className="h-5/6 ml-5">
               <div className="overflow-y-auto h-80 scrollbar-hide">
@@ -179,13 +188,17 @@ function KhoHang() {
                   </thead>
                   {/* PHIẾU NHẬP*/}
                   <tbody>
-                    {displayedReceipts.map((receipt, index) => (
-                      <tr key={receipt.receiptID} className={ `${index % 2 === 0 ? "bg-white" : "bg-gray-100 border-b border-[#A6A9AC]"} hover:bg-[#E6F1FE]`} onClick={() => handleOpenModal(receipt)}>
-                        <td className="p-2">{receipt.receiptID}</td>
-                        <td className="p-2">{receipt.time}</td>
-                        <td className="p-2">{receipt.employeeID}</td>
-                        <td className="p-2">{receipt.totalCost}</td>
-                      </tr>
+                    {receipts.map((receipt, index) => (
+                        <tr
+                          key={receipt.id}
+                          className={`${index % 2 === 0 ? "bg-white" : "bg-gray-100 border-b border-[#A6A9AC]"} hover:bg-[#E6F1FE]`}
+                          onClick={() => handleOpenModal(receipt)}
+                        >
+                          <td className="p-2">{receipt.id}</td>
+                          <td className="p-2">{new Date(receipt.created_at).toLocaleString("vi-VN")}</td>
+                          <td className="p-2">{receipt.employee_name}</td>
+                          <td className="p-2">{receipt.total_cost}</td>
+                        </tr>
                     ))}
                   </tbody>
                 </table>

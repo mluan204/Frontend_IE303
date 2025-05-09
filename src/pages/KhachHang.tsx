@@ -88,8 +88,16 @@ const removeCustomer = (customerId: string) => {
 const handleOnClickExport = async () => {
     try {
       const res = await getAllCustomer();
+      const mappedCustomers = customers.map((customer) => ({
+        "Mã khách hàng": customer.id,
+        "Giới tính": customer.gender === "male" ? "Nam" : customer.gender === "female" ? "Nữ" : "Khác",
+        "Tên khách hàng": customer.name,
+        "Số điện thoại": customer.phone_number,
+        "Điểm tích lũy": customer.score,
+        "Ngày tạo": new Date(customer.created_at).toLocaleDateString("vi-VN"),
+      }));
       if (res && res.length > 0) {
-        await CommonUtils.exportExcel(res, "Danh sách khách hàng", "Danh sách khách hàng");
+        await CommonUtils.exportExcel(mappedCustomers, "Danh sách khách hàng", "Danh sách khách hàng");
         console.log(res);
       }
     } catch (error) {

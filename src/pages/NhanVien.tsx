@@ -13,7 +13,7 @@ interface Employee {
   birthday: string;
   created_at: string;
   email: string;
-  gender: string;
+  gender: boolean;
   image: string;
   phone_number: string;
   position: string;
@@ -80,8 +80,23 @@ function NhanVien() {
   const handleOnClickExport = async () => {
       try {
         const res = await getAllEmployees();
+        console.log(res);
+        const mappedEmployees = employees.map((emp) => ({
+          "Mã nhân viên": emp.id,
+          "Họ và tên": emp.name,
+          "Giới tính": emp.gender === true ? "Nam" : emp.gender == false ? "Nữ" : "Khác",
+          "Ngày sinh": new Date(emp.birthday).toLocaleDateString("vi-VN"),
+          "Số điện thoại": emp.phone_number,
+          "Email": emp.email,
+          "Địa chỉ": emp.address,
+          "Chức vụ": emp.position,
+          "Mức lương": emp.salary,
+          "Ảnh": emp.image,
+          "Ngày tạo": new Date(emp.created_at).toLocaleDateString("vi-VN"),
+        }));
+
         if (res && res.length > 0) {
-          await CommonUtils.exportExcel(res, "Danh sách nhân viên", "Danh sách nhân viên");
+          await CommonUtils.exportExcel(mappedEmployees, "Danh sách nhân viên", "Danh sách nhân viên");
           console.log(res);
         }
       } catch (error) {

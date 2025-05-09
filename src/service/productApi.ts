@@ -2,11 +2,12 @@ import axios from "axios";
 
 const API_URL = "http://localhost:8080/api";
 let TOKEN : string = "";
-
-  export const fetchProduct = async (page = 0, size = 10, keyword = "") => {
     const tokenStr = localStorage.getItem('token');
     const parsedToken = tokenStr ? JSON.parse(tokenStr) : null;
     TOKEN = parsedToken.token;
+    
+  export const fetchProduct = async (page = 0, size = 10, keyword = "") => {
+
       try {
       const response = await axios.get(`${API_URL}/products/paged`, {
           headers: {
