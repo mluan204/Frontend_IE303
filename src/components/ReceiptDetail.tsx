@@ -84,128 +84,100 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
   if (!isOpen) return null;
 
   return (
-    <div className= "fixed inset-0 bg-black/30 flex justify-center items-center">
-      <div className="bg-white w-4/5 max-h-[600px] shadow-lg overflow-hidden">
-        {/* Thanh tiêu đề */}
-        <div className="flex justify-between border-b pt-2 pl-2 bg-[#C3F5DB] mb-5 sticky top-0 z-10">
-          <h2 className="text-lg p-1 rounded-t-lg font-semibold bg-white">Chi tiết phiếu nhập</h2>
-          <FontAwesomeIcon icon={faClose} className="text-2xl mr-2" onClick={handleClose} color="red" />
+    <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
+      <div className="bg-white rounded-2xl w-4/5 max-h-[600px] shadow-lg overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-between items-start px-4 py-3 bg-white mb-4 sticky top-0 z-10">
+          <h2 className="text-lg font-semibold text-gray-800">Chi tiết phiếu nhập</h2>
+          <FontAwesomeIcon icon={faClose} className="text-2xl text-gray-500 cursor-pointer" onClick={handleClose} />
         </div>
-        {/* Nội dung có thể cuộn */}
-        <div className="overflow-y-auto h-[calc(600px-50px)] p-4 scrollbar-hide">
-          {/* Thông tin hóa đơn*/}
-          <div className="grid grid-cols-3 gap-4">
-            {/* Cột 1: */}
-            <div className="col-span-1 space-y-2">
-              {["receiptID", "time", "totalCost"].map((field) => (
+
+        {/* Body */}
+        <div className="overflow-y-auto h-[calc(600px-48px)] px-6 pb-10 scrollbar-hide">
+          <div className="grid grid-cols-4 gap-6">
+            {/* Column 1 */}
+            <div className="space-y-4">
+              {["receiptID", "time"].map((field) => (
                 <div key={field}>
-                  <span className="font-medium">{receipFieldLabels[field as keyof Receipt]}: </span>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      name={field}
-                      value={(editedBill as any)[field] || ""}
-                      onChange={handleChange}
-                      className="border rounded p-1 w-full"
-                    />
-                  ) : (
-                    <span >{(editedBill as any)[field]}</span>
-                  )}
+                  <label className="text-sm font-medium text-gray-500 block mb-1">{receipFieldLabels[field as keyof Receipt]}</label>
+                  <div className="text-sm text-gray-900">{(editedBill as any)[field]}</div>
                 </div>
               ))}
             </div>
 
-            {/* Cột 2 */}
-            <div className="col-span-1 space-y-2">
-              {["employeeID"].map((field) => (
-                <div key={field} >
-                  <span className="font-medium">{receipFieldLabels[field as keyof Receipt]}: </span>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      name={field}
-                      value={(editedBill as any)[field] || ""}
-                      onChange={handleChange}
-                      className="border rounded p-1 w-full"
-                    />
-                  ) : (
-                    <span>{(editedBill as any)[field]}</span>
-                  )}
+            {/* Column 2 */}
+            <div className="space-y-4">
+              {["totalCost", "employeeID"].map((field) => (
+                <div key={field}>
+                  <label className="text-sm font-medium text-gray-500 block mb-1">{receipFieldLabels[field as keyof Receipt]}</label>
+                  <div className="text-sm text-gray-900">{(editedBill as any)[field]}</div>
                 </div>
               ))}
             </div>
 
-            {/* Cột 3: Ghi chú */}
-            <div className="col-span-1 border-l-1 pl-2">
-              <span className="font-medium">Ghi chú: </span>
-              {isEditing ? (
-                <textarea
-                  name="notes"
-                  // value={editedBill.notes || ""}
-                  // onChange={handleChange}
-                  className="border rounded p-1 w-full h-24"
-                />
-              ) : (
-                <p></p>
-              )}
+            {/* Column 3 */}
+            <div className="space-y-4 col-span-2">
+              <label className="text-sm font-medium text-gray-500 block mb-1">{receipFieldLabels.note}</label>
+              <div className="text-sm text-gray-900 whitespace-pre-wrap">{editedBill.note}</div>
             </div>
           </div>
-          
-          <table className="mt-5 h-40 mx-auto w-full  border-collapse">
-              {/* LABEL */}
-              <thead className="bg-[#E6F1FE] sticky top-0">
-                <tr className="border-b border-[#A6A9AC]">
-                  <th className="p-2 text-left">Tên sản phẩm</th>
-                  <th className="p-2 text-left">Giá nhập</th>
-                  <th className="p-2 text-left">Số lượng</th>
-                  <th className="p-2 text-left">Thành tiền</th>
+
+          {/* Table */}
+          <table className="min-w-full divide-y divide-gray-200 mt-6">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên sản phẩm</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá nhập</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số lượng</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {receiptDetails.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm text-gray-900">{item.productName}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{item.unitPrice.toLocaleString("vi-VN")}đ</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{item.quantity}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{item.totalPrice.toLocaleString("vi-VN")}đ</td>
                 </tr>
-              </thead>
-              {/* CHI TIẾT*/}
-              <tbody>
-                {receiptDetails.map((receipt, index) => (
-                  <tr key={receipt.id} className={ `${index % 2 === 0 ? "bg-white" : "bg-gray-100 border-b border-[#A6A9AC]"} hover:bg-[#E6F1FE]`}>
-                    <td className="p-2">{receipt.productName}</td>
-                    <td className="p-2">{receipt.unitPrice}</td>
-                    <td className="p-2">{receipt.quantity}</td>
-                    <td className="p-2">{receipt.totalPrice}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
 
-          {/* SUMMARY */}
-
-          <div className="p-4 ml-120">
-            <div className="space-y-2">
+          {/* Summary */}
+          <div className="p-4 mt-4">
+            <div className="space-y-2 text-sm text-gray-900">
               <div className="flex justify-between">
-                <span>Tổng số lượng:</span>
+                <span className="text-gray-500">Tổng số lượng:</span>
                 <span>4</span>
               </div>
               <div className="flex justify-between">
-                <span>Tổng tiền hàng:</span>
-                <span>310000</span>
+                <span className="text-gray-500">Tổng tiền hàng:</span>
+                <span>310,000đ</span>
               </div>
               <div className="flex justify-between">
-                <span>Giảm giá phiếu nhập:</span>
+                <span className="text-gray-500">Giảm giá phiếu nhập:</span>
                 <span>0</span>
               </div>
-              <div className="flex justify-between">
-                <span>Tổng cộng:</span>
-                <span>310000</span>
+              <div className="flex justify-between font-semibold">
+                <span className="text-gray-800">Tổng cộng:</span>
+                <span>310,000đ</span>
               </div>
             </div>
           </div>
-          {/* Nút điều khiển */}
-          <div className="flex justify-end gap-10 mt-4 mb-8 mr-4">
-            {isEditing ? (
-              <button onClick={handleSave} className="px-4 py-2 bg-green-500 text-white rounded"><FontAwesomeIcon icon={faSave} className="mr-2"/>Lưu</button>
-            ) : (
-              <button onClick={handleEdit} className="px-4 py-2 bg-blue-500 text-white rounded"><FontAwesomeIcon icon={faEdit} className="mr-2"/>Chỉnh sửa</button>
-            )}
-            <button onClick={handleClose} className="px-4 py-2 bg-red-400 text-white rounded"><FontAwesomeIcon icon={faClose} className="mr-2"/>Xóa phiếu nhập</button>
-          </div>
 
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 mt-4">
+            {isEditing ? (
+              <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
+                <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu
+              </button>
+            ) : (
+              <button onClick={handleEdit} className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded">
+                <FontAwesomeIcon icon={faEdit} className="mr-1" /> Chỉnh sửa
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEllipsisV, faPrint, faTrash, faBan } from "@fortawesome/free-solid-svg-icons";
-import { deleteBillById, fetchAllBill } from "../service/api";
+import { deleteBillById, fetchAllBill } from "../service/mainApi";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
