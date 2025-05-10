@@ -117,3 +117,59 @@ export const fetchSalesChart = async (type: string, startDate: string, endDate: 
     return null;
   }
 };
+
+
+export const fetchAllCategory = async () => {
+  try {
+    const response = await api.get("/category/all");
+    console.log(response);
+    return response;
+  } catch (error) {
+    console.log("Loi khi lay loai san pham", error);
+    return null;
+  }
+}
+
+export const fetchReciept = async (page = 0, size = 10, keyword = "") => {
+  try {
+    const response = await api.get("/receipts/paged", {
+      params: {page, size, ...(keyword && { keyword })},
+    });
+    console.log(response);
+    return response;
+  } catch (error) {
+    return "Loi khi lay nhap kho";
+  }
+}
+
+export const fetchAllReciept = async () => {
+  try {
+    const response = await api.get(`/receipts/all`);
+    console.log(response);
+    return response;
+  } catch (error) {
+    console.log("Loi khi lay tất cả nhập kho", error);
+    return null;
+  }
+}
+
+// export const changePass = async (username: string, oldPass: string, newPass: string) => {
+//   try {
+//     const response = await axios.post(`${API_URL}/v1/change-pass`,
+//       {
+//         username: username,
+//         old_pass: oldPass,
+//         new_pass: newPass,
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${TOKEN}`,
+//         },
+//       }
+//     );
+//     return response.data;
+//   } catch (error) {
+//     console.error("Lỗi khi gọi API đổi mật khẩu", error);
+//     throw new Error("Đổi mật khẩu thất bại");
+//   }
+// };

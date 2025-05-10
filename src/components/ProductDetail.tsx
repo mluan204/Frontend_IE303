@@ -3,16 +3,18 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
 
 interface Product {
-  id: string;
-  name: string;
-  price: string;
-  cost: string;
-  category: string;
-  stock: number;
-  image: string;
-  supplier: string;
-  expiry: string;
-  notes: string;
+  categoryId: number,
+  categoryName: string,
+  dateExpired: Date,
+  description: string,
+  id: number,
+  image: string,
+  inputPrice: number,
+  name: string,
+  price: number,
+  quantityAvailable: number,
+  salePrice: string,
+  suppliers: string
 }
 
 interface ProductDetailProps {
@@ -26,13 +28,15 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
     id: "Mã sản phẩm",
     name: "Tên sản phẩm",
     price: "Giá bán",
-    cost: "Giá nhập",
-    stock: "Tồn kho",
+    inputPrice: "Giá nhập",
+    quantityAvailable: "Tồn kho",
     image: "Ảnh",
-    category: "Phân loại",
-    supplier: "Nhà cung cấp",
-    expiry: "Hạn sử dụng",
-    notes: "Ghi chú",
+    categoryName: "Phân loại",
+    categoryId: "Mã phân loại",         // <-- Bổ sung
+    suppliers: "Nhà cung cấp",
+    salePrice: "Giá khuyến mãi",        // <-- Bổ sung
+    dateExpired: "Hạn sử dụng",
+    description: "Ghi chú",
   };
 
   const [isEditing, setIsEditing] = useState(false);
@@ -118,16 +122,16 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
             {/* Column 4 */}
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-500 block mb-1">{productFieldLabels.notes}</label>
+                <label className="text-sm font-medium text-gray-500 block mb-1">{productFieldLabels.description}</label>
                 {isEditing ? (
                   <textarea
                     name="notes"
-                    value={editedProduct.notes}
+                    value={editedProduct.description}
                     onChange={handleChange}
                     className="border rounded px-2 py-1 w-full text-gray-700 text-sm h-24"
                   />
                 ) : (
-                  <div className="text-gray-900 text-sm whitespace-pre-wrap">{editedProduct.notes}</div>
+                  <div className="text-gray-900 text-sm whitespace-pre-wrap">{editedProduct.description}</div>
                 )}
               </div>
             </div>

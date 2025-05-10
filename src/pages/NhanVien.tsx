@@ -5,7 +5,7 @@ import { faSearch, faAdd, faFileExport, faTrash, faEye } from "@fortawesome/free
 import EmployeeDetail from "../components/EmployeeDetail"; 
 import AddEmployeeModal from "../components/AddEmployeeModal";
 import { getAllEmployees } from "../service/employeeApi";
-
+import { CommonUtils } from "../utils/CommonUtils";
 // Kiểu dữ liệu cho nhân viên
 interface Employee {
   id: string;
@@ -14,7 +14,7 @@ interface Employee {
   birthday: string;
   created_at: string;
   email: string;
-  gender: string;
+  gender: boolean;
   image: string;
   phone_number: string;
   position: string;
@@ -80,6 +80,34 @@ function NhanVien() {
   // MODAL THÊM NHÂN VIÊN
   const [showAddModal, setShowAddModal] = useState(false);
 
+  const handleOnClickExport = async () => {
+      try {
+        const res = await getAllEmployees();
+        console.log(res);
+        const mappedEmployees = employees.map((emp) => ({
+          "Mã nhân viên": emp.id,
+          "Họ và tên": emp.name,
+          "Giới tính": emp.gender === true ? "Nam" : emp.gender == false ? "Nữ" : "Khác",
+          "Ngày sinh": new Date(emp.birthday).toLocaleDateString("vi-VN"),
+          "Số điện thoại": emp.phone_number,
+          "Email": emp.email,
+          "Địa chỉ": emp.address,
+          "Chức vụ": emp.position,
+          "Mức lương": emp.salary,
+          "Ảnh": emp.image,
+          "Ngày tạo": new Date(emp.created_at).toLocaleDateString("vi-VN"),
+        }));
+
+        if (res && res.length > 0) {
+          await CommonUtils.exportExcel(mappedEmployees, "Danh sách nhân viên", "Danh sách nhân viên");
+          console.log(res);
+        }
+      } catch (error) {
+        console.error("Error exporting category list:", error);
+        alert("Đã xảy ra lỗi khi xuất file!");
+      }
+    };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
@@ -114,7 +142,9 @@ function NhanVien() {
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded">
+              <button className="bg-green-500 text-white px-4 py-1 rounded"
+                onClick={handleOnClickExport}
+              >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
                 Xuất file
               </button>

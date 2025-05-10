@@ -3,16 +3,18 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave } from "@fortawesome/free-solid-svg-icons";
 
 interface Product {
-  id: string;
-  name: string;
-  price: string;
-  cost: string;
-  category: string;
-  stock: number;
-  image: string;
-  supplier: string;
-  expiry: string;
-  notes: string;
+  categoryId: number,
+  categoryName: string,
+  dateExpired: Date,
+  description: string,
+  id: number,
+  image: string,
+  inputPrice: number,
+  name: string,
+  price: number,
+  quantityAvailable: number,
+  salePrice: string,
+  suppliers: string
 }
 
 interface ProductAddModalProps {
@@ -22,16 +24,18 @@ interface ProductAddModalProps {
 }
 
 const emptyProduct: Product = {
-  id: "",
-  name: "",
-  price: "",
-  cost: "",
-  category: "",
-  stock: 0,
+  categoryId: 0,
+  categoryName: "",
+  dateExpired: new Date(),
+  description: "",
+  id: 0,
   image: "",
-  supplier: "",
-  expiry: "",
-  notes: "",
+  inputPrice: 0,
+  name: "",
+  price: 0,
+  quantityAvailable: 0,
+  salePrice: "",
+  suppliers: ""
 };
 
 function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
@@ -127,7 +131,7 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
                 <label className="text-sm font-medium text-gray-500 block mb-1">Ghi chú</label>
                 <textarea
                   name="notes"
-                  value={newProduct.notes}
+                  value={newProduct.description}
                   onChange={handleChange}
                   className="border rounded px-2 py-1 w-full text-gray-700 text-sm h-24"
                 />

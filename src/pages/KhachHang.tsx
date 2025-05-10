@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport, faEye, faTrash} from "@fortawesome/free-solid-svg-icons";
 import CustomerDetail from "../components/CustomerDetail"; 
 import { getAllCustomer } from "../service/customerApi";
-import AddCustomerModal from "../components/AddCustomerModal";
+import {CommonUtils} from "../utils/CommonUtils";import AddCustomerModal from "../components/AddCustomerModal";
 
 
 // Kiểu dữ liệu cho khách hàng
@@ -90,6 +90,27 @@ const removeCustomer = (customerId: string) => {
   setCustomers(prevCustomers => prevCustomers.filter(customer => customer.id !== customerId));
 };
   
+const handleOnClickExport = async () => {
+    try {
+      const res = await getAllCustomer();
+      const mappedCustomers = customers.map((customer) => ({
+        "Mã khách hàng": customer.id,
+        "Giới tính": customer.gender === "male" ? "Nam" : customer.gender === "female" ? "Nữ" : "Khác",
+        "Tên khách hàng": customer.name,
+        "Số điện thoại": customer.phone_number,
+        "Điểm tích lũy": customer.score,
+        "Ngày tạo": new Date(customer.created_at).toLocaleDateString("vi-VN"),
+      }));
+      if (res && res.length > 0) {
+        await CommonUtils.exportExcel(mappedCustomers, "Danh sách khách hàng", "Danh sách khách hàng");
+        console.log(res);
+      }
+    } catch (error) {
+      console.error("Error exporting category list:", error);
+      alert("Đã xảy ra lỗi khi xuất file!");
+    }
+  };
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -126,7 +147,9 @@ const removeCustomer = (customerId: string) => {
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded">
+              <button className="bg-green-500 text-white px-4 py-1 rounded"
+                onClick={handleOnClickExport}
+              >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
                 Xuất file
               </button>

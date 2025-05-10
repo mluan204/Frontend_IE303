@@ -3,13 +3,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit} from "@fortawesome/free-solid-svg-icons";
 
 interface Receipt {
-    receiptID: string;
-    time: string;
-    totalCost: string;
-    employeeID: string;
-    note: string;
-}
+  id: string;
+  created_at: string;
+  total_cost: string;
+  employee_name: string;
+  note: string;
 
+
+}
 interface ReceiptDetailProps {
   receipt: Receipt; 
   isOpen: boolean;
@@ -20,10 +21,10 @@ interface ReceiptDetailProps {
 function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
 
   const receipFieldLabels: Record<keyof Receipt, string> = {
-    receiptID: "Mã phiếu nhập",
-    time: "Thời gian",
-    totalCost: "Tổng tiền",
-    employeeID: "Nhân viên",
+    id: "Mã phiếu nhập",
+    created_at: "Thời gian",
+    total_cost: "Tổng tiền",
+    employee_name: "Nhân viên",
     note: "Ghi chú",
   }
 

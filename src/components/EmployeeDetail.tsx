@@ -10,7 +10,7 @@ interface Employee {
     birthday: string;
     created_at: string;
     email: string;
-    gender: string;
+    gender: boolean;
     image: string;
     phone_number: string;
     position: string;
@@ -34,7 +34,7 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
     position: "Chức vụ",
     address: "Địa chỉ",
     birthday: "Ngày sinh",
-    // create_at: "Ngày tạo",
+    created_at: "Ngày tạo",
     email: "Email",
     gender: "Giới tính",
     image: "Ảnh đại diện",

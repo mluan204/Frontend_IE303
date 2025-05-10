@@ -4,51 +4,49 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport, faTrash, faEye} from "@fortawesome/free-solid-svg-icons";
 import ProductDetail from "../components/ProductDetail"; 
 import AddProductModal from "../components/AddProductModal";
-
+import { useEffect } from "react";
+import { fetchProduct } from "../service/mainApi";
+import { fetchAllProduct } from "../service/mainApi";
+import { CommonUtils } from "../utils/CommonUtils";
+import { fetchAllCategory } from "../service/mainApi";
 
 // Định nghĩa kiểu dữ liệu cho product
 interface Product {
-  id: string;
-  name: string;
-  price: string;
-  cost: string;
-  category: string;
-  stock: number;
-  image: string;
-  supplier: string;
-  expiry: string;
-  notes: string;
+  categoryId: number,
+  categoryName: string,
+  dateExpired: Date,
+  description: string,
+  id: number,
+  image: string,
+  inputPrice: number,
+  name: string,
+  price: number,
+  quantityAvailable: number,
+  salePrice: string,
+  suppliers: string
 }
-// Tạo mảng products với kiểu Product[]
-const products: Product[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `SP${String(i + 1).padStart(6, "0")}`,
-  name: `Sản phẩm ${i + 1}`,
-  price: (100000 + i * 5000).toLocaleString("vi-VN"),
-  cost: (95000 + i * 5000).toLocaleString("vi-VN"),
-  category: ["Thực phẩm", "Đồ gia dụng", "Thời trang", "Thiết bị điện"][i % 4],
-  stock: 300 - i * 10,
-  image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg/revision/latest?cb=20210323154547&path-prefix=pt-br",
-  supplier: `Nhà cung cấp ${i % 5 + 1}`,
-  expiry: `2025-${(i % 12 + 1).toString().padStart(2, "0")}-15`,
-  notes: `Ghi chú cho sản phẩm ${i + 1}`
-}));
+interface Category {
+  id: number,   
+  name: string,
+}
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 10; // Số sản phẩm hiển thị trên mỗi trang
 
 function HangHoa() {
   // Cơ chế phân trang
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [totalItems, setTotalItems] = useState(0); 
+  const [categories, setCategories] = useState<Category[]>([]);
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const [searchCategory, setSearchCategory] = useState("");
 
-  const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
-  const displayedProducts = products.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
 
   // MODAL CHI TIẾT SẢN PHẨM
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
 
   // Mở modal và truyền thông tin sản phẩm
   const handleOpenModal = (product: Product) => {
@@ -65,6 +63,58 @@ function HangHoa() {
   //Modal thêm sản phẩm mới
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  const getProducts = async () => {
+    try {
+      const res = await fetchProduct(currentPage - 1, ITEMS_PER_PAGE, search);
+      if (res && res.content) {
+        setProducts(res.content);         // danh sách sản phẩm
+        setTotalItems(res.totalElements); // tổng số sản phẩm
+      }
+      console.log(res);
+    } catch (err) {
+      console.error("Lỗi khi lấy sản phẩm:", err);
+    }
+  };
+  const getCategory = async () => {
+    try {
+      const res = await fetchAllCategory();
+      console.log(res);
+      if (res ) {
+        setCategories(res.data);
+      }
+      console.log(res);
+    } catch (err) {
+      console.error("Lỗi khi lấy sản phẩm:", err);
+    }
+  };
+  useEffect(() => {
+    getCategory();
+    getProducts();
+  }, []);
+  useEffect(() => {  
+    getProducts();
+    getCategory();
+  }, [currentPage, search]);
+  
+  const handleOnClickExport = async () => {
+    const res = await fetchAllProduct() as Product[];
+    if (res && res.length > 0) {
+      const mappedData = res.map((item: Product) => ({
+        "Mã sản phẩm": item.id,
+        "Tên sản phẩm": item.name,
+        "Mô tả": item.description,
+        "Danh mục": item.categoryName,
+        "Giá nhập": item.inputPrice,
+        "Giá bán": item.price,
+        "Giá khuyến mãi": item.salePrice,
+        "Tồn kho": item.quantityAvailable,
+        "Hạn sử dụng": item.dateExpired,
+        "Nhà cung cấp": item.suppliers,
+        "Link ảnh sản phẩm": item.image
+      }));
+      await CommonUtils.exportExcel(mappedData, "Danh sách sản phẩm", "Danh sách sản phẩm");
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
@@ -84,7 +134,7 @@ function HangHoa() {
               <input
                 type="text"
                 placeholder="Tìm kiếm..."
-                className="border p-1 pl-10 rounded w-full bg-white"
+                className="border p-1 pl-10 rounded w-full bg-white focus:outline-none "
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -99,7 +149,9 @@ function HangHoa() {
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded">
+              <button className="bg-green-500 text-white px-4 py-1 rounded"
+                onClick={handleOnClickExport}
+              >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" /> Xuất file
               </button>
             </div>
@@ -113,13 +165,23 @@ function HangHoa() {
             <input
               type="text"
               placeholder="Tìm nhóm hàng"
-              className="border p-2 w-full mb-2 rounded"
+              value={searchCategory} // Liên kết với state
+              onChange={(e) => setSearchCategory(e.target.value)} // Cập nhật state khi nhập
+              className="border px-2 py-1 focus:outline-none w-full mb-2 rounded"
             />
-            <ul className="space-y-2">
-              <li className="p-2 cursor-pointer hover:bg-gray-200">Thuốc lá</li>
-              <li className="p-2 cursor-pointer hover:bg-gray-200">Sữa</li>
-              <li className="p-2 cursor-pointer hover:bg-gray-200">Nước ngọt</li>
-              <li className="p-2 cursor-pointer hover:bg-gray-200">Kẹo bánh</li>
+            <ul className="list-none overflow-y-auto scrollbar-hide max-h-[300px]">
+              {categories
+                .filter((category) =>
+                  category.name.toLowerCase().includes(searchCategory.toLowerCase()) // Lọc danh sách
+                )
+                .map((category) => (
+                  <li
+                    key={category.id}
+                    className="p-2 my-1 cursor-pointer hover:bg-gray-200 hover:rounded-sm"
+                  >
+                    {category.name}
+                  </li>
+                ))}
             </ul>
           </div>
 
@@ -139,43 +201,45 @@ function HangHoa() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
                   </tr>
                 </thead>
+                {/* SẢN PHẨM */}
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {displayedProducts.map((product) => (
-                    <tr
-                      key={product.id}
-                      className="hover:bg-gray-50 cursor-pointer"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-12 h-12"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.price}₫</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.cost}₫</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.stock}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
-                        <button
-                          onClick={() => handleOpenModal(product)}
-                          className="text-blue-600 hover:text-blue-900 cursor-pointer"
-                        >
-                          <FontAwesomeIcon icon={faEye} className="mr-1" />
-                          Chi tiết
-                        </button>
-                        <button
-                          onClick={() => alert(`Xóa sản phẩm ${product.id}`)} // Thay bằng logic xóa thật nếu cần
-                          className="text-red-600 hover:text-red-900 cursor-pointer"
-                        >
-                          <FontAwesomeIcon icon={faTrash} className="mr-1" />
-                          Xóa
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+                    {products.map((product, index) => (
+                      <tr
+                        key={product.id}
+                        className="hover:bg-gray-50 cursor-pointer"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-12 h-12"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.price}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.inputPrice }</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.quantityAvailable }</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
+                          <button
+                            onClick={() => handleOpenModal(product)}
+                            className="text-blue-600 hover:text-blue-900 cursor-pointer"
+                          >
+                            <FontAwesomeIcon icon={faEye} className="mr-1" />
+                            Chi tiết
+                          </button>
+                          <button
+                            onClick={() => alert(`Xóa sản phẩm ${product.id}`)} // Thay bằng logic xóa thật nếu cần
+                            className="text-red-600 hover:text-red-900 cursor-pointer"
+                          >
+                            <FontAwesomeIcon icon={faTrash} className="mr-1" />
+                            Xóa
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+
               </table>
               </div>
 

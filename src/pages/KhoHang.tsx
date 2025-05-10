@@ -1,27 +1,21 @@
 import { Helmet } from "react-helmet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport, faTrash, faEye } from "@fortawesome/free-solid-svg-icons";
 import ReceiptDetail from "../components/ReceiptDetail";
+import { fetchAllReciept, fetchReciept } from "../service/mainApi";
+import { CommonUtils } from "../utils/CommonUtils";
 import AddReceiptModal from "../components/AddReceiptModal";
 
 interface Receipt {
-  receiptID: string;
-  time: string;
-  totalCost: string;
-  employeeID: string;
+  id: string;
+  created_at: string;
+  total_cost: string;
+  employee_name: string;
   note: string;
 
 }
 
-// Mảng dữ liệu phiếu nhập giả định
-const receipts: Receipt[] = Array.from({ length: 20 }, (_, i) => ({
-  receiptID: `REC${String(i + 1).padStart(6, "0")}`, // ID hóa đơn, ví dụ: BILL000001
-  time: new Date(Date.now() - i * 86400000).toLocaleString("vi-VN"), // Thời gian, lùi lại 1 ngày mỗi hóa đơn
-  totalCost: (1000000 + i * 50000).toLocaleString("vi-VN"), // Tổng tiền, tăng dần
-  employeeID: `EMP${String((i % 3) + 1).padStart(3, "0")}`, // ID nhân viên (3 nhân viên khác nhau)
-  note: `CUS${String((i % 5) + 1).padStart(3, "0")}`, // ID khách hàng (5 khách khác nhau)
-}));
 
 interface Product {
   id: string;
@@ -51,15 +45,11 @@ const products: Product[] = Array.from({ length: 30 }, (_, i) => ({
 const ITEMS_PER_PAGE = 10;
 
 function KhoHang() {
-  // Cơ chế phân trang
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
-  const totalPages = Math.ceil(receipts.length / ITEMS_PER_PAGE);
-  const displayedReceipts = receipts.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const [totalPages, setTotalPages] = useState(1);
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // // MODAL CHI TIẾT SẢN PHẨM
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,6 +69,45 @@ function KhoHang() {
   const [selectedTime, setSelectedTime] = useState("thisMonth");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  const getReceipts = async () => {
+    setIsLoading(true);
+    const response = await fetchReciept(currentPage - 1, ITEMS_PER_PAGE, search);
+    console.log(response);
+    if (typeof response === "string") {
+      console.error(response);
+    } else {
+      const data = response.data; 
+      setReceipts(data.content || []);
+      setTotalPages(data.totalPages || 1);
+    }
+
+
+    setIsLoading(false);
+  };
+  useEffect(() => {
+    getReceipts();
+  }, [currentPage, search]);
+  
+  const handleOnClickExport = async () => {
+    try {
+      const res = await fetchAllReciept();
+      if (res ) {
+        const mappedData = res.data.map((item: Receipt) => ({
+        "Mã phiếu nhập": item.id,
+        "Thời gian": new Date(item.created_at).toLocaleString("vi-VN"),
+        "Nhân viên": item.employee_name,
+        "Tổng tiền": item.total_cost,
+        "Ghi chú": item.note || "",
+      }));
+      await CommonUtils.exportExcel(mappedData, "Danh sách phiếu nhập", "Phiếu nhập kho");
+
+      }
+    } catch (error) {
+      console.error("Error exporting product list:", error);
+      alert("Đã xảy ra lỗi khi xuất file!");
+    }
+  };
 
   //MODAL THÊM MỚI
   const [openModalAdd, setOpenModalAdd] = useState(false);
@@ -116,8 +145,11 @@ function KhoHang() {
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded">
-                <FontAwesomeIcon icon={faFileExport} className="mr-2" /> Xuất file
+              <button className="bg-green-500 text-white px-4 py-1 rounded"
+                onClick={handleOnClickExport}
+              >
+                <FontAwesomeIcon icon={faFileExport} className="mr-2"
+               /> Xuất file
               </button>
             </div>
           </div>
@@ -202,12 +234,12 @@ function KhoHang() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {displayedReceipts.map((receipt) => (
-                      <tr key={receipt.receiptID} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.receiptID}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.time}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.employeeID}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.totalCost}</td>
+                    {receipts.map((receipt) => (
+                      <tr key={receipt.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(receipt.created_at).toLocaleString("vi-VN")}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.employee_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.total_cost}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
                           <button
                             onClick={() => handleOpenModal(receipt)}
@@ -217,7 +249,7 @@ function KhoHang() {
                             Chi tiết
                           </button>
                           <button
-                            onClick={() => alert(`Xóa phiếu ${receipt.receiptID}`)}
+                            onClick={() => alert(`Xóa phiếu ${receipt.id}`)}
                             className="text-red-600 hover:text-red-900 cursor-pointer"
                           >
                             <FontAwesomeIcon icon={faTrash} className="mr-1" />
