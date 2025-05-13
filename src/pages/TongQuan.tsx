@@ -11,7 +11,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Bar } from "react-chartjs-2";
 import "chart.js/auto";
-import { fetchSummary, fetchSalesChart } from "../service/api";
+import { fetchSummary, fetchSalesChart } from "../service/mainApi";
 
 function TongQuan() {
   const [timeRange, setTimeRange] = useState("Tháng này");

@@ -10,38 +10,21 @@ import Login from "../pages/Login";
 import BanHang from "../pages/BanHang";
 import LichsuHoadon from "../pages/LichsuHoadon";
 import DoanhThu from "../pages/DoanhThu";
-import { ReactNode } from "react";
+// import { ReactNode } from "react";
 
-interface ProtectedRouteProps {
-  children: ReactNode;
-}
+// interface ProtectedRouteProps {
+//   children: ReactNode;
+// }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const tokenStr = localStorage.getItem("token");
-  console.log(tokenStr);
-  const parsedToken = tokenStr ? JSON.parse(tokenStr) : false; // Kiểm tra token trong localStorage
-
-  if (!parsedToken.token || parsedToken.exp < new Date()) {
-    localStorage.removeItem("token");
-
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-};
+// const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+//   return children;
+// };
 
 const Router = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <TongQuan />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/" element={<TongQuan />}/>
       <Route path="/hang-hoa" element={<HangHoa />} />
       <Route path="/hoa-don" element={<HoaDon />} />
       <Route path="/kho-hang" element={<KhoHang />} />

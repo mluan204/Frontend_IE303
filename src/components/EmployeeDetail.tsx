@@ -26,7 +26,7 @@ interface EmployeeDetailProps {
 
 // type EmployeeField = keyof Employee;
 
-function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
+function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeDetailProps) {
 
   const employeeFieldLabels: { [key in keyof Employee]?: string } = {
     id: "Mã nhân viên",
@@ -34,7 +34,7 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
     position: "Chức vụ",
     address: "Địa chỉ",
     birthday: "Ngày sinh",
-    create_at: "Ngày tạo",
+    created_at: "Ngày tạo",
     email: "Email",
     gender: "Giới tính",
     image: "Ảnh đại diện",

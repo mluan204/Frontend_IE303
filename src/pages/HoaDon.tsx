@@ -10,7 +10,7 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import BillDetail from "../components/BillDetail";
-import { fetchBill, fetchBillById, deleteBillById } from "../service/api";
+import { fetchBill, fetchBillById, deleteBillById } from "../service/mainApi";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
