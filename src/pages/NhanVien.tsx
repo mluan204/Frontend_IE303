@@ -21,25 +21,11 @@ interface Employee {
   salary: number;
 }
 
-// Danh sách nhân viên mẫu
-const mockEmployees: Employee[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `NV${String(i + 1).padStart(6, "0")}`,
-  name: `Nhân viên ${i + 1}`,
-  address: `Địa chỉ ${i + 1}`,
-  birthday: `199${i % 10}-01-01`,
-  created_at: `2023-0${(i % 9) + 1}-15`,
-  email: `nhanvien${i + 1}@gmail.com`,
-  gender: i % 2 === 0 ? "Nam" : "Nữ",
-  image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg",
-  phone_number: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
-  position: i % 2 === 0 ? "Quản lý" : "Nhân viên",
-  salary: 8000000 + i * 250000,
-}));
+
 const ITEMS_PER_PAGE = 10;
 
 function NhanVien() {
-    // const [employees, setEmployees] = useState<Employee[]>([]);
-    const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
+    const [employees, setEmployees] = useState<Employee[]>([]);
 
     useEffect( () => {
       const fetchData = async () => {
@@ -114,35 +100,39 @@ function NhanVien() {
         <title>Nhân viên</title>
       </Helmet>
   
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Header */}
-        <div className="flex items-center pb-13">
-          <h1 className="text-xl font-bold w-1/5">Nhân viên</h1>
-          <div className="flex items-center justify-between w-4/5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-5">
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <h1 className="text-xl font-bold whitespace-nowrap">Nhân viên</h1>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
             {/* Tìm kiếm */}
-            <div className="relative w-2/5 ml-6">
+            <div className="relative w-full sm:w-1/2">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                 <FontAwesomeIcon icon={faSearch} />
               </span>
               <input
                 type="text"
                 placeholder="Tìm kiếm..."
-                className="border p-1 pl-10 rounded w-full bg-white"
+                className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-  
-            {/* Nút chức năng */}
-            <div className="space-x-5">
+
+            {/* Nút */}
+            <div className="flex gap-2">
               <button
-                className="bg-green-500 text-white px-4 py-1 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded"
                 onClick={() => setShowAddModal(true)}
               >
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded"
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded"
                 onClick={handleOnClickExport}
               >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />

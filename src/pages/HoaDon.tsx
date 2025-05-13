@@ -294,46 +294,151 @@ function HoaDon() {
         <title>Hóa đơn</title>
       </Helmet>
 
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center pb-13">
-          <h1 className="text-xl font-bold w-1/5">Hóa đơn</h1>
-          <div className="flex items-center justify-between w-4/5">
-            {/* Thanh tìm kiếm */}
-            <div className="relative w-2/5 ml-6">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <FontAwesomeIcon icon={faSearch}></FontAwesomeIcon>
-              </span>
-              <input
-                type="text"
-                placeholder="Tìm kiếm..."
-                className="border p-1 pl-10 rounded w-full bg-white"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={handleSearch}
-              />
-            </div>
-
-            {/* Các nút chức năng */}
-            <div className="space-x-5">
-              <button className="bg-green-500 text-white px-4 py-1 rounded" onClick={() => setIsAddModalOpen(true)}> 
-                <FontAwesomeIcon icon={faAdd} className="mr-2" />
-                Thêm mới
-
-              </button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded">
-                <FontAwesomeIcon icon={faFileExport} className="mr-2" /> Xuất
-                file
-              </button>
-            </div>
-          </div>
+      <div className="p-4 sm:p-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-5">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <h1 className="text-xl font-bold whitespace-nowrap">Hóa đơn</h1>
         </div>
 
-        <div className="flex">
-          {/* Sidebar */}
-          <div className="w-1/5 p-4 h-full bg-white shadow rounded-lg">
-            <h2 className="font-bold mb-2">Thời gian</h2>
-            <ul className="space-y-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+          {/* Tìm kiếm */}
+          <div className="relative w-full sm:w-1/2">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <FontAwesomeIcon icon={faSearch} />
+            </span>
+            <input
+              type="text"
+              placeholder="Tìm kiếm..."
+              className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleSearch}
+            />
+          </div>
+
+          {/* Nút chức năng */}
+          <div className="flex gap-2">
+            <button
+              className="bg-green-500 text-white px-4 py-2 rounded"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              <FontAwesomeIcon icon={faAdd} className="mr-2" />
+              Thêm mới
+            </button>
+            <button className="bg-green-500 text-white px-4 py-2 rounded">
+              <FontAwesomeIcon icon={faFileExport} className="mr-2" />
+              Xuất file
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Bộ lọc thời gian - phiên bản mobile */}
+      <div className="mb-4 md:hidden bg-white shadow rounded-lg p-4">
+        <h2 className="font-bold mb-2">Thời gian</h2>
+        <ul className="space-y-2">
+          <li className="flex items-center space-x-2">
+            <input
+              type="radio"
+              name="timeFilter"
+              id="allTimeMobile"
+              value="allTime"
+              checked={selectedTime === "allTime"}
+              onChange={() => setSelectedTime("allTime")}
+              className="cursor-pointer"
+            />
+            <label htmlFor="allTimeMobile" className="cursor-pointer">
+              Tất cả
+            </label>
+          </li>
+          <li className="flex items-center space-x-2">
+            <input
+              type="radio"
+              name="timeFilter"
+              id="thisMonthMobile"
+              value="thisMonth"
+              checked={selectedTime === "thisMonth"}
+              onChange={() => setSelectedTime("thisMonth")}
+              className="cursor-pointer"
+            />
+            <label htmlFor="thisMonthMobile" className="cursor-pointer">
+              Tháng này
+            </label>
+          </li>
+          <li className="flex items-start space-x-2">
+            <input
+              type="radio"
+              name="timeFilter"
+              id="customTimeMobile"
+              value="customTime"
+              checked={selectedTime === "customTime"}
+              onChange={() => setSelectedTime("customTime")}
+              className="cursor-pointer"
+            />
+            <label htmlFor="customTimeMobile" className="cursor-pointer">
+              Thời gian khác
+            </label>
+          </li>
+          {selectedTime === "customTime" && (
+            <div className="pl-6 space-y-2">
+              <div>
+                <label htmlFor="startDateMobile" className="block text-sm">
+                  Từ ngày:
+                </label>
+                <input
+                  type="date"
+                  id="startDateMobile"
+                  value={
+                    tempStartDate
+                      ? tempStartDate.split("-").reverse().join("-")
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const [year, month, day] = e.target.value.split("-");
+                    setTempStartDate(`${day}-${month}-${year}`);
+                  }}
+                  className="border p-1 rounded w-full"
+                />
+              </div>
+              <div>
+                <label htmlFor="endDateMobile" className="block text-sm">
+                  Đến ngày:
+                </label>
+                <input
+                  type="date"
+                  id="endDateMobile"
+                  value={
+                    tempEndDate
+                      ? tempEndDate.split("-").reverse().join("-")
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const [year, month, day] = e.target.value.split("-");
+                    setTempEndDate(`${day}-${month}-${year}`);
+                  }}
+                  className="border p-1 rounded w-full"
+                />
+              </div>
+
+              <div className="flex justify-end mt-4">
+                <button
+                  className="px-6 py-1 cursor-pointer text-white bg-[#0070f4] hover:bg-[#0400f4] rounded transition-all duration-200 outline-none ring-offset-2 focus-visible:ring-2 active:scale-[0.98]"
+                  onClick={onClickButton}
+                >
+                  Áp dụng
+                </button>
+              </div>
+            </div>
+          )}
+        </ul>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Sidebar desktop */}
+        <div className="hidden md:block w-full md:w-1/4 bg-white shadow rounded-lg p-4">
+          <h2 className="font-bold mb-2">Thời gian</h2>
+          <ul className="space-y-2">
               <li className="flex items-center space-x-2">
                 <input
                   type="radio"
@@ -431,7 +536,7 @@ function HoaDon() {
           </div>
 
           {/* Main Content */}
-          <div className="w-4/5 ml-5">
+          <div className="w-full md:w-3/4">
             {loading ? (
               <div className="flex justify-center items-center h-80">
                 <div className="text-center">
