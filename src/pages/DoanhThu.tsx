@@ -4,7 +4,7 @@ import { faCalendarAlt } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Bar } from "react-chartjs-2";
-import { fetchSalesChart } from "../service/api";
+import { fetchSalesChart } from "../service/mainApi";
 
 function DoanhThu() {
   const [selectedDate, setSelectedDate] = useState(new Date());

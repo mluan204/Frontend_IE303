@@ -37,6 +37,7 @@ function TongQuan() {
 
   const loadData = async () => {
     const rs = await fetchSummary();
+    console.log(rs);
     setSummary(rs);
   };
 
