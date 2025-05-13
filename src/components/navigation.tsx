@@ -6,10 +6,9 @@ import ChangePassword from "./ChangePassword";
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isAccountPopupOpen, setIsAccountPopupOpen] = useState(false);  
+  const [isAccountPopupOpen, setIsAccountPopupOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null); // Tham chiếu đến popup
-
 
   const navItems = [
     { path: "/", icon: "fas fa-eye", label: "Tổng quan" },
@@ -23,7 +22,10 @@ const Navigation = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+      if (
+        popupRef.current &&
+        !popupRef.current.contains(event.target as Node)
+      ) {
         setIsAccountPopupOpen(false);
       }
     };
@@ -40,7 +42,7 @@ const Navigation = () => {
   };
 
   return (
-    <div className="bg-white shadow-md" >
+    <div className="bg-white shadow-md">
       {/* Top navigation bar */}
       <nav className="flex items-center justify-between py-3 px-8 border-b border-gray-100">
         <div className="flex items-center space-x-3">
@@ -52,17 +54,18 @@ const Navigation = () => {
           <span className="font-bold text-xl text-gray-800">UIT Store</span>
         </div>
         <div className="flex items-center mt-2">
-          <button className="border border-gray-200 px-2 py-1 bg-gray-100 hover:bg-gray-300 rounded-full transition-colors"
+          <button
+            className="border border-gray-200 px-2 py-1 bg-gray-100 hover:bg-gray-300 rounded-full transition-colors"
             onClick={() => setIsAccountPopupOpen(!isAccountPopupOpen)}
           >
             <i className="fas fa-user text-gray-600 "></i>
           </button>
           {isAccountPopupOpen && (
-            <div 
+            <div
               ref={popupRef}
               className="absolute right-8 top-[50px] w-48 bg-white border border-gray-200 rounded-lg shadow-lg"
             >
-              <ul >
+              <ul>
                 <li>
                   <button
                     className="w-full text-left px-4 py-2 rounded-t-lg hover:bg-gray-100"
@@ -71,7 +74,7 @@ const Navigation = () => {
                       setIsAccountPopupOpen(false); // Đóng popup Account
                     }}
                   >
-                    <i className="fas fa-key text-gray-600 mr-1"></i> 
+                    <i className="fas fa-key text-gray-600 mr-1"></i>
                     <span>Thay đổi mật khẩu</span>
                   </button>
                 </li>
@@ -80,7 +83,7 @@ const Navigation = () => {
                     className="w-full text-left px-4 py-2 rounded-b-lg hover:bg-gray-100"
                     onClick={handleLogout}
                   >
-                    <i className="fas fa-sign-out-alt text-gray-600 mr-1"></i> 
+                    <i className="fas fa-sign-out-alt text-gray-600 mr-1"></i>
                     <span>Đăng xuất</span>
                   </button>
                 </li>

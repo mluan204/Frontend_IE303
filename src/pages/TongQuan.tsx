@@ -13,23 +13,7 @@ import { Bar } from "react-chartjs-2";
 import "chart.js/auto";
 import { fetchSummary, fetchSalesChart } from "../service/mainApi";
 
-// type SummaryType = {
-//   homnay: {
-//     tongbill: number;
-//     khachhangmoi: number;
-//     sanphamdaban: number;
-//     doanhthu: number;
-//   };
-//   homqua: {
-//     tongbill: number;
-//     khachhangmoi: number;
-//     sanphamdaban: number;
-//     doanhthu: number;
-//   };
-// };
-
 function TongQuan() {
-
   const [timeRange, setTimeRange] = useState("Tháng này");
   const [activeTab, setActiveTab] = useState("Theo ngày");
   const [sumary, setSummary] = useState<any>(null);
@@ -53,6 +37,7 @@ function TongQuan() {
 
   const loadData = async () => {
     const rs = await fetchSummary();
+    console.log(rs);
     setSummary(rs);
   };
 
@@ -68,10 +53,6 @@ function TongQuan() {
         startDate.setHours(0, 0, 0, 0);
         endDate = new Date(startDate);
         endDate.setHours(23, 59, 59, 999);
-        break;
-      case "7 ngày qua":
-        startDate.setDate(startDate.getDate() - 7);
-        startDate.setHours(0, 0, 0, 0);
         break;
       case "Tháng này":
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -99,6 +80,14 @@ function TongQuan() {
         break;
     }
 
+    // Convert to UTC to match backend timezone
+    const startDateUTC = new Date(
+      startDate.getTime() - startDate.getTimezoneOffset() * 60000
+    );
+    const endDateUTC = new Date(
+      endDate.getTime() - endDate.getTimezoneOffset() * 60000
+    );
+
     const type =
       activeTab === "Theo ngày"
         ? "DAILY"
@@ -107,8 +96,8 @@ function TongQuan() {
         : "WEEKLY";
     const data = await fetchSalesChart(
       type,
-      startDate.toISOString(),
-      endDate.toISOString()
+      startDateUTC.toISOString(),
+      endDateUTC.toISOString()
     );
 
     if (data) {
@@ -189,7 +178,7 @@ function TongQuan() {
     },
   ];
 
-  const timeRanges = ["Hôm qua", "7 ngày qua", "Tháng này", "Tháng trước"];
+  const timeRanges = ["Hôm qua", "Tháng này", "Tháng trước"];
 
   return (
     <div className="min-h-screen bg-gray-50">
