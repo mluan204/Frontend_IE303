@@ -46,7 +46,6 @@ function TongQuan() {
     let startDate = new Date();
     let endDate = new Date();
 
-    // Tính toán khoảng thời gian dựa trên timeRange
     switch (timeRange) {
       case "Hôm qua":
         startDate.setDate(startDate.getDate() - 1);
@@ -56,27 +55,11 @@ function TongQuan() {
         break;
       case "Tháng này":
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        endDate = new Date(
-          now.getFullYear(),
-          now.getMonth() + 1,
-          0,
-          23,
-          59,
-          59,
-          999
-        );
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
         break;
       case "Tháng trước":
         startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        endDate = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          0,
-          23,
-          59,
-          59,
-          999
-        );
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
         break;
     }
 
@@ -88,17 +71,8 @@ function TongQuan() {
       endDate.getTime() - endDate.getTimezoneOffset() * 60000
     );
 
-    const type =
-      activeTab === "Theo ngày"
-        ? "DAILY"
-        : activeTab === "Theo giờ"
-        ? "HOURLY"
-        : "WEEKLY";
-    const data = await fetchSalesChart(
-      type,
-      startDateUTC.toISOString(),
-      endDateUTC.toISOString()
-    );
+    const type = activeTab === "Theo ngày" ? "DAILY" : activeTab === "Theo giờ" ? "HOURLY" : "WEEKLY";
+    const data = await fetchSalesChart(type, startDate.toISOString(), endDate.toISOString());
 
     if (data) {
       setChartData({
@@ -122,59 +96,37 @@ function TongQuan() {
       label: "Doanh thu",
       value: sumary?.homnay?.doanhthu?.toLocaleString("vi") || 0,
       percent:
-        sumary?.homqua?.doanhthu === 0
-          ? "0"
-          : calPercent(sumary?.homnay?.doanhthu, sumary?.homqua?.doanhthu),
+        sumary?.homqua?.doanhthu === 0 ? "0" : calPercent(sumary?.homnay?.doanhthu, sumary?.homqua?.doanhthu),
       icon: faDollarSign,
       color: "#4AD991",
-      positive:
-        sumary?.homnay?.doanhthu >= sumary?.homqua?.doanhthu ? true : false,
+      positive: sumary?.homnay?.doanhthu >= sumary?.homqua?.doanhthu,
     },
     {
       label: "Hóa đơn",
       value: sumary?.homnay?.tongbill || 0,
       percent:
-        sumary?.homqua?.tongbill === 0
-          ? "0"
-          : calPercent(sumary?.homnay?.tongbill, sumary?.homqua?.tongbill),
+        sumary?.homqua?.tongbill === 0 ? "0" : calPercent(sumary?.homnay?.tongbill, sumary?.homqua?.tongbill),
       icon: faReceipt,
       color: "#0070F4",
-      positive:
-        sumary?.homnay?.tongbill >= sumary?.homqua?.tongbill ? true : false,
+      positive: sumary?.homnay?.tongbill >= sumary?.homqua?.tongbill,
     },
     {
       label: "Sản phẩm đã bán",
       value: sumary?.homnay?.sanphamdaban || 0,
       percent:
-        sumary?.homqua?.sanphamdaban === 0
-          ? "0"
-          : calPercent(
-              sumary?.homnay?.sanphamdaban,
-              sumary?.homqua?.sanphamdaban
-            ),
+        sumary?.homqua?.sanphamdaban === 0 ? "0" : calPercent(sumary?.homnay?.sanphamdaban, sumary?.homqua?.sanphamdaban),
       icon: faBox,
       color: "#FEC53D",
-      positive:
-        sumary?.homnay?.sanphamdaban >= sumary?.homqua?.sanphamdaban
-          ? true
-          : false,
+      positive: sumary?.homnay?.sanphamdaban >= sumary?.homqua?.sanphamdaban,
     },
     {
       label: "Khách hàng",
       value: sumary?.homnay?.khachhangmoi || 0,
       percent:
-        sumary?.homqua?.khachhangmoi === 0
-          ? "0"
-          : calPercent(
-              sumary?.homnay?.khachhangmoi,
-              sumary?.homqua?.khachhangmoi
-            ),
+        sumary?.homqua?.khachhangmoi === 0 ? "0" : calPercent(sumary?.homnay?.khachhangmoi, sumary?.homqua?.khachhangmoi),
       icon: faUsers,
       color: "#F93C65",
-      positive:
-        sumary?.homnay?.khachhangmoi >= sumary?.homqua?.khachhangmoi
-          ? true
-          : false,
+      positive: sumary?.homnay?.khachhangmoi >= sumary?.homqua?.khachhangmoi,
     },
   ];
 
@@ -186,27 +138,27 @@ function TongQuan() {
         <title>Tổng quan</title>
       </Helmet>
 
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
             KẾT QUẢ BÁN HÀNG HÔM NAY
           </h1>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
           {summaryData.map((item, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-1">
                     {item.label}
                   </h3>
-                  <p className="text-2xl font-bold text-gray-800 mb-2">
+                  <p className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
                     {item.value}
                   </p>
                   <div className="flex items-center">
@@ -226,13 +178,13 @@ function TongQuan() {
                   </div>
                 </div>
                 <div
-                  className="w-12 h-12 flex items-center justify-center rounded-lg"
+                  className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg"
                   style={{ backgroundColor: `${item.color}20` }}
                 >
                   <FontAwesomeIcon
                     icon={item.icon}
                     color={item.color}
-                    className="text-xl"
+                    className="text-lg sm:text-xl"
                   />
                 </div>
               </div>
@@ -241,18 +193,18 @@ function TongQuan() {
         </div>
 
         {/* Chart Section */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-800">
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 gap-4">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">
               DOANH THU BÁN HÀNG
             </h2>
-            <div className="flex items-center space-x-4">
-              <div className="flex space-x-2 bg-gray-100 rounded-lg p-1">
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:space-x-4">
+              <div className="flex flex-wrap gap-2 bg-gray-100 rounded-lg p-1">
                 {["Theo ngày", "Theo giờ", "Theo thứ"].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors
                       ${
                         activeTab === tab
                           ? "bg-white text-blue-600 shadow-sm"
@@ -263,12 +215,12 @@ function TongQuan() {
                   </button>
                 ))}
               </div>
-              <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+              <div className="flex flex-wrap gap-2 bg-gray-100 rounded-lg p-1">
                 {timeRanges.map((range) => (
                   <button
                     key={range}
                     onClick={() => setTimeRange(range)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors
                       ${
                         timeRange === range
                           ? "bg-white text-blue-600 shadow-sm"
@@ -282,7 +234,7 @@ function TongQuan() {
             </div>
           </div>
 
-          <div className="h-[400px]">
+          <div className="h-[300px] sm:h-[400px]">
             {chartData && (
               <Bar
                 data={chartData}
