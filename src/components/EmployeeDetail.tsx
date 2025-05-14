@@ -4,30 +4,27 @@ import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
 import { deleteEmployeeById, updateEmployeeById } from "../service/employeeApi";
 
 interface Employee {
-    id: string;
-    name: string;
-    address: string;
-    birthday: string;
-    created_at: string;
-    email: string;
-    gender: boolean;
-    image: string;
-    phone_number: string;
-    position: string;
-    salary: number;
-  }
+  id: string;
+  name: string;
+  address: string;
+  birthday: string;
+  created_at: string;
+  email: string;
+  gender: boolean;
+  image: string;
+  phone_number: string;
+  position: string;
+  salary: number;
+}
 
 interface EmployeeDetailProps {
   employee: Employee;
   isOpen: boolean;
   onClose: () => void;
-  removeEmployee: (id:string) =>void;
+  removeEmployee: (id: string) => void;
 }
 
-// type EmployeeField = keyof Employee;
-
 function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeDetailProps) {
-
   const employeeFieldLabels: { [key in keyof Employee]?: string } = {
     id: "Mã nhân viên",
     name: "Họ và tên",
@@ -41,7 +38,6 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
     phone_number: "Số điện thoại",
     salary: "Lương",
   };
-  
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedEmployee, setEditedEmployee] = useState(employee);
@@ -49,26 +45,17 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
   const handleEdit = () => setIsEditing(true);
   const handleSave = async () => {
     setIsEditing(false);
-    // Gọi hàm lưu ở đây
-    employee.address = editedEmployee.address;
-    employee.birthday = editedEmployee.birthday;
-    employee.email = editedEmployee.email;
-    employee.gender = editedEmployee.gender;
-    employee.image = editedEmployee.address;
-    employee.name = editedEmployee.name;
-    employee.phone_number = editedEmployee.phone_number;
-    employee.position = editedEmployee.position;
-    employee.salary = editedEmployee.salary;
+    Object.assign(employee, editedEmployee);
     await updateEmployeeById(editedEmployee);
   };
+
   const handleClose = () => {
     setIsEditing(false);
     onClose();
   };
+
   const handleDelete = async () => {
-    // Gọi hàm xóa ở đây
     await deleteEmployeeById(employee.id);
-    // removeEmployee(employee.id);
     onClose();
   };
 
@@ -81,7 +68,7 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
 
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
-      <div className="bg-white rounded-2xl w-4/5 max-h-[540px] shadow-lg overflow-hidden">
+      <div className="bg-white rounded-2xl w-[95%] md:w-4/5 max-h-[90vh] shadow-lg overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-start px-4 py-3 bg-white mb-4 sticky top-0 z-10">
           <h2 className="text-lg font-semibold text-gray-800">Chi tiết nhân viên</h2>
@@ -89,13 +76,11 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto h-[calc(440px-48px)] px-6 pb-4 scrollbar-hide">
-          <div className="grid grid-cols-4 gap-6">
-            {/* Column 1: Ảnh */}
-            <div className="space-y-4">
-              <div className="flex justify-center items-center flex-col h-full">
-                <img src={editedEmployee.image} alt={editedEmployee.name} className="w-32 h-32 object-cover rounded" />
-              </div>
+        <div className="overflow-y-auto max-h-[calc(90vh-56px)] px-6 pb-6 scrollbar-hide">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Column 1: Avatar */}
+            <div className="flex justify-center items-center flex-col">
+              <img src={editedEmployee.image} alt={editedEmployee.name} className="w-32 h-32 object-cover rounded" />
             </div>
 
             {/* Column 2 */}
@@ -140,7 +125,7 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
 
             {/* Column 4 */}
             <div className="space-y-4">
-              {(["gender"] as (keyof Employee)[]).map((field) => (
+              {(["gender", "created_at"] as (keyof Employee)[]).map((field) => (
                 <div key={field}>
                   <label className="text-sm font-medium text-gray-500 block mb-1">{employeeFieldLabels[field]}</label>
                   {isEditing ? (
@@ -160,7 +145,7 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 mt-4">
+          <div className="flex justify-end gap-3 mt-6">
             {isEditing ? (
               <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
                 <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu

@@ -85,7 +85,7 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
 
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
-      <div className="bg-white rounded-2xl w-4/5 max-h-[600px] shadow-lg overflow-hidden">
+      <div className="bg-white rounded-2xl w-[95%] md:w-4/5 max-h-[90vh] shadow-lg overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-start px-4 py-3 bg-white mb-4 sticky top-0 z-10">
           <h2 className="text-lg font-semibold text-gray-800">Chi tiết phiếu nhập</h2>
@@ -93,59 +93,66 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto h-[calc(600px-48px)] px-6 pb-10 scrollbar-hide">
-          <div className="grid grid-cols-4 gap-6">
-            {/* Column 1 */}
+        <div className="overflow-y-auto max-h-[calc(90vh-56px)] px-6 pb-6 scrollbar-hide">
+          {/* Thông tin cơ bản */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            {/* Cột 1 */}
             <div className="space-y-4">
-              {["receiptID", "time"].map((field) => (
+              {["id", "created_at"].map((field) => (
                 <div key={field}>
-                  <label className="text-sm font-medium text-gray-500 block mb-1">{receipFieldLabels[field as keyof Receipt]}</label>
+                  <label className="text-sm font-medium text-gray-500 block mb-1">
+                    {receipFieldLabels[field as keyof Receipt]}
+                  </label>
                   <div className="text-sm text-gray-900">{(editedBill as any)[field]}</div>
                 </div>
               ))}
             </div>
 
-            {/* Column 2 */}
+            {/* Cột 2 */}
             <div className="space-y-4">
-              {["totalCost", "employeeID"].map((field) => (
+              {["total_cost", "employee_name"].map((field) => (
                 <div key={field}>
-                  <label className="text-sm font-medium text-gray-500 block mb-1">{receipFieldLabels[field as keyof Receipt]}</label>
+                  <label className="text-sm font-medium text-gray-500 block mb-1">
+                    {receipFieldLabels[field as keyof Receipt]}
+                  </label>
                   <div className="text-sm text-gray-900">{(editedBill as any)[field]}</div>
                 </div>
               ))}
             </div>
 
-            {/* Column 3 */}
-            <div className="space-y-4 col-span-2">
+            {/* Cột 3–4: Ghi chú */}
+            <div className="space-y-4 lg:col-span-2">
               <label className="text-sm font-medium text-gray-500 block mb-1">{receipFieldLabels.note}</label>
               <div className="text-sm text-gray-900 whitespace-pre-wrap">{editedBill.note}</div>
             </div>
           </div>
 
-          {/* Table */}
-          <table className="min-w-full divide-y divide-gray-200 mt-6">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên sản phẩm</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá nhập</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số lượng</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thành tiền</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {receiptDetails.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-900">{item.productName}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{item.unitPrice.toLocaleString("vi-VN")}đ</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{item.quantity}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{item.totalPrice.toLocaleString("vi-VN")}đ</td>
+          {/* Bảng sản phẩm */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 mt-2">
+              <thead className="bg-gray-50 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tên sản phẩm</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Giá nhập</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Số lượng</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Thành tiền</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {receiptDetails.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 text-sm text-gray-900">{item.productName}</td>
+                    <td className="px-4 py-2 text-sm text-gray-900">{item.unitPrice.toLocaleString("vi-VN")}đ</td>
+                    <td className="px-4 py-2 text-sm text-gray-900">{item.quantity}</td>
+                    <td className="px-4 py-2 text-sm text-gray-900">{item.totalPrice.toLocaleString("vi-VN")}đ</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          {/* Summary */}
-          <div className="p-4 mt-4">
+          {/* Tổng kết */}
+          <div className="p-4 mt-6 bg-gray-50 rounded">
             <div className="space-y-2 text-sm text-gray-900">
               <div className="flex justify-between">
                 <span className="text-gray-500">Tổng số lượng:</span>
@@ -166,8 +173,8 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 mt-4">
+          {/* Nút hành động */}
+          <div className="flex justify-end gap-3 mt-6">
             {isEditing ? (
               <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
                 <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu
