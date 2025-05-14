@@ -119,45 +119,105 @@ function KhoHang() {
   
       <div className="p-6">
         {/* Header */}
-        <div className="flex items-center pb-13">
-          <h1 className="text-xl font-bold w-1/5">Kho hàng</h1>
-          <div className="flex items-center justify-between w-4/5">
-            {/* Thanh tìm kiếm */}
-            <div className="relative w-2/5 ml-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-5">
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <h1 className="text-xl font-bold whitespace-nowrap">Kho hàng</h1>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+            {/* Tìm kiếm */}
+            <div className="relative w-full sm:w-1/2">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                 <FontAwesomeIcon icon={faSearch} />
               </span>
               <input
                 type="text"
                 placeholder="Tìm kiếm..."
-                className="border p-1 pl-10 rounded w-full bg-white"
+                className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-  
+
             {/* Nút chức năng */}
-            <div className="space-x-5">
+            <div className="flex gap-2">
               <button
-                className="bg-green-500 text-white px-4 py-1 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded"
                 onClick={() => setOpenModalAdd(true)}
               >
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded"
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded"
                 onClick={handleOnClickExport}
               >
-                <FontAwesomeIcon icon={faFileExport} className="mr-2"
-               /> Xuất file
+                <FontAwesomeIcon icon={faFileExport} className="mr-2" />
+                Xuất file
               </button>
             </div>
           </div>
         </div>
-  
-        <div className="flex">
-          {/* Sidebar */}
-          <div className="w-1/5 p-4 h-full bg-white shadow rounded-lg">
+          
+        {/* Bộ lọc thời gian - phiên bản mobile */}
+        <div className="mb-4 md:hidden bg-white shadow rounded-lg p-4">
+          <h2 className="font-bold mb-2">Thời gian</h2>
+          <ul className="space-y-2">
+            <li className="flex items-center space-x-2">
+              <input
+                type="radio"
+                name="timeFilter"
+                id="thisMonthMobile"
+                value="thisMonth"
+                checked={selectedTime === "thisMonth"}
+                onChange={() => setSelectedTime("thisMonth")}
+                className="cursor-pointer"
+              />
+              <label htmlFor="thisMonthMobile" className="cursor-pointer">Tháng này</label>
+            </li>
+            <li className="flex items-start space-x-2">
+              <input
+                type="radio"
+                name="timeFilter"
+                id="customTimeMobile"
+                value="customTime"
+                checked={selectedTime === "customTime"}
+                onChange={() => setSelectedTime("customTime")}
+                className="cursor-pointer"
+              />
+              <label htmlFor="customTimeMobile" className="cursor-pointer">Thời gian khác</label>
+            </li>
+            {selectedTime === "customTime" && (
+              <div className="pl-6 space-y-2">
+                <div>
+                  <label htmlFor="startDateMobile" className="block text-sm">Từ ngày:</label>
+                  <input
+                    type="date"
+                    id="startDateMobile"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="border p-1 rounded w-full"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="endDateMobile" className="block text-sm">Đến ngày:</label>
+                  <input
+                    type="date"
+                    id="endDateMobile"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="border p-1 rounded w-full"
+                  />
+                </div>
+              </div>
+            )}
+          </ul>
+        </div>
+
+        {/* Phiên bản desktop */}
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Sidebar desktop */}
+          <div className="hidden md:block w-full md:w-1/4 bg-white shadow rounded-lg p-4">
             <h2 className="font-bold mb-2">Thời gian</h2>
             <ul className="space-y-2">
               <li className="flex items-center space-x-2">
@@ -170,9 +230,7 @@ function KhoHang() {
                   checked={selectedTime === "thisMonth"}
                   onChange={() => setSelectedTime("thisMonth")}
                 />
-                <label htmlFor="thisMonth" className="cursor-pointer">
-                  Tháng này
-                </label>
+                <label htmlFor="thisMonth" className="cursor-pointer">Tháng này</label>
               </li>
               <li className="flex items-start space-x-2">
                 <input
@@ -184,16 +242,12 @@ function KhoHang() {
                   checked={selectedTime === "customTime"}
                   onChange={() => setSelectedTime("customTime")}
                 />
-                <label htmlFor="customTime" className="cursor-pointer">
-                  Thời gian khác
-                </label>
+                <label htmlFor="customTime" className="cursor-pointer">Thời gian khác</label>
               </li>
               {selectedTime === "customTime" && (
                 <div className="pl-6 space-y-2">
                   <div>
-                    <label htmlFor="startDate" className="block text-sm">
-                      Từ ngày:
-                    </label>
+                    <label htmlFor="startDate" className="block text-sm">Từ ngày:</label>
                     <input
                       type="date"
                       id="startDate"
@@ -203,9 +257,7 @@ function KhoHang() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="endDate" className="block text-sm">
-                      Đến ngày:
-                    </label>
+                    <label htmlFor="endDate" className="block text-sm">Đến ngày:</label>
                     <input
                       type="date"
                       id="endDate"
@@ -218,9 +270,10 @@ function KhoHang() {
               )}
             </ul>
           </div>
+
   
           {/* DANH SÁCH PHIẾU NHẬP */}
-          <div className="w-4/5 ml-5">
+          <div className="w-full md:w-3/4">
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">

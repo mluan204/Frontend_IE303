@@ -121,127 +121,143 @@ function HangHoa() {
         <title>Hàng hóa</title>
       </Helmet>
 
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex items-center pb-13">
-          <h1 className="text-xl font-bold w-1/5">Hàng hóa</h1>
-          <div className="flex items-center justify-between w-4/5">
-            {/* Thanh tìm kiếm */}
-            <div className="relative w-2/5 ml-6">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <FontAwesomeIcon icon={faSearch}></FontAwesomeIcon>
-              </span>
-              <input
-                type="text"
-                placeholder="Tìm kiếm..."
-                className="border p-1 pl-10 rounded w-full bg-white focus:outline-none "
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-
-            {/* Các nút chức năng */}
-            <div className="space-x-5">
-              <button
-                className="bg-green-500 text-white px-4 py-1 rounded"
-                onClick={() => setIsAddModalOpen(true)}
-              >
-                <FontAwesomeIcon icon={faAdd} className="mr-2" />
-                Thêm mới
-              </button>
-              <button className="bg-green-500 text-white px-4 py-1 rounded"
-                onClick={handleOnClickExport}
-              >
-                <FontAwesomeIcon icon={faFileExport} className="mr-2" /> Xuất file
-              </button>
-            </div>
-          </div>
+      <div className="p-4 sm:p-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-5">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <h1 className="text-xl font-bold whitespace-nowrap">Hàng hóa</h1>
         </div>
 
-        <div className="flex">
-          {/* Sidebar */}
-          <div className="w-1/5 p-4 h-full bg-white shadow rounded-lg">
-            <h2 className="font-bold mb-2">Nhóm hàng</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+          {/* Tìm kiếm */}
+          <div className="relative w-full sm:w-1/2">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <FontAwesomeIcon icon={faSearch} />
+            </span>
             <input
               type="text"
-              placeholder="Tìm nhóm hàng"
-              value={searchCategory} // Liên kết với state
-              onChange={(e) => setSearchCategory(e.target.value)} // Cập nhật state khi nhập
-              className="border px-2 py-1 focus:outline-none w-full mb-2 rounded"
+              placeholder="Tìm kiếm..."
+              className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
-            <ul className="list-none overflow-y-auto scrollbar-hide max-h-[300px]">
-              {categories
-                .filter((category) =>
-                  category.name.toLowerCase().includes(searchCategory.toLowerCase()) // Lọc danh sách
-                )
-                .map((category) => (
-                  <li
-                    key={category.id}
-                    className="p-2 my-1 cursor-pointer hover:bg-gray-200 hover:rounded-sm"
-                  >
-                    {category.name}
-                  </li>
-                ))}
-            </ul>
           </div>
 
-          {/* Main Content */}
-          <div className="w-4/5 ml-5">
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+          {/* Nút */}
+          <div className="flex gap-2">
+            <button
+              className="bg-green-500 text-white px-4 py-2 rounded"
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              <FontAwesomeIcon icon={faAdd} className="mr-2" />
+              Thêm mới
+            </button>
+            <button
+              className="bg-green-500 text-white px-4 py-2 rounded"
+              onClick={handleOnClickExport}
+            >
+              <FontAwesomeIcon icon={faFileExport} className="mr-2" />
+              Xuất file
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar  */}
+      <div className="mb-4 md:hidden bg-white shadow rounded-lg p-4">
+        <h2 className="font-bold mb-2">Nhóm hàng</h2>
+        <input
+          type="text"
+          placeholder="Tìm nhóm hàng"
+          value={searchCategory}
+          onChange={(e) => setSearchCategory(e.target.value)}
+          className="border px-2 py-1 w-full mb-2 rounded"
+        />
+        <ul className="max-h-[300px] overflow-y-auto">
+          {categories
+            .filter((c) => c.name.toLowerCase().includes(searchCategory.toLowerCase()))
+            .map((category) => (
+              <li
+                key={category.id}
+                className="p-2 my-1 cursor-pointer hover:bg-gray-100 rounded"
+              >
+                {category.name}
+              </li>
+            ))}
+        </ul>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Sidebar desktop */}
+        <div className="hidden md:block w-full md:w-1/4 bg-white shadow rounded-lg p-4">
+          <h2 className="font-bold mb-2">Nhóm hàng</h2>
+          <input
+            type="text"
+            placeholder="Tìm nhóm hàng"
+            value={searchCategory}
+            onChange={(e) => setSearchCategory(e.target.value)}
+            className="border px-2 py-1 w-full mb-2 rounded"
+          />
+          <ul className="max-h-[300px] overflow-y-auto">
+            {categories
+              .filter((c) => c.name.toLowerCase().includes(searchCategory.toLowerCase()))
+              .map((category) => (
+                <li
+                  key={category.id}
+                  className="p-2 my-1 cursor-pointer hover:bg-gray-100 rounded"
+                >
+                  {category.name}
+                </li>
+              ))}
+          </ul>
+        </div>
+
+        {/* Table content */}
+        <div className="w-full md:w-3/4">
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-max w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã sản phẩm</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên sản phẩm</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá bán</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá vốn</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tồn kho</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                    <th className="px-6 py-3"></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã sản phẩm</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên sản phẩm</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá bán</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá vốn</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tồn kho</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                   </tr>
                 </thead>
-                {/* SẢN PHẨM */}
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {products.map((product, index) => (
-                      <tr
-                        key={product.id}
-                        className="hover:bg-gray-50 cursor-pointer"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-12 h-12"
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.price}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.inputPrice }</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.quantityAvailable }</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
-                          <button
-                            onClick={() => handleOpenModal(product)}
-                            className="text-blue-600 hover:text-blue-900 cursor-pointer"
-                          >
-                            <FontAwesomeIcon icon={faEye} className="mr-1" />
-                            Chi tiết
-                          </button>
-                          <button
-                            onClick={() => alert(`Xóa sản phẩm ${product.id}`)} // Thay bằng logic xóa thật nếu cần
-                            className="text-red-600 hover:text-red-900 cursor-pointer"
-                          >
-                            <FontAwesomeIcon icon={faTrash} className="mr-1" />
-                            Xóa
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-
+                  {products.map((product) => (
+                    <tr key={product.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <img src={product.image} alt={product.name} className="w-12 h-12" />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{product.id}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{product.name}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{product.price}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{product.inputPrice}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{product.quantityAvailable}</td>
+                      <td className="px-6 py-4 space-x-4">
+                        <button
+                          onClick={() => handleOpenModal(product)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          <FontAwesomeIcon icon={faEye} className="mr-1" /> Chi tiết
+                        </button>
+                        <button
+                          onClick={() => alert(`Xóa sản phẩm ${product.id}`)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <FontAwesomeIcon icon={faTrash} className="mr-1" /> Xóa
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
-              </div>
+            </div>
 
               {/* Pagination */}
               <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">

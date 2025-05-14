@@ -21,9 +21,7 @@ interface CustomerDetailProps {
 
 type CustomerField = keyof Customer;
 
-
 function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerDetailProps) {
-
   const customerFieldLabels: Record<CustomerField, string> = {
     id: "Mã KH",
     gender: "Giới tính",
@@ -33,19 +31,16 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
     created_at: "Ngày tạo",
   };
 
-
   const [isEditing, setIsEditing] = useState(false);
   const [editedCustomer, setEditedCustomer] = useState(customer);
 
   const handleEdit = () => setIsEditing(true);
   const handleSave = async () => {
     setIsEditing(false);
-    customer.name = editedCustomer.name;
-    customer.gender = editedCustomer.gender;
-    customer.score = editedCustomer.score;
+    Object.assign(customer, editedCustomer);
     await updateCustomer(customer);
-    // Gọi hàm lưu dữ liệu ở đây nếu cần
   };
+
   const handleClose = () => {
     setIsEditing(false);
     onClose();
@@ -54,7 +49,6 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
     // removeCustomer(customer.id);
     await deleteCustomerById(customer.id);
     onClose();
-    // Gọi hàm xóa ở đây nếu cần
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -69,7 +63,7 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
 
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
-      <div className="bg-white rounded-2xl w-4/5 max-h-[340px] shadow-lg overflow-hidden">
+      <div className="bg-white rounded-2xl w-[95%] md:w-4/5 max-h-[90vh] shadow-lg overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-start px-4 py-3 bg-white mb-4 sticky top-0 z-10">
           <h2 className="text-lg font-semibold text-gray-800">Chi tiết khách hàng</h2>
@@ -77,13 +71,11 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto h-[calc(440px-48px)] px-6 pb-4 scrollbar-hide">
-          <div className="grid grid-cols-4 gap-6">
+        <div className="overflow-y-auto max-h-[calc(90vh-56px)] px-6 pb-6 scrollbar-hide">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {(["id", "name", "gender", "phone_number"] as (keyof Customer)[]).map((field) => (
               <div key={field}>
-                <label className="text-sm font-medium text-gray-500 block mb-1">
-                  {customerFieldLabels[field]}
-                </label>
+                <label className="text-sm font-medium text-gray-500 block mb-1">{customerFieldLabels[field]}</label>
                 {isEditing ? (
                   field === "gender" ? (
                     <select
@@ -111,6 +103,7 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
                 )}
               </div>
             ))}
+
             <div>
               <label className="text-sm font-medium text-gray-500 block mb-1">{customerFieldLabels["score"]}</label>
               {isEditing ? (
@@ -125,6 +118,7 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
                 <div className="text-gray-900 text-sm">{editedCustomer.score}</div>
               )}
             </div>
+
             <div>
               <label className="text-sm font-medium text-gray-500 block mb-1">{customerFieldLabels["created_at"]}</label>
               <div className="text-gray-900 text-sm">{editedCustomer.created_at}</div>
@@ -132,7 +126,7 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 mt-4">
+          <div className="flex justify-end gap-3 mt-6">
             {isEditing ? (
               <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
                 <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu

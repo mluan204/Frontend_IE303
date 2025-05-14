@@ -7,7 +7,7 @@ import api from "./api";
 //     const tokenStr = localStorage.getItem('token');
 //     const parsedToken = tokenStr ? JSON.parse(tokenStr) : null;
 //     TOKEN = parsedToken.token;
-    
+
 //   export const fetchProduct = async (page = 0, size = 10, keyword = "") => {
 
 //       try {
@@ -31,16 +31,15 @@ import api from "./api";
 //           Authorization: `Bearer ${TOKEN}`,
 //         }
 //       });
-      
+
 //       return response.data;
 //     } catch (error) {
 //       return "Loi khi lay tat ca san pham";
 //     }
 //   }
-  
+
 interface Product {
   categoryId: number,
-  categoryName: string,
   dateExpired: Date,
   description: string,
   id: number,
@@ -53,26 +52,27 @@ interface Product {
   suppliers: string
 }
 
-export const createEmployee = async (prod : Product) => {
+export const createProduct = async (prod: Product) => {
   const req = {
     name: prod.name,
     description: prod.description,
     image: prod.image,
-    suppliers: "Vinamilk",
-    quantity_available: 100,
-    sale_price: 25000,
-    input_price: 20000,
-    price: 28000,
-    category: 1
+    suppliers: prod.suppliers,
+    quantity_available: prod.quantityAvailable,
+    sale_price: prod.salePrice,
+    input_price: prod.inputPrice,
+    price: prod.price,
+    category: { id: prod.categoryId },
   }
+  console.log(req);
+
   try {
     const response = await api.post("/products/add", req);
     console.log(response.data);
-    
+
     return response.data.id;
   } catch (error) {
     console.log(error);
     return "Loi khi tao employee";
   }
 };
-  

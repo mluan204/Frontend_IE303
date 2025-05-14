@@ -79,16 +79,16 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
 
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50">
-      <div className="bg-white rounded-2xl w-4/5 max-h-[360px] shadow-lg overflow-hidden">
+      <div className="bg-white rounded-2xl w-[95%] md:w-4/5 max-h-[90vh] shadow-lg overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-start px-4 py-3 bg-white mb-4 sticky top-0 z-10">
+        <div className="flex justify-between items-start px-4 py-3 bg-white border-b sticky top-0 z-10">
           <h2 className="text-lg font-semibold text-gray-800">Thêm khách hàng</h2>
           <FontAwesomeIcon icon={faClose} className="text-2xl text-gray-500 cursor-pointer" onClick={onClose} />
         </div>
 
         {/* Form */}
-        <div className="overflow-y-auto px-6 pb-4 scrollbar-hide">
-          <div className="grid grid-cols-4 gap-6">
+        <div className="overflow-y-auto max-h-[calc(90vh-60px)] px-6 pb-6 scrollbar-hide">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { name: "name", label: "Họ tên" },
               { name: "gender", label: "Giới tính" },
@@ -96,7 +96,7 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
               { name: "score", label: "Điểm tích lũy" },
             ].map((field) => (
               <div key={field.name}>
-                <label className="text-sm font-medium text-gray-500 block mb-1">{field.label}</label>
+                <label className="text-sm font-medium text-gray-500 block mb-1 truncate">{field.label}</label>
                 <input
                   type={field.name === "score" ? "number" : "text"}
                   name={field.name}
@@ -108,7 +108,7 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
             ))}
 
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">Ngày tạo</label>
+              <label className="text-sm font-medium text-gray-500 block mb-1 truncate">Ngày tạo</label>
               <div className="text-gray-900 text-sm">
                 {new Date(newCustomer.created_at).toLocaleDateString("vi-VN")}
               </div>
@@ -116,7 +116,7 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
           </div>
 
           {/* Action */}
-          <div className="flex justify-end gap-3 mt-4">
+          <div className="flex justify-end gap-3 mt-6">
             <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
               <FontAwesomeIcon icon={faSave} className="mr-1" /> Thêm mới
             </button>
