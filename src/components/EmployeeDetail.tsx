@@ -1,32 +1,31 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
-import { deleteEmployeeById, updateEmployeeById } from "../service/employeeApi";
+import { updateEmployeeById } from "../service/employeeApi";
 
 interface Employee {
-    id: string;
-    name: string;
-    address: string;
-    birthday: string;
-    created_at: string;
-    email: string;
-    gender: boolean;
-    image: string;
-    phone_number: string;
-    position: string;
-    salary: number;
-  }
+  id: number;
+  name: string;
+  address: string;
+  birthday: string;
+  created_at: string;
+  email: string;
+  gender: boolean;
+  image: string;
+  phone_number: string;
+  position: string;
+  salary: number;
+}
 
 interface EmployeeDetailProps {
   employee: Employee;
   isOpen: boolean;
   onClose: () => void;
-  removeEmployee: (id:string) =>void;
 }
 
 // type EmployeeField = keyof Employee;
 
-function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeDetailProps) {
+function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
 
   const employeeFieldLabels: { [key in keyof Employee]?: string } = {
     id: "Mã nhân viên",
@@ -41,7 +40,7 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
     phone_number: "Số điện thoại",
     salary: "Lương",
   };
-  
+
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedEmployee, setEditedEmployee] = useState(employee);
@@ -63,12 +62,6 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
   };
   const handleClose = () => {
     setIsEditing(false);
-    onClose();
-  };
-  const handleDelete = async () => {
-    // Gọi hàm xóa ở đây
-    await deleteEmployeeById(employee.id);
-    // removeEmployee(employee.id);
     onClose();
   };
 
@@ -152,7 +145,7 @@ function EmployeeDetail({ employee, isOpen, onClose, removeEmployee }: EmployeeD
                       className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
                     />
                   ) : (
-                    <div className="text-gray-900 text-sm">{editedEmployee[field]}</div>
+                    <div className="text-gray-900 text-sm">{editedEmployee[field] === true ? "Nam" : "Nữ"}</div>
                   )}
                 </div>
               ))}

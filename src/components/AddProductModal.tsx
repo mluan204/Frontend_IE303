@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave } from "@fortawesome/free-solid-svg-icons";
 
@@ -40,6 +40,7 @@ const emptyProduct: Product = {
 
 function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
   const [newProduct, setNewProduct] = useState<Product>(emptyProduct);
+  const [fileImg, setFileImg] = useState<string>("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -55,6 +56,21 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
     setNewProduct(emptyProduct);
     onClose();
   };
+
+    const handleUpload= (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file) {
+      setFileImg(file);
+      const url = URL.createObjectURL(file);
+      setNewProduct((prev) => ({ ...prev, image: url }));
+    }
+  }
+
+    const fileInputRef = useRef(null)
+    const handleButtonClick = () => {
+      fileInputRef.current.click()
+    }
 
   if (!isOpen) return null;
 
@@ -82,9 +98,17 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
                     <span className="text-gray-400 text-sm">No Image</span>
                   )}
                 </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleUpload}
+                  style={{ display: 'none' }}
+                />
+
                 <button
                   className="mt-2 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-                  onClick={() => alert('Thêm ảnh dô')}
+                  onClick={handleButtonClick}
                 >
                   Thêm ảnh
                 </button>

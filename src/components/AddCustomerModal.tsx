@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faSave } from "@fortawesome/free-solid-svg-icons";
+import { createCustomer } from "../service/customerApi";
 
 interface Customer {
-  id: string;
-  gender: string;
+  id: number;
+  gender: boolean;
   name: string;
   phone_number: string;
   score: number;
@@ -19,8 +20,8 @@ interface AddCustomerModalProps {
 
 function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModalProps) {
   const [newCustomer, setNewCustomer] = useState<Customer>({
-    id: "",
-    gender: "",
+    id: 0,
+    gender: true,
     name: "",
     phone_number: "",
     score: 0,
@@ -29,21 +30,43 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setNewCustomer((prev) => ({
-      ...prev,
-      [name]: name === "score" ? parseInt(value) || 0 : value,
-    }));
+
+    if(name == "gender"){
+      setNewCustomer((prev) => ({
+        ...prev,
+        gender: value === "Nam"
+      }));
+    } else {
+      setNewCustomer((prev) => ({
+        ...prev,
+        [name]: name === "score" ? parseInt(value) || 0 : value,
+      }));
+    }
+    
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!newCustomer.name.trim()) {
       alert("Tên khách hàng không được để trống!");
       return;
     }
-    onCustomerAdded(newCustomer);
+
+    const resId = await createCustomer(newCustomer);
+    if (typeof resId === 'string' && resId.startsWith('Loi')) {
+      alert(resId);
+      return;
+    }
+
+    const updatedCustomer = {
+      ...newCustomer,
+      id: Number(resId)
+    };
+
+    onCustomerAdded(updatedCustomer);
+
     setNewCustomer({
-      id: "",
-      gender: "",
+      id: 0,
+      gender: true,
       name: "",
       phone_number: "",
       score: 0,
@@ -67,7 +90,6 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
         <div className="overflow-y-auto px-6 pb-4 scrollbar-hide">
           <div className="grid grid-cols-4 gap-6">
             {[
-              { name: "id", label: "Mã KH" },
               { name: "name", label: "Họ tên" },
               { name: "gender", label: "Giới tính" },
               { name: "phone_number", label: "Số điện thoại" },
@@ -78,7 +100,7 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
                 <input
                   type={field.name === "score" ? "number" : "text"}
                   name={field.name}
-                  value={(newCustomer as any)[field.name]}
+                  value={(newCustomer as any)[field.name === "gender" ? "" : field.name]}
                   onChange={handleChange}
                   className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
                 />

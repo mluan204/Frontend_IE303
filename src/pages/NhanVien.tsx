@@ -2,13 +2,13 @@ import { Helmet } from "react-helmet";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport, faTrash, faEye } from "@fortawesome/free-solid-svg-icons";
-import EmployeeDetail from "../components/EmployeeDetail"; 
+import EmployeeDetail from "../components/EmployeeDetail";
 import AddEmployeeModal from "../components/AddEmployeeModal";
-import { getAllEmployees } from "../service/employeeApi";
+import { deleteEmployeeById, getAllEmployees } from "../service/employeeApi";
 import { CommonUtils } from "../utils/CommonUtils";
 // Kiểu dữ liệu cho nhân viên
 interface Employee {
-  id: string;
+  id: number;
   name: string;
   address: string;
   birthday: string;
@@ -23,13 +23,13 @@ interface Employee {
 
 // Danh sách nhân viên mẫu
 const mockEmployees: Employee[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `NV${String(i + 1).padStart(6, "0")}`,
+  id: i + 1,
   name: `Nhân viên ${i + 1}`,
   address: `Địa chỉ ${i + 1}`,
   birthday: `199${i % 10}-01-01`,
   created_at: `2023-0${(i % 9) + 1}-15`,
   email: `nhanvien${i + 1}@gmail.com`,
-  gender: i % 2 === 0 ? "Nam" : "Nữ",
+  gender: i % 2 === 0,
   image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg",
   phone_number: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
   position: i % 2 === 0 ? "Quản lý" : "Nhân viên",
@@ -38,18 +38,18 @@ const mockEmployees: Employee[] = Array.from({ length: 30 }, (_, i) => ({
 const ITEMS_PER_PAGE = 10;
 
 function NhanVien() {
-    // const [employees, setEmployees] = useState<Employee[]>([]);
-    const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
+  // const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
 
-    useEffect( () => {
-      const fetchData = async () => {
-        const result = await getAllEmployees();
-        setEmployees(result);
-        console.log(result);
-      }
-  
-      fetchData();
-    },[])
+  useEffect(() => {
+    const fetchData = async () => {
+      const result = await getAllEmployees();
+      setEmployees(result);
+      console.log(result);
+    }
+
+    fetchData();
+  }, [])
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -74,46 +74,44 @@ function NhanVien() {
     setIsModalOpen(false);
   };
 
-  const removeEmployee= (employeeId: string) => {
-    setEmployees(prevE => prevE.filter(employee => employee.id !== employeeId));
+  const removeEmployee = (employeeId: number) => {
+    setEmployees(prevEmployees => prevEmployees.filter(employee => employee.id !== employeeId));
   };
   // MODAL THÊM NHÂN VIÊN
   const [showAddModal, setShowAddModal] = useState(false);
 
   const handleOnClickExport = async () => {
-      try {
-        const res = await getAllEmployees();
-        console.log(res);
-        const mappedEmployees = employees.map((emp) => ({
-          "Mã nhân viên": emp.id,
-          "Họ và tên": emp.name,
-          "Giới tính": emp.gender === true ? "Nam" : emp.gender == false ? "Nữ" : "Khác",
-          "Ngày sinh": new Date(emp.birthday).toLocaleDateString("vi-VN"),
-          "Số điện thoại": emp.phone_number,
-          "Email": emp.email,
-          "Địa chỉ": emp.address,
-          "Chức vụ": emp.position,
-          "Mức lương": emp.salary,
-          "Ảnh": emp.image,
-          "Ngày tạo": new Date(emp.created_at).toLocaleDateString("vi-VN"),
-        }));
+    try {
+      const res = await getAllEmployees();
+      console.log(res);
+      const mappedEmployees = employees.map((employee) => ({
+        "Mã nhân viên": employee.id.toString(),
+        "Họ và tên": employee.name,
+        "Chức vụ": employee.position,
+        "Địa chỉ": employee.address,
+        "Ngày sinh": new Date(employee.birthday).toLocaleDateString("vi-VN"),
+        "Email": employee.email,
+        "Giới tính": employee.gender ? "Nam" : "Nữ",
+        "Số điện thoại": employee.phone_number,
+        "Lương": employee.salary,
+      }));
 
-        if (res && res.length > 0) {
-          await CommonUtils.exportExcel(mappedEmployees, "Danh sách nhân viên", "Danh sách nhân viên");
-          console.log(res);
-        }
-      } catch (error) {
-        console.error("Error exporting category list:", error);
-        alert("Đã xảy ra lỗi khi xuất file!");
+      if (res && res.length > 0) {
+        await CommonUtils.exportExcel(mappedEmployees, "Danh sách nhân viên", "Danh sách nhân viên");
+        console.log(res);
       }
-    };
+    } catch (error) {
+      console.error("Error exporting category list:", error);
+      alert("Đã xảy ra lỗi khi xuất file!");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
         <title>Nhân viên</title>
       </Helmet>
-  
+
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center pb-13">
@@ -132,7 +130,7 @@ function NhanVien() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-  
+
             {/* Nút chức năng */}
             <div className="space-x-5">
               <button
@@ -151,7 +149,7 @@ function NhanVien() {
             </div>
           </div>
         </div>
-  
+
         {/* Bảng nhân viên */}
         <div className="flex">
           <div className="w-full">
@@ -185,7 +183,10 @@ function NhanVien() {
                             Chi tiết
                           </button>
                           <button
-                            onClick={() => removeEmployee(employee.id)}
+                            onClick={() => {
+                              deleteEmployeeById(employee.id);
+                              removeEmployee(employee.id)
+                            }}
                             className="text-red-600 hover:text-red-900 cursor-pointer"
                           >
                             <FontAwesomeIcon icon={faTrash} className="mr-1" />
@@ -197,7 +198,7 @@ function NhanVien() {
                   </tbody>
                 </table>
               </div>
-  
+
               {/* Phân trang */}
               <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
                 <div className="flex-1 flex justify-between sm:hidden">
@@ -237,11 +238,10 @@ function NhanVien() {
                       <button
                         key={index}
                         onClick={() => setCurrentPage(index + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
-                          currentPage === index + 1
-                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${currentPage === index + 1
+                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          }`}
                       >
                         {index + 1}
                       </button>
@@ -257,22 +257,27 @@ function NhanVien() {
                 </div>
               </div>
             </div>
-  
+
             {/* Modal chi tiết nhân viên */}
             {selectedEmployee && (
               <EmployeeDetail
                 employee={selectedEmployee}
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
-                removeEmployee={removeEmployee}
               />
             )}
           </div>
         </div>
       </div>
-  
+
       {/* Modal thêm mới nhân viên */}
-      <AddEmployeeModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} />
+      <AddEmployeeModal 
+        isOpen={showAddModal} 
+        onClose={() => setShowAddModal(false)} 
+        onEmployeeAdded={(newEmployee) => {
+            setEmployees((prev) => [...prev, newEmployee]);
+          }} 
+      />
     </div>
   );
 }

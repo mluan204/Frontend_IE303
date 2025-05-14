@@ -1,16 +1,16 @@
 import { Helmet } from "react-helmet";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faAdd, faFileExport, faEye, faTrash} from "@fortawesome/free-solid-svg-icons";
-import CustomerDetail from "../components/CustomerDetail"; 
-import { getAllCustomer } from "../service/customerApi";
-import {CommonUtils} from "../utils/CommonUtils";import AddCustomerModal from "../components/AddCustomerModal";
+import { faSearch, faAdd, faFileExport, faEye, faTrash } from "@fortawesome/free-solid-svg-icons";
+import CustomerDetail from "../components/CustomerDetail";
+import { deleteCustomerById, getAllCustomer } from "../service/customerApi";
+import { CommonUtils } from "../utils/CommonUtils"; import AddCustomerModal from "../components/AddCustomerModal";
 
 
 // Kiểu dữ liệu cho khách hàng
 interface Customer {
-  id: string;
-  gender: string;
+  id: number;
+  gender: boolean;
   name: string;
   phone_number: string;
   score: number;
@@ -19,8 +19,8 @@ interface Customer {
 
 // Danh sách khách hàng mẫu
 const mockCustomers: Customer[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `KH${String(i + 1).padStart(6, "0")}`,
-  gender: i % 2 === 0 ? "Nam" : "Nữ",
+  id: i + 1,
+  gender: i % 2 === 0,
   name: `Khách hàng ${i + 1}`,
   phone_number: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
   score: Math.floor(Math.random() * 1000),
@@ -33,14 +33,14 @@ function KhachHang() {
   // const [customers, setCustomers] = useState<Customer[]>([]);
   const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
 
-  useEffect( () => {
+  useEffect(() => {
     const fetchData = async () => {
       const result = await getAllCustomer();
       setCustomers(result);
     }
 
     fetchData();
-  },[])
+  }, [])
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,7 +48,7 @@ function KhachHang() {
   // Lọc khách hàng theo tìm kiếm (theo tên, mã, hoặc SĐT)
   const filteredCustomers = customers.filter((customer) =>
     customer.name.toLowerCase().includes(search.toLowerCase()) ||
-    customer.id.toLowerCase().includes(search.toLowerCase()) ||
+    customer.id.toString().includes(search.toLowerCase()) ||
     customer.phone_number.includes(search)
   );
 
@@ -63,7 +63,7 @@ function KhachHang() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   const handleOpenModal = (customer: Customer) => {
-    
+
     setSelectedCustomer(customer);
     setIsModalOpen(true);
   };
@@ -79,23 +79,23 @@ function KhachHang() {
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleDateString('vi-VN',
       {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       }
-      );
+    );
   }
-  
-const removeCustomer = (customerId: string) => {
-  setCustomers(prevCustomers => prevCustomers.filter(customer => customer.id !== customerId));
-};
-  
-const handleOnClickExport = async () => {
+
+  const removeCustomer = (customerId: number) => {
+    setCustomers(prevCustomers => prevCustomers.filter(customer => customer.id !== customerId));
+  };
+
+  const handleOnClickExport = async () => {
     try {
       const res = await getAllCustomer();
       const mappedCustomers = customers.map((customer) => ({
-        "Mã khách hàng": customer.id,
-        "Giới tính": customer.gender === "male" ? "Nam" : customer.gender === "female" ? "Nữ" : "Khác",
+        "Mã khách hàng": customer.id.toString(),
+        "Giới tính": customer.gender ? "Nam" : "Nữ",
         "Tên khách hàng": customer.name,
         "Số điện thoại": customer.phone_number,
         "Điểm tích lũy": customer.score,
@@ -110,7 +110,7 @@ const handleOnClickExport = async () => {
       alert("Đã xảy ra lỗi khi xuất file!");
     }
   };
-  
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -178,7 +178,7 @@ const handleOnClickExport = async () => {
                       <tr key={customer.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.id}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.gender}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.gender ? "Nam" : "Nữ"}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.phone_number}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.score}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(customer.created_at)}</td>
@@ -191,7 +191,10 @@ const handleOnClickExport = async () => {
                             Chi tiết
                           </button>
                           <button
-                            onClick={() => removeCustomer(customer.id)}
+                            onClick={() => {
+                              deleteCustomerById(customer.id);
+                              removeCustomer(customer.id);
+                            }}
                             className="text-red-600 hover:text-red-900 cursor-pointer"
                           >
                             <FontAwesomeIcon icon={faTrash} className="mr-1" />
@@ -244,11 +247,10 @@ const handleOnClickExport = async () => {
                       <button
                         key={index}
                         onClick={() => setCurrentPage(index + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
-                          currentPage === index + 1
-                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${currentPage === index + 1
+                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          }`}
                       >
                         {index + 1}
                       </button>
