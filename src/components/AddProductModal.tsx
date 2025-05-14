@@ -1,10 +1,23 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave } from "@fortawesome/free-solid-svg-icons";
+import { createProduct } from "../service/productApi";
+import { uploadImage } from "../service/uploadImg";
+const CATEGORIES = [
+  "Thực phẩm ăn liền",
+  "Đồ uống có cồn",
+  "Kẹo bánh",
+  "Mỹ phẩm",
+  "Nước ngọt",
+  "Sữa",
+  "Thuốc lá",
+  "Văn phòng phẩm",
+  "Đồ dùng cá nhân"
+] as const;
+
 
 interface Product {
   categoryId: number,
-  categoryName: string,
   dateExpired: Date,
   description: string,
   id: number,
@@ -24,8 +37,7 @@ interface ProductAddModalProps {
 }
 
 const emptyProduct: Product = {
-  categoryId: 0,
-  categoryName: "",
+  categoryId: 1,
   dateExpired: new Date(),
   description: "",
   id: 0,
@@ -40,21 +52,65 @@ const emptyProduct: Product = {
 
 function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
   const [newProduct, setNewProduct] = useState<Product>(emptyProduct);
+  const [fileImg, setFileImg] = useState<File | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setNewProduct((prev) => ({ ...prev, [name]: name === "quantityAvailable" || name === "inputPrice" || name === "price" ? Number(value) : value }));
+    console.log(name);
+
+    if (name === "categoryId") {
+      setNewProduct((prev) => ({ ...prev, categoryId: (CATEGORIES.indexOf(value as typeof CATEGORIES[number]) + 1) }));
+    } else if (name === "dateExpired") {
+      setNewProduct((prev) => ({ ...prev, dateExpired: new Date(value) }));
+    } else {
+      setNewProduct((prev) => ({ ...prev, [name]: name === "quantityAvailable" || name === "inputPrice" || name === "price" ? Number(value) : value }));
+    }
+
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!newProduct.name.trim()) {
       alert("Tên sản phẩm không được để trống!");
       return;
     }
-    onSave(newProduct);
-    setNewProduct(emptyProduct);
-    onClose();
+
+    try {
+      let productToSave = { ...newProduct };
+
+      if (fileImg) {
+        const url = await uploadImage(fileImg);
+        if (url) {
+          productToSave = { ...productToSave, image: url };
+        }
+      }
+
+      const resId = await createProduct(productToSave);
+      const updatedProduct = {
+        ...productToSave,
+        id: Number(resId)
+      };
+
+      onSave(updatedProduct);
+      setNewProduct(emptyProduct);
+      onClose();
+    } catch (error) {
+      console.error("Error saving product:", error);
+      alert("Có lỗi xảy ra khi lưu sản phẩm!");
+    }
   };
+
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileImg(file);
+    const previewUrl = URL.createObjectURL(file);
+    setNewProduct((prev) => ({ ...prev, image: previewUrl }));
+  }
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  }
 
   if (!isOpen) return null;
 
@@ -71,41 +127,69 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
         <div className="overflow-y-auto max-h-[calc(90vh-56px)] px-6 pb-6 scrollbar-hide">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Cột 1 - Ảnh */}
-            <div className="flex justify-center items-center flex-col">
-              <div className="w-32 h-32 border border-gray-300 flex items-center justify-center rounded">
-                {newProduct.image ? (
-                  <img src={newProduct.image} alt="Preview" className="object-cover w-full h-full rounded" />
-                ) : (
-                  <span className="text-gray-400 text-sm">No Image</span>
-                )}
+            <div className="space-y-4">
+              <div className="flex justify-center items-center flex-col h-full">
+                <div className="w-32 h-32 border border-gray-300 flex items-center justify-center rounded">
+                  {newProduct.image ? (
+                    <img src={newProduct.image} alt="Preview" className="object-cover w-full h-full rounded" />
+                  ) : (
+                    <span className="text-gray-400 text-sm">No Image</span>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleUpload}
+                  style={{ display: 'none' }}
+                />
+
+                <button
+                  className="mt-2 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+                  onClick={handleButtonClick}
+                >
+                  Thêm ảnh
+                </button>
               </div>
-              <button
-                className="mt-2 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-                onClick={() => alert('Thêm ảnh dô')}
-              >
-                Thêm ảnh
-              </button>
             </div>
 
             {/* Cột 2 */}
             <div className="space-y-4">
-              {[
-                { name: "id", label: "Mã sản phẩm" },
-                { name: "name", label: "Tên sản phẩm" },
-                { name: "categoryName", label: "Phân loại" },
-                { name: "suppliers", label: "Nhà cung cấp" },
-              ].map((field) => (
-                <div key={field.name}>
-                  <label className="text-sm font-medium text-gray-500 block mb-1">{field.label}</label>
-                  <input
-                    type="text"
-                    name={field.name}
-                    value={(newProduct as any)[field.name] || ""}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
-                  />
-                </div>
-              ))}
+              <div>
+                <label className="text-sm font-medium text-gray-500 block mb-1">Tên sản phẩm</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={newProduct.name}
+                  onChange={handleChange}
+                  className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500 block mb-1">Phân loại</label>
+                <select
+                  name="categoryId"
+                  value={CATEGORIES[newProduct.categoryId]}
+                  onChange={handleChange}
+                  className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                >
+                  {CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500 block mb-1">Nhà cung cấp</label>
+                <input
+                  type="text"
+                  name="suppliers"
+                  value={newProduct.suppliers}
+                  onChange={handleChange}
+                  className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                />
+              </div>
             </div>
 
             {/* Cột 3 */}

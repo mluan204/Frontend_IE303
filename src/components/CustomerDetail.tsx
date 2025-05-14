@@ -4,8 +4,8 @@ import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
 import { deleteCustomerById, updateCustomer } from "../service/customerApi";
 
 interface Customer {
-  id: string;
-  gender: string;
+  id: number;
+  gender: boolean;
   name: string;
   phone_number: string;
   score: number;
@@ -16,7 +16,7 @@ interface CustomerDetailProps {
   customer: Customer;
   isOpen: boolean;
   onClose: () => void;
-  removeCustomer: (id: string) => void;
+  removeCustomer: (id: number) => void;
 }
 
 type CustomerField = keyof Customer;
@@ -35,7 +35,6 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
   const [editedCustomer, setEditedCustomer] = useState(customer);
 
   const handleEdit = () => setIsEditing(true);
-
   const handleSave = async () => {
     setIsEditing(false);
     Object.assign(customer, editedCustomer);
@@ -46,15 +45,18 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
     setIsEditing(false);
     onClose();
   };
-
   const handleDelete = async () => {
+    // removeCustomer(customer.id);
     await deleteCustomerById(customer.id);
     onClose();
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setEditedCustomer((prev) => ({ ...prev, [name]: value }));
+    setEditedCustomer((prev) => ({
+      ...prev,
+      [name]: name === "gender" ? value === "Nam" : value
+    }));
   };
 
   if (!isOpen) return null;
@@ -75,15 +77,29 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
               <div key={field}>
                 <label className="text-sm font-medium text-gray-500 block mb-1">{customerFieldLabels[field]}</label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name={field}
-                    value={editedCustomer[field] ?? ""}
-                    onChange={handleChange}
-                    className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
-                  />
+                  field === "gender" ? (
+                    <select
+                      name={field}
+                      value={editedCustomer.gender ? "Nam" : "Nữ"}
+                      onChange={handleChange}
+                      className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                    >
+                      <option value="Nam">Nam</option>
+                      <option value="Nữ">Nữ</option>
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      name={field}
+                      value={editedCustomer[field] ?? ""}
+                      onChange={handleChange}
+                      className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                    />
+                  )
                 ) : (
-                  <div className="text-gray-900 text-sm">{editedCustomer[field]}</div>
+                  <div className="text-gray-900 text-sm">
+                    {field === "gender" ? (editedCustomer.gender ? "Nam" : "Nữ") : editedCustomer[field]}
+                  </div>
                 )}
               </div>
             ))}
