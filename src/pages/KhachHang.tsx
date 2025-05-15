@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faAdd, faFileExport, faEye, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faAdd, faFileExport, faEye, faTrash, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import CustomerDetail from "../components/CustomerDetail";
 import { deleteCustomerById, getAllCustomer } from "../service/customerApi";
 import { CommonUtils } from "../utils/CommonUtils"; import AddCustomerModal from "../components/AddCustomerModal";
@@ -31,15 +31,26 @@ const ITEMS_PER_PAGE = 10;
 
 function KhachHang() {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const result = await getAllCustomer();
-      setCustomers(result);
-    }
+      try {
+        setIsLoading(true);
+        setError(null);
+        const result = await getAllCustomer();
+        setCustomers(result);
+      } catch (err) {
+        console.error("Lỗi khi lấy danh sách khách hàng:", err);
+        setError("Không thể tải dữ liệu khách hàng. Vui lòng thử lại.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     fetchData();
-  }, [])
+  }, []);
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -110,6 +121,36 @@ function KhachHang() {
     }
   };
 
+  //LOADING
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-4xl text-blue-500 animate-spin mb-4"
+          />
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

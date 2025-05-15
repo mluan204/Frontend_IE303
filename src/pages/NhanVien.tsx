@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faAdd, faFileExport, faTrash, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faAdd, faFileExport, faTrash, faEye, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import EmployeeDetail from "../components/EmployeeDetail";
 import AddEmployeeModal from "../components/AddEmployeeModal";
 import { deleteEmployeeById, getAllEmployees } from "../service/employeeApi";
@@ -21,35 +21,30 @@ interface Employee {
   salary: number;
 }
 
-// Danh sách nhân viên mẫu
-const mockEmployees: Employee[] = Array.from({ length: 30 }, (_, i) => ({
-  id: i + 1,
-  name: `Nhân viên ${i + 1}`,
-  address: `Địa chỉ ${i + 1}`,
-  birthday: `199${i % 10}-01-01`,
-  created_at: `2023-0${(i % 9) + 1}-15`,
-  email: `nhanvien${i + 1}@gmail.com`,
-  gender: i % 2 === 0,
-  image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg",
-  phone_number: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
-  position: i % 2 === 0 ? "Quản lý" : "Nhân viên",
-  salary: 8000000 + i * 250000,
-}));
 const ITEMS_PER_PAGE = 10;
 
 function NhanVien() {
-  // const [employees, setEmployees] = useState<Employee[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const result = await getAllEmployees();
-      setEmployees(result);
-      console.log(result);
-    }
+      try {
+        setIsLoading(true);
+        setError(null);
+        const result = await getAllEmployees();
+        setEmployees(result);
+      } catch (err) {
+        console.error("Lỗi khi tải danh sách nhân viên:", err);
+        setError("Không thể tải dữ liệu nhân viên. Vui lòng thử lại sau.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     fetchData();
-  }, [])
+  }, []);
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -80,6 +75,36 @@ function NhanVien() {
   // MODAL THÊM NHÂN VIÊN
   const [showAddModal, setShowAddModal] = useState(false);
 
+  //LOADING
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-4xl text-blue-500 animate-spin mb-4"
+          />
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
   const handleOnClickExport = async () => {
     try {
       const res = await getAllEmployees();

@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faAdd, faFileExport, faTrash, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faAdd, faFileExport, faTrash, faEye, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import ReceiptDetail from "../components/ReceiptDetail";
 import { fetchAllProduct, fetchAllReciept, fetchReciept } from "../service/mainApi";
 import { CommonUtils } from "../utils/CommonUtils";
@@ -39,6 +39,7 @@ function KhoHang() {
   const [totalPages, setTotalPages] = useState(1);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [selectedTime, setSelectedTime] = useState("thisMonth");
   const [startDate, setStartDate] = useState("");
@@ -63,21 +64,27 @@ function KhoHang() {
   };
   
 
-  const getReceipts = async () => {
+const getReceipts = async () => {
+  try {
     setIsLoading(true);
+    setError(null);
     const response = await fetchReciept(currentPage - 1, ITEMS_PER_PAGE, search);
-    console.log(response);
     if (typeof response === "string") {
       console.error(response);
+      setError("Đã có lỗi xảy ra khi lấy dữ liệu."); // optional
     } else {
       const data = response.data;
       setReceipts(data.content || []);
       setTotalPages(data.totalPages || 1);
     }
-
-
+  } catch (error) {
+    console.error("Lỗi khi fetch receipts:", error);
+    setError("Không thể tải danh sách phiếu nhập. Vui lòng thử lại sau.");
+  } finally {
     setIsLoading(false);
-  };
+  }
+};
+
   useEffect(() => {
     fetchProducts();
   }, []);

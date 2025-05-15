@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet";
 import { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faAdd, faFileExport, faTrash, faEye} from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faAdd, faFileExport, faTrash, faEye, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import ProductDetail from "../components/ProductDetail"; 
 import AddProductModal from "../components/AddProductModal";
 import { useEffect } from "react";
@@ -46,6 +46,9 @@ function HangHoa() {
   const [searchCategory, setSearchCategory] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | 0>(0); // ID của danh mục hàng hóa được chọn, mặc định là 0 (Tất cả)
 
+  //loading
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // MODAL CHI TIẾT SẢN PHẨM
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -69,14 +72,21 @@ function HangHoa() {
 
   const getProducts = async () => {
     try {
+      setIsLoading(true);
+      setError(null);
       const res = await searchProducts(search, selectedCategoryId, currentPage - 1, ITEMS_PER_PAGE);
       if (res && res.content) {
         setProducts(res.content);         // danh sách sản phẩm
         setTotalItems(res.totalElements); // tổng số sản phẩm
+      } else {
+      setError("Không thể tải danh sách sản phẩm.");
       }
       console.log(res);
     } catch (err) {
       console.error("Lỗi khi lấy sản phẩm:", err);
+      setError("Đã xảy ra lỗi khi tải sản phẩm.");
+    } finally {
+      setIsLoading(false);
     }
   };
   const getCategory = async () => {
@@ -130,8 +140,7 @@ function HangHoa() {
       await CommonUtils.exportExcel(mappedData, "Danh sách sản phẩm", "Danh sách sản phẩm");
     }
   };
-
-  const onClickDeleteProduct = async (product: Product) => {
+   const onClickDeleteProduct = async (product: Product) => {
     const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${product.name}"?`);
     if (confirmDelete) {
       try {
@@ -144,8 +153,36 @@ function HangHoa() {
       }
     }
   };
+  //  LOADING
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-4xl text-blue-500 animate-spin mb-4"
+          />
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
-
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={getProducts}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
