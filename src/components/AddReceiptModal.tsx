@@ -1,22 +1,37 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, use, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faTrash, faSave } from "@fortawesome/free-solid-svg-icons";
+import { getAllEmployees } from "../service/employeeApi";
+import { addReceipt } from "../service/receiptApi";
+
+interface Employee {
+  id: number;
+  name: string;
+  address: string;
+  birthday: string;
+  created_at: string;
+  email: string;
+  gender: boolean;
+  image: string;
+  phone_number: string;
+  position: string;
+  salary: number;
+}
 
 interface Product {
-  id: string;
+  id: number;
   name: string;
-  price: string;
-  cost: string;
+  price: number;
+  cost: number;
   category: string;
   stock: number;
   image: string;
   supplier: string;
-  expiry: string;
   notes: string;
 }
 
 interface SelectedProduct {
-  id: string;
+  id: number;
   name: string;
   cost: number;
   quantity: number;
@@ -33,12 +48,20 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
   const [search, setSearch] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [receiptInfo, setReceiptInfo] = useState({
-    receiptID: "",
     time: "",
-    employeeID: "",
+    employeeID: 0,
     note: "",
+    totalCost: 0,
   });
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
+  useEffect(() => {
+    const fetchEmployee = async () => {
+      const response = await getAllEmployees();
+      setEmployees(response);
+    };
+    fetchEmployee();
+  }, []);
   const filteredProducts = useMemo(
     () =>
       products.filter(
@@ -56,7 +79,7 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
         {
           id: product.id,
           name: product.name,
-          cost: parseInt(product.cost.replace(/\D/g, "")),
+          cost: product.price,
           quantity: 1,
           discount: 0,
         },
@@ -64,14 +87,33 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
     }
   };
 
-  const handleRemoveProduct = (id: string) => {
+  const handleRemoveProduct = (id: number) => {
     setSelectedProducts(selectedProducts.filter((p) => p.id !== id));
   };
 
-  const handleChange = (id: string, field: keyof SelectedProduct, value: number) => {
+  const handleChange = (id: number, field: keyof SelectedProduct, value: number) => {
     setSelectedProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, [field]: value } : p))
     );
+  };
+
+  const handleSaveReceipt = async () => {
+    const formData = {
+      created_at: receiptInfo.time,
+      total_cost: totalCost,
+      note: receiptInfo.note,
+      employeeId: receiptInfo.employeeID,
+      receiptDetails: selectedProducts.map((p) => ({
+        productId: p.id,
+        quantity: p.quantity,
+        input_price: p.cost,
+        isCheck: true
+      })),
+    };
+    console.log(formData);
+    const id = await addReceipt(formData);
+    console.log(id);
+    onClose();
   };
 
   const totalCost = selectedProducts.reduce(
@@ -121,7 +163,7 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
                       <tr key={p.id} className="hover:bg-gray-100">
                         <td className="px-4 py-2">{index + 1}</td>
                         <td className="px-4 py-2 max-w-[160px] truncate">{p.name}</td>
-                        <td className="px-4 py-2">{p.cost.toLocaleString()}</td>
+                        <td className="px-4 py-2">{(p.cost).toLocaleString("vi-VN")}đ</td>
                         <td className="px-4 py-2">
                           <input
                             type="number"
@@ -131,7 +173,7 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
                             onChange={(e) => handleChange(p.id, "quantity", +e.target.value)}
                           />
                         </td>
-                        <td className="px-4 py-2">{(p.quantity * p.cost).toLocaleString()}đ</td>
+                        <td className="px-4 py-2">{(p.quantity * p.cost).toLocaleString("vi-VN")}đ</td>
                         <td className="px-4 py-2">
                           <button onClick={() => handleRemoveProduct(p.id)}>
                             <FontAwesomeIcon icon={faTrash} className="text-red-500" />
@@ -154,17 +196,33 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
 
           {/* Receipt Info */}
           <div className="w-full lg:w-1/3 lg:h-auto h-1/2 p-6 overflow-auto space-y-4">
-            {[{ label: "Mã phiếu nhập", key: "receiptID" }, { label: "Thời gian", key: "time" }, { label: "Người nhập", key: "employeeID" }].map((field) => (
-              <div key={field.key}>
-                <label className="text-sm font-medium text-gray-500 block mb-1 truncate">{field.label}</label>
-                <input
-                  type="text"
-                  value={(receiptInfo as any)[field.key]}
-                  onChange={(e) => setReceiptInfo({ ...receiptInfo, [field.key]: e.target.value })}
-                  className="w-full border rounded px-3 py-1 text-sm"
-                />
-              </div>
-            ))}
+            {/* Thời gian */}
+            <div>
+              <label className="text-sm font-medium text-gray-500 block mb-1 truncate">Thời gian</label>
+              <input
+                type="datetime-local"
+                value={receiptInfo.time}
+                onChange={(e) => setReceiptInfo({ ...receiptInfo, time: e.target.value })}
+                className="w-full border rounded px-3 py-1 text-sm"
+              />
+            </div>
+
+            {/* Người nhập */}
+            <div>
+              <label className="text-sm font-medium text-gray-500 block mb-1 truncate">Người nhập</label>
+              <select
+                value={receiptInfo.employeeID}
+                onChange={(e) => setReceiptInfo({ ...receiptInfo, employeeID: parseInt(e.target.value) })}
+                className="w-full border rounded px-3 py-1 text-sm bg-white"
+              >
+                <option value="">Chọn nhân viên</option>
+                {employees.map((employee) => (
+                  <option key={employee.id} value={employee.id}>
+                    {employee.name} - {employee.position}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <div>
               <label className="text-sm font-medium text-gray-500 block mb-1 truncate">Tổng tiền hàng</label>
@@ -186,7 +244,7 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
-              <button className="px-4 py-2 bg-green-500 text-white text-sm rounded">
+              <button onClick={handleSaveReceipt} className="px-4 py-2 bg-green-500 text-white text-sm rounded">
                 <FontAwesomeIcon icon={faSave} className="mr-2" />
                 Lưu phiếu
               </button>

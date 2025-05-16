@@ -1,24 +1,52 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faSave, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { getAllEmployees } from "../service/employeeApi";
+import { getAllCustomer } from "../service/customerApi";
+import { createBill } from "../service/billApi";
 
 interface Product {
-  id: string;
+  id: number;
   name: string;
-  price: string;
-  cost: string;
-  category: string;
-  stock: number;
+  description: string;
   image: string;
-  supplier: string;
-  expiry: string;
-  notes: string;
+  suppliers: string;
+  quantityAvailable: number;
+  dateExpired: Date | null;
+  salePrice: number | null;
+  inputPrice: number;
+  price: number;
+  categoryId: number;
+  categoryName: string;
+}
+
+interface Bill {
+  id: number;
+  total_cost: number;
+  after_discount: number;
+  customer: Customer;
+  employee: Employee;
+  isDeleted: boolean;
+  billDetails: BillDetail[];
+  createdAt: string;
+  totalQuantity: number;
+  notes: string | null;
+  pointsToUse: number | null;
+  is_error: boolean;
+}
+
+interface BillDetail {
+  productId: number;
+  productName: string;
+  price: number;
+  afterDiscount: number | null;
+  quantity: number;
 }
 
 interface SelectedProduct {
-  id: string;
+  id: number;
   name: string;
-  cost: number;
+  price: number;
   quantity: number;
   discount: number;
 }
@@ -30,14 +58,53 @@ interface AddBillModalProps {
   onSave: (data: any) => void;
 }
 
+interface Employee {
+  id: number;
+  name: string;
+  address: string;
+  birthday: string;
+  created_at: string;
+  email: string;
+  gender: boolean;
+  image: string;
+  phone_number: string;
+  position: string;
+  salary: number;
+}
+
+interface Customer {
+  id: number;
+  gender: boolean;
+  name: string;
+  phone_number: string;
+  score: number;
+  created_at: string;
+}
+
+
 export default function AddBillModal({ isOpen, onClose, products, onSave }: AddBillModalProps) {
   const [search, setSearch] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [billInfo, setBillInfo] = useState({
-    customerName: "",
-    employeeName: "",
+    customerId: 0,
+    employeeId: 0,
     note: "",
   });
+  const [employee, setEmployee] = useState<Employee[]>([]);
+  const [customer, setCustomer] = useState<Customer[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await getAllEmployees();
+      console.log("Get all employees");
+      setEmployee(response);
+      const responseCustomer = await getAllCustomer();
+      console.log("Get all customers");
+      setCustomer(responseCustomer);
+    };
+
+    fetchData();
+  }, []);
 
   const filteredProducts = useMemo(
     () =>
@@ -56,7 +123,7 @@ export default function AddBillModal({ isOpen, onClose, products, onSave }: AddB
         {
           id: product.id,
           name: product.name,
-          cost: parseInt(product.price.replace(/\D/g, "")),
+          price: product.price,
           quantity: 1,
           discount: 0,
         },
@@ -64,11 +131,11 @@ export default function AddBillModal({ isOpen, onClose, products, onSave }: AddB
     }
   };
 
-  const handleRemoveProduct = (id: string) => {
+  const handleRemoveProduct = (id: number) => {
     setSelectedProducts(selectedProducts.filter((p) => p.id !== id));
   };
 
-  const handleChange = (id: string, value: number) => {
+  const handleChange = (id: number, value: number) => {
     setSelectedProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, quantity: value } : p))
     );
@@ -76,17 +143,52 @@ export default function AddBillModal({ isOpen, onClose, products, onSave }: AddB
 
   const totalQuantity = selectedProducts.reduce((sum, p) => sum + p.quantity, 0);
   const totalCost = selectedProducts.reduce(
-    (sum, p) => sum + p.quantity * p.cost * (1 - p.discount / 100),
+    (sum, p) => sum + p.quantity * p.price * (1 - p.discount / 100),
     0
   );
 
-  const handleSubmit = () => {
-    onSave({
-      ...billInfo,
+  const handleSubmit = async () => {
+
+    const formData = {
+      employee: {
+        id: billInfo.employeeId
+      },
+      customer: {
+        id: billInfo.customerId
+      },
+      billDetails: selectedProducts.map(p => ({
+        productId: p.id,
+        afterDiscount: p.price - p.price * p.discount / 100,
+        quantity: p.quantity
+      })),
+      pointsToUse: 0,
+      notes: billInfo.note
+    }
+
+    const id = await createBill(formData);
+
+    const newBill: Bill = {
+      id: id,
       total_cost: totalCost,
-      totalQuantity,
-      billDetails: selectedProducts,
-    });
+      after_discount: totalCost,
+      customer: customer.find(c => c.id === billInfo.customerId)!,
+      employee: employee.find(e => e.id === billInfo.employeeId)!,
+      isDeleted: false,
+      billDetails: selectedProducts.map(p => ({
+        productId: p.id,
+        productName: p.name,
+        price: p.price,
+        afterDiscount: p.price - p.price * p.discount / 100,
+        quantity: p.quantity
+      })),
+      createdAt: new Date().toISOString(),
+      totalQuantity: totalQuantity,
+      notes: billInfo.note,
+      pointsToUse: 0,
+      is_error: false
+    }
+    console.log(newBill);
+    onSave(newBill);
     onClose();
   };
 
@@ -117,7 +219,7 @@ export default function AddBillModal({ isOpen, onClose, products, onSave }: AddB
                 <table className="min-w-full divide-y divide-gray-200 text-sm whitespace-nowrap">
                   <thead className="bg-gray-50 text-xs uppercase text-gray-500">
                     <tr>
-                      <th className="px-4 py-2 text-left">STT</th>
+                      <th className="px-4 py-2 text-left">Mã SP</th>
                       <th className="px-4 py-2 text-left">Tên SP</th>
                       <th className="px-4 py-2 text-left">Đơn giá</th>
                       <th className="px-4 py-2 text-left">Số lượng</th>
@@ -128,9 +230,9 @@ export default function AddBillModal({ isOpen, onClose, products, onSave }: AddB
                   <tbody>
                     {selectedProducts.map((p, index) => (
                       <tr key={p.id} className="hover:bg-gray-100">
-                        <td className="px-4 py-2">SP00{p.id}</td>
+                        <td className="px-4 py-2">{p.id}</td>
                         <td className="px-4 py-2 max-w-[160px] truncate">{p.name}</td>
-                        <td className="px-4 py-2">{p.cost.toLocaleString("vi-VN")}</td>
+                        <td className="px-4 py-2">{p.price.toLocaleString("vi-VN")}</td>
                         <td className="px-4 py-2">
                           <input
                             type="number"
@@ -140,7 +242,7 @@ export default function AddBillModal({ isOpen, onClose, products, onSave }: AddB
                             className="w-16 border rounded text-sm"
                           />
                         </td>
-                        <td className="px-4 py-2">{(p.quantity * p.cost).toLocaleString("vi-VN")} đ</td>
+                        <td className="px-4 py-2">{(p.quantity * p.price).toLocaleString("vi-VN")} đ</td>
                         <td className="px-4 py-2">
                           <button onClick={() => handleRemoveProduct(p.id)}>
                             <FontAwesomeIcon icon={faTrash} className="text-red-500" />
@@ -165,22 +267,34 @@ export default function AddBillModal({ isOpen, onClose, products, onSave }: AddB
           <div className="w-full lg:w-1/3 lg:h-auto h-1/2 p-6 overflow-auto space-y-4">
             <div>
               <label className="text-sm font-medium text-gray-500 block mb-1 truncate">Khách hàng</label>
-              <input
-                type="text"
-                value={billInfo.customerName}
-                onChange={(e) => setBillInfo({ ...billInfo, customerName: e.target.value })}
+              <select
+                value={billInfo.customerId}
+                onChange={(e) => setBillInfo({ ...billInfo, customerId: parseInt(e.target.value) })}
                 className="w-full border rounded px-3 py-1 text-sm"
-              />
+              >
+                <option value="">Chọn khách hàng</option>
+                {customer.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}{c.id === 0 ? "" : " - " + c.phone_number}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="text-sm font-medium text-gray-500 block mb-1 truncate">Nhân viên bán</label>
-              <input
-                type="text"
-                value={billInfo.employeeName}
-                onChange={(e) => setBillInfo({ ...billInfo, employeeName: e.target.value })}
+              <select
+                value={billInfo.employeeId}
+                onChange={(e) => setBillInfo({ ...billInfo, employeeId: parseInt(e.target.value) })}
                 className="w-full border rounded px-3 py-1 text-sm"
-              />
+              >
+                <option value="">Chọn nhân viên</option>
+                {employee.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}{e.id === 0 ? "" : " - " + e.phone_number}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
