@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEllipsisV, faPrint, faTrash, faBan } from "@fortawesome/free-solid-svg-icons";
-import { deleteBillById, fetchAllBill } from "../service/mainApi";
+import { deleteBillById, fetchAllBill, fetchBill } from "../service/mainApi";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -49,7 +49,9 @@ function LishsuHoadon() {
 
   const fetchData = async () => {
         try {
-          const result = await fetchAllBill(); // trả về mảng any[]
+          const today = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
+          const result = await fetchBill(0, 10, "", today, today); 
+          console.log(result)
             
           // map sang Product để hiển thị
           const mapped: Invoice[] = result.map((item: any) => ({
