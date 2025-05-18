@@ -1,6 +1,6 @@
 import api from "./api";
 
-interface Employee {
+export interface Employee {
   id: number;
   name: string;
   address: string;
@@ -12,6 +12,23 @@ interface Employee {
   phone_number: string;
   position: string;
   salary: number;
+  employeeShifts?: number[];
+  bills?: number[];
+  receipts?: number[];
+}
+
+export interface Shift {
+  id: number;
+  employeeId: number;
+  date: string;
+  shiftType: 'DAI1' | 'DAI2';
+}
+
+export interface EmployeeShiftDTO {
+  id?: number;
+  employeeId: number;
+  date: string;
+  shiftType: "DAI1" | "DAI2";
 }
 
 export const getAllEmployees = async () => {
@@ -21,6 +38,16 @@ export const getAllEmployees = async () => {
   } catch (error) {
     console.log(error);
     return "Loi khi lay all employee";
+  }
+};
+
+export const getEmployeeById = async (id: number): Promise<Employee> => {
+  try {
+    const response = await api.get(`/v1/employees/${id}`);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
   }
 };
 
@@ -68,5 +95,25 @@ export const createEmployee = async (em : Employee) => {
   } catch (error) {
     console.log(error);
     return "Loi khi tao employee";
+  }
+};
+
+export const getWeeklyShifts = async (date: string): Promise<Shift[]> => {
+  try {
+    const response = await api.get(`/shifts/weekly?date=${date}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching shifts:", error);
+    throw error;
+  }
+};
+
+export const createShift = async (shiftData: EmployeeShiftDTO): Promise<EmployeeShiftDTO> => {
+  try {
+    const response = await api.post<EmployeeShiftDTO>('/shifts', shiftData);
+    return response.data;
+  } catch (error) {
+    console.error("Error creating shift:", error);
+    throw error;
   }
 };

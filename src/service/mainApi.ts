@@ -153,6 +153,18 @@ export const fetchAllReciept = async () => {
   }
 }
 
+export const fetchSalesReport = async (startDate: string, endDate: string) => {
+  try {
+    const response = await api.get("/sales/report", {
+      params: { startDate, endDate },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy báo cáo doanh thu:", error);
+    return null;
+  }
+};
+
 // export const changePass = async (username: string, oldPass: string, newPass: string) => {
 //   try {
 //     const response = await axios.post(`${API_URL}/v1/change-pass`,
