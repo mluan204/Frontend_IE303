@@ -16,6 +16,7 @@ const Navigation = () => {
   const navItems = [
     { path: "/", icon: "fas fa-eye", label: "Tổng quan" },
     { path: "/hang-hoa", icon: "fas fa-box", label: "Hàng hóa" },
+    { path: "/combo", icon: "fas fa-layer-group", label: "Combo" },
     { path: "/hoa-don", icon: "fas fa-receipt", label: "Hóa đơn" },
     { path: "/kho-hang", icon: "fas fa-warehouse", label: "Kho hàng" },
     { path: "/nhan-vien", icon: "fas fa-users", label: "Nhân viên" },

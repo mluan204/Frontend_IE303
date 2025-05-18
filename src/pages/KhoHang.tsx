@@ -3,12 +3,12 @@ import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faAdd, faFileExport, faTrash, faEye } from "@fortawesome/free-solid-svg-icons";
 import ReceiptDetail from "../components/ReceiptDetail";
-import { fetchAllReciept, fetchReciept } from "../service/mainApi";
+import { fetchAllProduct, fetchAllReciept, fetchReciept } from "../service/mainApi";
 import { CommonUtils } from "../utils/CommonUtils";
 import AddReceiptModal from "../components/AddReceiptModal";
 
 interface Receipt {
-  id: string;
+  id: number;
   created_at: string;
   total_cost: string;
   employee_name: string;
@@ -18,10 +18,10 @@ interface Receipt {
 
 
 interface Product {
-  id: string;
+  id: number;
   name: string;
-  price: string;
-  cost: string;
+  price: number;
+  cost: number;
   category: string;
   stock: number;
   image: string;
@@ -30,18 +30,6 @@ interface Product {
   notes: string;
 }
 
-const products: Product[] = Array.from({ length: 30 }, (_, i) => ({
-  id: `SP${String(i + 1).padStart(6, "0")}`,
-  name: `Sản phẩm ${i + 1}`,
-  price: (100000 + i * 5000).toLocaleString("vi-VN"),
-  cost: (95000 + i * 5000).toLocaleString("vi-VN"),
-  category: ["Thực phẩm", "Đồ gia dụng", "Thời trang", "Thiết bị điện"][i % 4],
-  stock: 300 - i * 10,
-  image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg/revision/latest?cb=20210323154547&path-prefix=pt-br",
-  supplier: `Nhà cung cấp ${i % 5 + 1}`,
-  expiry: `2025-${(i % 12 + 1).toString().padStart(2, "0")}-15`,
-  notes: `Ghi chú cho sản phẩm ${i + 1}`
-}));
 const ITEMS_PER_PAGE = 10;
 
 function KhoHang() {
@@ -69,6 +57,7 @@ function KhoHang() {
   const [selectedTime, setSelectedTime] = useState("thisMonth");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
 
   const getReceipts = async () => {
     setIsLoading(true);
@@ -77,7 +66,7 @@ function KhoHang() {
     if (typeof response === "string") {
       console.error(response);
     } else {
-      const data = response.data; 
+      const data = response.data;
       setReceipts(data.content || []);
       setTotalPages(data.totalPages || 1);
     }
@@ -86,21 +75,29 @@ function KhoHang() {
     setIsLoading(false);
   };
   useEffect(() => {
+    fetchProducts();
+  }, []);
+  const fetchProducts = async () => {
+    const response = await fetchAllProduct();
+    setProducts(response);
+  };
+
+  useEffect(() => {
     getReceipts();
   }, [currentPage, search]);
-  
+
   const handleOnClickExport = async () => {
     try {
       const res = await fetchAllReciept();
-      if (res ) {
+      if (res) {
         const mappedData = res.data.map((item: Receipt) => ({
-        "Mã phiếu nhập": item.id,
-        "Thời gian": new Date(item.created_at).toLocaleString("vi-VN"),
-        "Nhân viên": item.employee_name,
-        "Tổng tiền": item.total_cost,
-        "Ghi chú": item.note || "",
-      }));
-      await CommonUtils.exportExcel(mappedData, "Danh sách phiếu nhập", "Phiếu nhập kho");
+          "Mã phiếu nhập": item.id,
+          "Thời gian": new Date(item.created_at).toLocaleString("vi-VN"),
+          "Nhân viên": item.employee_name,
+          "Tổng tiền": item.total_cost,
+          "Ghi chú": item.note || "",
+        }));
+        await CommonUtils.exportExcel(mappedData, "Danh sách phiếu nhập", "Phiếu nhập kho");
 
       }
     } catch (error) {
@@ -116,7 +113,7 @@ function KhoHang() {
       <Helmet>
         <title>Kho hàng</title>
       </Helmet>
-  
+
       <div className="p-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-5">
@@ -158,7 +155,7 @@ function KhoHang() {
             </div>
           </div>
         </div>
-          
+
         {/* Bộ lọc thời gian - phiên bản mobile */}
         <div className="mb-4 md:hidden bg-white shadow rounded-lg p-4">
           <h2 className="font-bold mb-2">Thời gian</h2>
@@ -271,7 +268,7 @@ function KhoHang() {
             </ul>
           </div>
 
-  
+
           {/* DANH SÁCH PHIẾU NHẬP */}
           <div className="w-full md:w-3/4">
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -314,7 +311,7 @@ function KhoHang() {
                   </tbody>
                 </table>
               </div>
-  
+
               {/* Phân trang */}
               <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
                 {/* MOBILE: Trang trước / sau */}
@@ -364,11 +361,10 @@ function KhoHang() {
                       <button
                         key={index}
                         onClick={() => setCurrentPage(index + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
-                          currentPage === index + 1
-                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${currentPage === index + 1
+                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          }`}
                       >
                         {index + 1}
                       </button>
@@ -384,7 +380,7 @@ function KhoHang() {
                 </div>
               </div>
             </div>
-  
+
             {/* Chi tiết phiếu */}
             {selectedReceipt && (
               <ReceiptDetail
@@ -396,7 +392,7 @@ function KhoHang() {
           </div>
         </div>
       </div>
-  
+
       {/* Modal thêm mới */}
       <AddReceiptModal
         isOpen={openModalAdd}

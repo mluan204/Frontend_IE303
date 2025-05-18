@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClose, faSave, faEdit} from "@fortawesome/free-solid-svg-icons";
+import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
 
 interface Receipt {
-  id: string;
+  id: number;
   created_at: string;
   total_cost: string;
   employee_name: string;
@@ -12,7 +12,7 @@ interface Receipt {
 
 }
 interface ReceiptDetailProps {
-  receipt: Receipt; 
+  receipt: Receipt;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -28,40 +28,40 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
     note: "Ghi chú",
   }
 
-    const receiptDetails = [
+  const receiptDetails = [
     {
-        id: 1,
-        productName: "Thuốc lá Vinataba",
-        unitPrice: 20000,
-        quantity: 2,
-        discount: 0.1,
-        totalPrice: 36000, 
+      id: 1,
+      productName: "Thuốc lá Vinataba",
+      unitPrice: 20000,
+      quantity: 2,
+      discount: 0.1,
+      totalPrice: 36000,
     },
     {
-        id: 2,
-        productName: "Sữa Vinamilk",
-        unitPrice: 15000,
-        quantity: 3,
-        discount: 0.05, 
-        totalPrice: 42750, 
+      id: 2,
+      productName: "Sữa Vinamilk",
+      unitPrice: 15000,
+      quantity: 3,
+      discount: 0.05,
+      totalPrice: 42750,
     },
     {
-        id: 3,
-        productName: "Nước ngọt Coca-Cola",
-        unitPrice: 10000,
-        quantity: 5,
-        discount: 0, 
-        totalPrice: 50000, 
+      id: 3,
+      productName: "Nước ngọt Coca-Cola",
+      unitPrice: 10000,
+      quantity: 5,
+      discount: 0,
+      totalPrice: 50000,
     },
     {
-        id: 4,
-        productName: "Kẹo Alpenliebe",
-        unitPrice: 5000,
-        quantity: 10,
-        discount: 0.2, 
-        totalPrice: 40000, 
+      id: 4,
+      productName: "Kẹo Alpenliebe",
+      unitPrice: 5000,
+      quantity: 10,
+      discount: 0.2,
+      totalPrice: 40000,
     },
-    ];
+  ];
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedBill, setEditedBill] = useState(bill);

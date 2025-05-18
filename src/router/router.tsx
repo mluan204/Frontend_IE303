@@ -10,6 +10,7 @@ import Login from "../pages/Login";
 import BanHang from "../pages/BanHang";
 import LichsuHoadon from "../pages/LichsuHoadon";
 import DoanhThu from "../pages/DoanhThu";
+import Combo from "../pages/Combo";
 import CaLam from "../pages/CaLam";
 // import { ReactNode } from "react";
 
@@ -28,6 +29,7 @@ const Router = () => {
       <Route path="/" element={<TongQuan />} />
       <Route path="/hang-hoa" element={<HangHoa />} />
       <Route path="/hoa-don" element={<HoaDon />} />
+      <Route path="/combo" element={<Combo />} />
       <Route path="/kho-hang" element={<KhoHang />} />
       <Route path="/nhan-vien" element={<NhanVien />} />
       <Route path="/ca-lam" element={<CaLam />} />
