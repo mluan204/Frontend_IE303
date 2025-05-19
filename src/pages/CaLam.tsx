@@ -6,11 +6,13 @@ import {
   Employee,
   getAllEmployees,
   createShift,
+  deleteShift,
+  updateShift,
 } from "../service/employeeApi";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faSpinner, faTimes } from "@fortawesome/free-solid-svg-icons";
 
 const CaLam: React.FC = () => {
   const [viewDate, setViewDate] = useState(new Date());
@@ -44,7 +46,6 @@ const CaLam: React.FC = () => {
       const data = await getWeeklyShifts(formattedDate);
       setShifts(data);
 
-      // Fetch employee details for each shift
       const employeeIds = [...new Set(data.map((shift) => shift.employeeId))];
       const employeeDetailsPromises = employeeIds.map((id) =>
         getEmployeeById(id)
@@ -117,6 +118,21 @@ const CaLam: React.FC = () => {
     }
   };
 
+  const handleDeleteShift = async (shift: Shift, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering handleShiftClick
+    if (
+      window.confirm("Bạn có chắc chắn muốn xóa nhân viên này khỏi ca làm?")
+    ) {
+      try {
+        await deleteShift(shift.id);
+        // Refresh shifts after deletion
+        fetchShifts();
+      } catch (error) {
+        console.error("Error deleting shift:", error);
+      }
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -166,11 +182,18 @@ const CaLam: React.FC = () => {
                           {dayShifts.map((shift) => (
                             <div
                               key={shift.id}
-                              className="bg-green-100 p-2 rounded cursor-pointer hover:bg-green-200 transition-colors"
+                              className="bg-green-100 p-2 rounded cursor-pointer hover:bg-green-200 transition-colors relative group"
                               onClick={() => handleShiftClick(shift)}
                             >
                               {employeeDetails[shift.employeeId]?.name ||
                                 `Nhân viên #${shift.employeeId}`}
+                              <button
+                                onClick={(e) => handleDeleteShift(shift, e)}
+                                className="absolute top-1 right-1 text-red-500 opacity-0 group-hover:opacity-100 hover:text-red-700 transition-opacity"
+                                title="Xóa nhân viên khỏi ca làm"
+                              >
+                                <FontAwesomeIcon icon={faTimes} />
+                              </button>
                             </div>
                           ))}
                           <button
@@ -198,11 +221,18 @@ const CaLam: React.FC = () => {
                           {dayShifts.map((shift) => (
                             <div
                               key={shift.id}
-                              className="bg-blue-100 p-2 rounded cursor-pointer hover:bg-blue-200 transition-colors"
+                              className="bg-blue-100 p-2 rounded cursor-pointer hover:bg-blue-200 transition-colors relative group"
                               onClick={() => handleShiftClick(shift)}
                             >
                               {employeeDetails[shift.employeeId]?.name ||
                                 `Nhân viên #${shift.employeeId}`}
+                              <button
+                                onClick={(e) => handleDeleteShift(shift, e)}
+                                className="absolute top-1 right-1 text-red-500 opacity-0 group-hover:opacity-100 hover:text-red-700 transition-opacity"
+                                title="Xóa nhân viên khỏi ca làm"
+                              >
+                                <FontAwesomeIcon icon={faTimes} />
+                              </button>
                             </div>
                           ))}
                           <button

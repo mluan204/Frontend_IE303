@@ -13,9 +13,15 @@ interface CartItemProps {
   discount?: number; // Giá đã giảm, ví dụ: 5000
 }
 
-
 const BillItem: React.FC<CartItemProps> = ({
-  index, id, name, price, quantity, onUpdateQuantity, onRemove, discount = 0
+  index,
+  id,
+  name,
+  price,
+  quantity,
+  onUpdateQuantity,
+  onRemove,
+  discount = 0,
 }) => {
   const [currentQuantity, setCurrentQuantity] = useState(quantity);
 
@@ -37,9 +43,7 @@ const BillItem: React.FC<CartItemProps> = ({
     onUpdateQuantity(id, newQuantity);
   };
 
-  console.log(index, id, name, price, quantity, discount)
-
-   return (
+  return (
     <div className="flex items-center border-b border-gray-300 p-3 w-full justify-between mt-1">
       {/* Số thứ tự & Xóa */}
       <div className="flex w-1/12 items-center justify-end mr-1">
@@ -53,32 +57,50 @@ const BillItem: React.FC<CartItemProps> = ({
       </div>
 
       {/* Giá gốc (gạch nếu có discount) */}
-      <div className={`text-right text-sm w-[60px] ${discount !== price ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+      <div
+        className={`text-right text-sm w-[60px] ${
+          discount !== price ? "text-gray-400 line-through" : "text-gray-800"
+        }`}
+      >
         {price.toLocaleString("vi-VN")}đ
       </div>
 
       {/* Giá sau giảm (nếu có) */}
       {discount !== price && (
         <div className="text-red-600 text-sm font-semibold w-[60px] text-right">
-          {(discount).toLocaleString("vi-VN")}đ
+          {discount.toLocaleString("vi-VN")}đ
         </div>
       )}
 
-
       {/* Điều chỉnh số lượng */}
       <div className="flex items-center justify-between w-16 mx-4">
-        <button className="text-gray-500 rounded-full border border-gray-300 bg-gray-300 w-4 h-4 flex items-center justify-center my-1" onClick={handleDecrease}>-</button>
-        <span className="w-10 text-center border-b-2 border-gray-300 text-gray-500">{quantity}</span>
-        <button className="text-gray-500 rounded-full border border-gray-300 bg-gray-300 w-4 h-4 flex items-center justify-center" onClick={handleIncrease}>+</button>
+        <button
+          className="text-gray-500 rounded-full border border-gray-300 bg-gray-300 w-4 h-4 flex items-center justify-center my-1"
+          onClick={handleDecrease}
+        >
+          -
+        </button>
+        <span className="w-10 text-center border-b-2 border-gray-300 text-gray-500">
+          {quantity}
+        </span>
+        <button
+          className="text-gray-500 rounded-full border border-gray-300 bg-gray-300 w-4 h-4 flex items-center justify-center"
+          onClick={handleIncrease}
+        >
+          +
+        </button>
       </div>
 
       {/* Tổng sau giảm */}
       <span className="w-2/12 font-bold text-right">
-         {(discount ?  discount * currentQuantity : price * currentQuantity).toLocaleString("vi-VN")}đ
+        {(discount
+          ? discount * currentQuantity
+          : price * currentQuantity
+        ).toLocaleString("vi-VN")}
+        đ
       </span>
     </div>
   );
 };
-
 
 export default BillItem;

@@ -117,3 +117,22 @@ export const createShift = async (shiftData: EmployeeShiftDTO): Promise<Employee
     throw error;
   }
 };
+
+export const deleteShift = async (id: number): Promise<void> => {
+  try {
+    await api.delete(`/shifts/${id}`);
+  } catch (error) {
+    console.error("Error deleting shift:", error);
+    throw error;
+  }
+};
+
+export const updateShift = async (id: number, shiftData: EmployeeShiftDTO): Promise<EmployeeShiftDTO> => {
+  try {
+    const response = await api.put<EmployeeShiftDTO>(`/shifts/${id}`, shiftData);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating shift:", error);
+    throw error;
+  }
+};
