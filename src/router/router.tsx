@@ -11,6 +11,7 @@ import BanHang from "../pages/BanHang";
 import LichsuHoadon from "../pages/LichsuHoadon";
 import DoanhThu from "../pages/DoanhThu";
 import Combo from "../pages/Combo";
+import CaLam from "../pages/CaLam";
 // import { ReactNode } from "react";
 
 // interface ProtectedRouteProps {
@@ -25,12 +26,13 @@ const Router = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/" element={<TongQuan />}/>
+      <Route path="/" element={<TongQuan />} />
       <Route path="/hang-hoa" element={<HangHoa />} />
       <Route path="/hoa-don" element={<HoaDon />} />
       <Route path="/combo" element={<Combo />} />
       <Route path="/kho-hang" element={<KhoHang />} />
       <Route path="/nhan-vien" element={<NhanVien />} />
+      <Route path="/ca-lam" element={<CaLam />} />
       <Route path="/bao-cao" element={<BaoCao />} />
       <Route path="/khach-hang" element={<KhachHang />} />
       <Route path="*" element={<Navigate to="/" />} />

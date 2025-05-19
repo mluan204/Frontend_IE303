@@ -11,3 +11,13 @@ export const createBill = async (data: any) => {
         return "Loi khi tao employee";
     }
 };
+
+export const getProductQuantity = async () => {
+    try {
+        const response = await api.get("/bill-detail/product-quantities");
+        // console.log("api"+response.data.length);
+        return response.data;
+    } catch (error) {
+        console.log(error);
+    }
+};

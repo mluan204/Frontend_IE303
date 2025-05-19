@@ -4,12 +4,12 @@ import NavigationSale from "./components/NavigationSale";
 import Navigation from "./components/navigation";
 import { useEffect } from "react";
 import { useAuth } from "./context/AuthContext";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const navigate = useNavigate();
-  const {isAuthenticated} = useAuth();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) navigate("/login");

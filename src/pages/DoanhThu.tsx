@@ -4,14 +4,16 @@ import { faCalendarAlt } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Bar } from "react-chartjs-2";
-import { fetchSalesChart } from "../service/mainApi";
+import { fetchSalesChart, fetchSalesReport } from "../service/mainApi";
 
 function DoanhThu() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [chartData, setChartData] = useState<any>(null);
+  const [reportData, setReportData] = useState<any>(null);
 
   useEffect(() => {
     loadChartData();
+    loadReportData();
   }, [selectedDate]);
 
   const loadChartData = async () => {
@@ -21,8 +23,12 @@ function DoanhThu() {
     endDate.setHours(23, 59, 59, 999);
 
     // Convert to UTC to match backend timezone
-    const startDateUTC = new Date(startDate.getTime() - startDate.getTimezoneOffset() * 60000);
-    const endDateUTC = new Date(endDate.getTime() - endDate.getTimezoneOffset() * 60000);
+    const startDateUTC = new Date(
+      startDate.getTime() - startDate.getTimezoneOffset() * 60000
+    );
+    const endDateUTC = new Date(
+      endDate.getTime() - endDate.getTimezoneOffset() * 60000
+    );
 
     const data = await fetchSalesChart(
       "HOURLY",
@@ -47,18 +53,23 @@ function DoanhThu() {
     }
   };
 
-  const data = {
-    date: "Thứ Hai 07-04-2025",
-    dineIn: { transactions: 18, total: 1943000 },
-    takeAway: { transactions: 0, total: 0 },
-    details: {
-      totalCustomers: 18,
-      avgPerTransaction: 107944,
-      avgPerCustomer: 107944,
-      discount: 0,
-      refund: 0,
-      serviceFee: 0,
-    },
+  const loadReportData = async () => {
+    const startDate = new Date(selectedDate);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(selectedDate);
+    endDate.setHours(23, 59, 59, 999);
+    const startDateUTC = new Date(
+      startDate.getTime() - startDate.getTimezoneOffset() * 60000
+    );
+    const endDateUTC = new Date(
+      endDate.getTime() - endDate.getTimezoneOffset() * 60000
+    );
+    const data = await fetchSalesReport(
+      startDateUTC.toISOString(),
+      endDateUTC.toISOString()
+    );
+    console.log(data);
+    setReportData(data);
   };
 
   return (
@@ -73,7 +84,10 @@ function DoanhThu() {
           Báo cáo ngày {format(new Date(selectedDate), "dd-MM-yyyy")}
         </h2>
         <div className="relative w-8 h-8 flex items-center justify-center">
-          <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-600 w-5 h-5 cursor-pointer z-10" />
+          <FontAwesomeIcon
+            icon={faCalendarAlt}
+            className="text-gray-600 w-5 h-5 cursor-pointer z-10"
+          />
           <input
             type="date"
             value={format(selectedDate, "yyyy-MM-dd")}
@@ -90,48 +104,84 @@ function DoanhThu() {
           <div>Giao dịch</div>
           <div className="text-right">Tổng số tiền thu được</div>
         </div>
+        {reportData &&
+          [
+            {
+              label: "Tổng",
+              transactions: reportData.totalTransactions,
+              total: reportData.totalAmount,
+            },
+            {
+              label: "Khánh vãng lai",
+              transactions: reportData.guestTransactions,
+              total: reportData.guestAmount,
+            },
+            {
+              label: "Khách hàng thân thiết",
+              transactions: reportData.loyalTransactions,
+              total: reportData.loyalAmount,
+            },
+          ].map((item, idx) => (
+            <div
+              key={idx}
+              className="flex flex-col sm:grid sm:grid-cols-3 p-3 text-base border-b border-gray-100 last:border-b-0"
+            >
+              <div className="flex justify-between sm:block">
+                <span className="font-semibold sm:hidden">Loại:</span>
+                <span>{item.label}</span>
+              </div>
+              <div className="flex justify-between sm:block">
+                <span className="font-semibold sm:hidden">Giao dịch:</span>
+                <span>{item.transactions}</span>
+              </div>
+              <div className="flex justify-between sm:block text-right sm:text-right">
+                <span className="font-semibold sm:hidden">Tổng tiền:</span>
+                <span>{item.total.toLocaleString()}đ</span>
+              </div>
+            </div>
+          ))}
 
-        {[{
-          label: "Tổng",
-          transactions: data.dineIn.transactions + data.takeAway.transactions,
-          total: data.dineIn.total
-        }, {
-          label: "Khánh vãng lai",
-          transactions: data.dineIn.transactions,
-          total: data.dineIn.total
-        }, {
-          label: "Khách hàng thân thiết",
-          transactions: data.takeAway.transactions,
-          total: data.takeAway.total
-        }].map((item, idx) => (
-          <div
-            key={idx}
-            className="flex flex-col sm:grid sm:grid-cols-3 p-3 text-base border-b border-gray-100 last:border-b-0"
-          >
-            <div className="flex justify-between sm:block">
-              <span className="font-semibold sm:hidden">Loại:</span>
-              <span>{item.label}</span>
+        <h3 className="font-bold text-lg sm:text-xl border-b border-gray-300 py-4">
+          Chi tiết
+        </h3>
+        {reportData && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 text-base">
+            <div className="p-3">
+              Tổng số khách:{" "}
+              <span className="font-semibold">{reportData.totalCustomers}</span>
             </div>
-            <div className="flex justify-between sm:block">
-              <span className="font-semibold sm:hidden">Giao dịch:</span>
-              <span>{item.transactions}</span>
+            <div className="p-3">
+              Trung bình mỗi khách:{" "}
+              <span className="font-semibold">
+                {reportData.averagePerCustomer.toLocaleString()}đ
+              </span>
             </div>
-            <div className="flex justify-between sm:block text-right sm:text-right">
-              <span className="font-semibold sm:hidden">Tổng tiền:</span>
-              <span>{item.total.toLocaleString()}đ</span>
+            <div className="p-3">
+              Số hóa đơn giảm giá:{" "}
+              <span className="font-semibold">
+                {reportData.discountedBillsAmount.toLocaleString()}đ
+              </span>
+            </div>
+            <div className="p-3">
+              Trung bình giá tiền giảm giá:{" "}
+              <span className="font-semibold">
+                {reportData.averageDiscountAmount.toLocaleString()}đ
+              </span>
+            </div>
+            <div className="p-3">
+              Hoàn tiền:{" "}
+              <span className="font-semibold">
+                {reportData.refundAmount.toLocaleString()}đ
+              </span>
+            </div>
+            <div className="p-3">
+              Tổng phí dịch vụ thu được:{" "}
+              <span className="font-semibold">
+                {reportData.serviceFeeAmount.toLocaleString()}đ
+              </span>
             </div>
           </div>
-        ))}
-
-        <h3 className="font-bold text-lg sm:text-xl border-b border-gray-300 py-4">Chi tiết</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 text-base">
-          <div className="p-3">Tổng số khách: <span className="font-semibold">{data.details.totalCustomers}</span></div>
-          <div className="p-3">Trung bình mỗi khách: <span className="font-semibold">{data.details.avgPerCustomer.toLocaleString()}đ</span></div>
-          <div className="p-3">Số hóa đơn giảm giá: <span className="font-semibold">{data.details.avgPerTransaction}đ</span></div>
-          <div className="p-3">Trung bình giá tiền giảm giá: <span className="font-semibold">{data.details.discount.toLocaleString()}đ</span></div>
-          <div className="p-3">Hoàn tiền: <span className="font-semibold">{data.details.refund.toLocaleString()}đ</span></div>
-          <div className="p-3">Tổng phí dịch vụ thu được: <span className="font-semibold">{data.details.serviceFee.toLocaleString()}đ</span></div>
-        </div>
+        )}
       </div>
 
       {/* Chi tiết biểu đồ */}

@@ -9,7 +9,9 @@ const Navigation = () => {
   const [isAccountPopupOpen, setIsAccountPopupOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isEmployeeSubmenuOpen, setIsEmployeeSubmenuOpen] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
+  const employeeMenuRef = useRef<HTMLDivElement>(null);
 
   const navItems = [
     { path: "/", icon: "fas fa-eye", label: "Tổng quan" },
@@ -30,6 +32,12 @@ const Navigation = () => {
       ) {
         setIsAccountPopupOpen(false);
       }
+      if (
+        employeeMenuRef.current &&
+        !employeeMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsEmployeeSubmenuOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -41,11 +49,15 @@ const Navigation = () => {
   };
 
   return (
-    <div className="bg-white shadow-md">
+    <div className="bg-white shadow-md z-20 relative">
       {/* Top bar */}
       <nav className="flex items-center justify-between py-3 px-4 md:px-8 border-b border-gray-100">
         <div className="flex items-center space-x-3">
-          <img src={Logo} alt="UIT Store Logo" className="h-10 w-10 object-contain" />
+          <img
+            src={Logo}
+            alt="UIT Store Logo"
+            className="h-10 w-10 object-contain"
+          />
           <span className="font-bold text-xl text-gray-800">UIT Store</span>
         </div>
 
@@ -82,7 +94,8 @@ const Navigation = () => {
                     setIsAccountPopupOpen(false);
                   }}
                 >
-                  <i className="fas fa-key text-gray-600 mr-1"></i> Thay đổi mật khẩu
+                  <i className="fas fa-key text-gray-600 mr-1"></i> Thay đổi mật
+                  khẩu
                 </button>
               </li>
               <li>
@@ -90,7 +103,8 @@ const Navigation = () => {
                   className="w-full text-left px-4 py-2 hover:bg-gray-100"
                   onClick={handleLogout}
                 >
-                  <i className="fas fa-sign-out-alt text-gray-600 mr-1"></i> Đăng xuất
+                  <i className="fas fa-sign-out-alt text-gray-600 mr-1"></i>{" "}
+                  Đăng xuất
                 </button>
               </li>
             </ul>
@@ -102,11 +116,13 @@ const Navigation = () => {
       <nav className="bg-[#0070F4] px-4 md:px-6 overflow-x-auto hidden md:block">
         <ul className="flex min-w-max space-x-3 md:space-x-4 lg:space-x-6">
           {navItems.map((item) => (
-            <li key={item.path}>
+            <li key={item.path} className="relative">
               <Link
                 to={item.path}
-                className={`flex items-center py-3 px-2 text-sm md:text-base text-white transition-colors relative group ${
-                  location.pathname === item.path ? "font-semibold" : "hover:text-blue-100"
+                className={`flex items-center py-3 px-2 text-sm md:text-base text-white transition-colors relative ${
+                  location.pathname === item.path
+                    ? "font-semibold"
+                    : "hover:text-blue-100"
                 }`}
               >
                 <i className={`${item.icon} mr-2`}></i>
@@ -130,7 +146,7 @@ const Navigation = () => {
                   to={item.path}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`block py-3 px-3 text-white rounded hover:bg-blue-600 ${
-                    location.pathname === item.path ? "font-semibold" : ""
+                    location.pathname === item.path ? "bg-blue-600" : ""
                   }`}
                 >
                   <i className={`${item.icon} mr-2`}></i>
