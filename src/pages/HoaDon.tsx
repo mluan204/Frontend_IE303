@@ -76,20 +76,6 @@ interface Product {
   categoryName: string;
 }
 
-const productss: Product[] = Array.from({ length: 30 }, (_, i) => ({
-  id: i + 1,
-  name: `Sản phẩm ${i + 1}`,
-  description: `Mô tả sản phẩm ${i + 1}`,
-  image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg/revision/latest?cb=20210323154547&path-prefix=pt-br",
-  suppliers: `Nhà cung cấp ${i % 5 + 1}`,
-  quantityAvailable: 300 - i * 10,
-  dateExpired: new Date(`2025-${(i % 12 + 1).toString().padStart(2, "0")}-15`),
-  salePrice: null,
-  inputPrice: 95000 + i * 5000,
-  price: 100000 + i * 5000,
-  categoryId: (i % 4) + 1,
-  categoryName: ["Thực phẩm", "Đồ gia dụng", "Thời trang", "Thiết bị điện"][i % 4]
-}));
 function HoaDon() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);

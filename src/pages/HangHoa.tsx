@@ -9,6 +9,7 @@ import { fetchProduct } from "../service/mainApi";
 import { fetchAllProduct } from "../service/mainApi";
 import { CommonUtils } from "../utils/CommonUtils";
 import { fetchAllCategory } from "../service/mainApi";
+import { deleteProductById } from "../service/productApi";
 
 // Định nghĩa kiểu dữ liệu cho product
 interface Product {
@@ -115,6 +116,21 @@ function HangHoa() {
       await CommonUtils.exportExcel(mappedData, "Danh sách sản phẩm", "Danh sách sản phẩm");
     }
   };
+
+  const onClickDeleteProduct = async (product: Product) => {
+    const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${product.name}"?`);
+    if (confirmDelete) {
+      try {
+        const result = await deleteProductById(product.id);
+        console.log(result);
+        getProducts(); // Refresh lại danh sách
+      } catch (error) {
+        alert("Lỗi khi xóa sản phẩm!");
+        console.error(error);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
@@ -247,7 +263,7 @@ function HangHoa() {
                           <FontAwesomeIcon icon={faEye} className="mr-1" /> Chi tiết
                         </button>
                         <button
-                          onClick={() => alert(`Xóa sản phẩm ${product.id}`)}
+                          onClick={()=>onClickDeleteProduct(product)}
                           className="text-red-600 hover:text-red-900"
                         >
                           <FontAwesomeIcon icon={faTrash} className="mr-1" /> Xóa
@@ -287,10 +303,10 @@ function HangHoa() {
                     </span>{" "}
                     đến{" "}
                     <span className="font-medium">
-                      {Math.min(currentPage * ITEMS_PER_PAGE, products.length)}
+                      {Math.min(currentPage * ITEMS_PER_PAGE, totalItems)}
                     </span>{" "}
                     của{" "}
-                    <span className="font-medium">{products.length}</span> kết quả
+                    <span className="font-medium">{totalItems}</span> kết quả
                   </p>
                   <nav
                     className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
@@ -336,6 +352,7 @@ function HangHoa() {
                 product={selectedProduct}
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
+                categories={categories}
               />
             )}
           </div>

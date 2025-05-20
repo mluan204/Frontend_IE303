@@ -9,3 +9,14 @@ export const addReceipt = async (receiptData: any) => {
         return "Loi khi add receipt";
     }
 };
+
+export const deleteReceiptById = async (id: number) => {
+  try {
+    const response =  await api.delete(`/receipts/${id}`);
+    console.log("xoa nhap hang thanh cong");
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    return "Loi khi xoa nhap hang";
+  }
+};

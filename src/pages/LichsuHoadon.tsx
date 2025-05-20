@@ -43,51 +43,54 @@ function LishsuHoadon() {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  // const handleDelete = (id: string) => {
-  //   setInvoices(invoices.filter((invoice) => invoice.id !== id));
-  //   if (selectedInvoice?.id === id) setSelectedInvoice(null);
-  // };
-
   const handlePrint = (id: string) => {
     alert(`Đang in hóa đơn ${id}...`);
   };
 
   const fetchData = async () => {
-    try {
-      const today = new Date()
-        .toISOString()
-        .split("T")[0]
-        .split("-")
-        .reverse()
-        .join("-"); // dd-mm-yyyy
-      const result = await fetchBill(0, 10, "", today, today);
-      console.log(result);
+  try {
+    setLoading(true);
+    const tempStartDate = dayjs().format("YYYY-MM-DD");
+    const [startDay, startMonth, startYear] = tempStartDate.split("-");
+    const startDate = `${startYear}-${startMonth}-${startDay}`;
 
-      // map sang Product để hiển thị
-      const mapped: Invoice[] = result.map((item: any) => ({
-        id: item.id.toString(),
-        date: item.createdAt, // chú ý: đúng key là `createdAt` chứ không phải `createAt`
-        total: item.after_discount,
-        customerName: item.customer?.name || "Không rõ",
-        staffName: item.employee?.name || "Không rõ",
-        paymentMethod: "Tiền mặt",
-        isDelete: item.isDeleted,
-        discount: item.total_cost - item.after_discount,
-        items: item.billDetails.map((d: any) => ({
-          productId: d.productId,
-          productName: d.productName,
-          price: d.price,
-          after_discount: d.afterDiscount ?? d.price, // fallback nếu null
-          quantity: d.quantity,
-        })),
-      }));
-      setInvoices(mapped);
-      console.log(result);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching data:", error);
+    const result = await fetchBill(0, 100, "", startDate, startDate);
+   
+
+    if (typeof result === "string") {
+      console.error("Lỗi khi lấy hóa đơn:", result);
+      return;
     }
-  };
+
+    const bills = result.content || [];
+
+    const mapped: Invoice[] = bills.map((item: any) => ({
+      id: item.id?.toString() || "",
+      date: item.createdAt,
+      total: item.after_discount,
+      customerName: item.customer?.name || "Không rõ",
+      staffName: item.employee?.name || "Không rõ",
+      paymentMethod: "Tiền mặt",
+      isDelete: item.isDeleted,
+      discount: item.total_cost - item.after_discount,
+      items: item.billDetails?.map((d: any) => ({
+        productId: d.productId,
+        productName: d.productName,
+        price: d.price,
+        after_discount: d.afterDiscount ?? d.price,
+        quantity: d.quantity,
+      })) || [],
+    }));
+
+    setInvoices(mapped);
+    setSelectedInvoice(mapped[0] || null);
+  } catch (error) {
+    console.error("Lỗi khi gọi API:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const deleteInvoiceById = async (id: string) => {
     try {
@@ -132,14 +135,17 @@ function LishsuHoadon() {
         <h2 className="text-lg font-bold text-center py-2 shadow-md bg-white sticky top-0 ">
           Danh sách hóa đơn
         </h2>
+        <div className="flex items-center gap-4 mb-4">
+    </div>
+
 
         {/* Danh sách hóa đơn có thể cuộn */}
         <ul
           className="flex-1 overflow-y-auto"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {invoices
-            .sort((a, b) => b.date.localeCompare(a.date))
+          {invoices.length > 0 ? (
+            invoices.sort((a, b) => b.date.localeCompare(a.date))
             .map((invoice) => (
               <li key={invoice.id} className="border-b border-gray-300">
                 <div
@@ -219,7 +225,12 @@ function LishsuHoadon() {
                   </div>
                 </div>
               </li>
-            ))}
+            ))
+          ):(
+            <div className="flex  justify-center h-full">
+              <p className="text-gray-500">Hiện tại không có hóa đơn nào</p>
+            </div>
+          )}
         </ul>
       </div>
 
