@@ -6,6 +6,7 @@ import ReceiptDetail from "../components/ReceiptDetail";
 import { fetchAllProduct, fetchAllReciept, fetchReciept } from "../service/mainApi";
 import { CommonUtils } from "../utils/CommonUtils";
 import AddReceiptModal from "../components/AddReceiptModal";
+import { deleteReceiptById } from "../service/receiptApi";
 
 interface Receipt {
   id: number;
@@ -39,9 +40,15 @@ function KhoHang() {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [selectedTime, setSelectedTime] = useState("thisMonth");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
   // // MODAL CHI TIẾT SẢN PHẨM
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null)
+  //MODAL THÊM MỚI
+  const [openModalAdd, setOpenModalAdd] = useState(false);
 
   // // Mở modal và truyền thông tin sản phẩm
   const handleOpenModal = (bill: Receipt) => {
@@ -54,10 +61,7 @@ function KhoHang() {
     setSelectedReceipt(null);
     setIsModalOpen(false);
   };
-  const [selectedTime, setSelectedTime] = useState("thisMonth");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
+  
 
   const getReceipts = async () => {
     setIsLoading(true);
@@ -106,8 +110,19 @@ function KhoHang() {
     }
   };
 
-  //MODAL THÊM MỚI
-  const [openModalAdd, setOpenModalAdd] = useState(false);
+  const onClickDeleteProduct = async (receipt: Receipt) => {
+    const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa phiếu nhập hàng này?`);
+    if (confirmDelete) {
+      try {
+        const result = await deleteReceiptById(receipt.id);
+        console.log(result);
+        getReceipts(); // Refresh lại danh sách
+      } catch (error) {
+        alert("Lỗi khi xóa sản phẩm!");
+        console.error(error);
+      }
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
@@ -299,7 +314,7 @@ function KhoHang() {
                             Chi tiết
                           </button>
                           <button
-                            onClick={() => alert(`Xóa phiếu ${receipt.id}`)}
+                            onClick={() => onClickDeleteProduct(receipt)}
                             className="text-red-600 hover:text-red-900 cursor-pointer"
                           >
                             <FontAwesomeIcon icon={faTrash} className="mr-1" />

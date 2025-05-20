@@ -18,6 +18,7 @@ const CATEGORIES = [
 
 interface Product {
   categoryId: number,
+  categoryName: string,
   dateExpired: Date,
   description: string,
   id: number,
@@ -38,6 +39,7 @@ interface ProductAddModalProps {
 
 const emptyProduct: Product = {
   categoryId: 1,
+  categoryName: "",
   dateExpired: new Date(),
   description: "",
   id: 0,

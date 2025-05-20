@@ -67,10 +67,7 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
   const [editedBill, setEditedBill] = useState(bill);
 
   const handleEdit = () => setIsEditing(true);
-  const handleSave = () => {
-    setIsEditing(false);
-    // Gọi hàm lưu ở đây
-  };
+
   const handleClose = () => {
     setIsEditing(false);
     onClose();
@@ -173,18 +170,6 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
             </div>
           </div>
 
-          {/* Nút hành động */}
-          <div className="flex justify-end gap-3 mt-6">
-            {isEditing ? (
-              <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
-                <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu
-              </button>
-            ) : (
-              <button onClick={handleEdit} className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded">
-                <FontAwesomeIcon icon={faEdit} className="mr-1" /> Chỉnh sửa
-              </button>
-            )}
-          </div>
         </div>
       </div>
     </div>

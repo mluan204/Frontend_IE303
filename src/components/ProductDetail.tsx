@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
-
+import { toast } from "react-toastify";
+import { updateProduct } from "../service/productApi"; 
 interface Product {
   categoryId: number,
   categoryName: string,
@@ -17,13 +18,19 @@ interface Product {
   suppliers: string
 }
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 interface ProductDetailProps {
   product: Product;
   isOpen: boolean;
   onClose: () => void;
+  categories: Category[];
 }
 
-function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
+function ProductDetail({ product, isOpen, onClose, categories }: ProductDetailProps) {
   const productFieldLabels: Record<keyof Product, string> = {
     id: "Mã sản phẩm",
     name: "Tên sản phẩm",
@@ -43,9 +50,14 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
   const [editedProduct, setEditedProduct] = useState(product);
 
   const handleEdit = () => setIsEditing(true);
-  const handleSave = () => {
-    setIsEditing(false);
-    // Save logic here
+  const handleSave = async () => {
+    try {
+      const res = await updateProduct(editedProduct, product.id);
+      toast.success("Cập nhật sản phẩm thành công!", { autoClose: 2000 });
+      setIsEditing(false);
+    } catch (err) {
+      toast.error("Cập nhật sản phẩm thất bại!", { autoClose: 2000 });
+    }
   };
   const handleClose = () => {
     setIsEditing(false);
@@ -78,25 +90,92 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
 
             {/* Cột 2 */}
             <div className="space-y-4">
-              {["id", "name", "categoryName", "suppliers"].map((field) => (
-                <div key={field}>
-                  <label className="text-sm font-medium text-gray-500 block mb-1">
-                    {productFieldLabels[field as keyof Product]}
-                  </label>
-                  {isEditing ? (
+              {/* Mã sản phẩm: không chỉnh sửa */}
+              <div>
+                <label className="text-sm font-medium text-gray-500 block mb-1">
+                  {productFieldLabels["id"]}
+                </label>
+                {isEditing ? (
                     <input
                       type="text"
-                      name={field}
-                      value={(editedProduct as any)[field] || ""}
-                      onChange={handleChange}
-                      className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                      name="id"
+                      value={editedProduct.id}
+                      readOnly
+                      className="border rounded px-2 py-1 w-full text-gray-700 text-sm bg-gray-100 cursor-not-allowed"
                     />
-                  ) : (
-                    <div className="text-gray-900 text-sm">{(editedProduct as any)[field]}</div>
-                  )}
-                </div>
-              ))}
+                ) : (
+                   <div className="text-gray-900 text-sm">{editedProduct.id}</div>
+                )}
+               
+
+              </div>
+
+              {/* Tên sản phẩm */}
+              <div>
+                <label className="text-sm font-medium text-gray-500 block mb-1">
+                  {productFieldLabels["name"]}
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="name"
+                    value={editedProduct.name}
+                    onChange={handleChange}
+                    className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                  />
+                ) : (
+                  <div className="text-gray-900 text-sm">{editedProduct.name}</div>
+                )}
+              </div>
+
+              {/* Loại sản phẩm (dropdown) */}
+              <div>
+                <label className="text-sm font-medium text-gray-500 block mb-1">
+                  {productFieldLabels["categoryName"]}
+                </label>
+                {isEditing ? (
+                  <select
+                    name="categoryId"
+                    value={editedProduct.categoryId}
+                    onChange={(e) => {
+                      const selectedId = Number(e.target.value);
+                      const selectedCategory = categories.find((c) => c.id === selectedId);
+                      setEditedProduct((prev) => ({
+                        ...prev,
+                        categoryId: selectedId,
+                        categoryName: selectedCategory?.name || "",
+                      }));
+                    }}
+                    className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="text-gray-900 text-sm">{editedProduct.categoryName}</div>
+                )}
+              </div>
+
+              {/* Nhà cung cấp */}
+              <div>
+                <label className="text-sm font-medium text-gray-500 block mb-1">
+                  {productFieldLabels["suppliers"]}
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="suppliers"
+                    value={editedProduct.suppliers}
+                    onChange={handleChange}
+                    className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                  />
+                ) : (
+                  <div className="text-gray-900 text-sm">{editedProduct.suppliers}</div>
+                )}
+              </div>
             </div>
+
 
             {/* Cột 3 */}
             <div className="space-y-4">
@@ -106,18 +185,38 @@ function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) {
                     {productFieldLabels[field as keyof Product]}
                   </label>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      name={field}
-                      value={(editedProduct as any)[field] || ""}
-                      onChange={handleChange}
-                      className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
-                    />
+                    field === "dateExpired" ? (
+                      <input
+                        type="date"
+                        name={field}
+                        value={editedProduct.dateExpired ? new Date(editedProduct.dateExpired).toISOString().split("T")[0] : ""}
+                        onChange={(e) => {
+                          setEditedProduct((prev) => ({
+                            ...prev,
+                            dateExpired: new Date(e.target.value),
+                          }));
+                        }}
+                        className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        name={field}
+                        value={(editedProduct as any)[field] || ""}
+                        onChange={handleChange}
+                        className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                      />
+                    )
                   ) : (
-                    <div className="text-gray-900 text-sm">{(editedProduct as any)[field]}</div>
+                    <div className="text-gray-900 text-sm">
+                      {field === "dateExpired"
+                        ? new Date(editedProduct.dateExpired).toLocaleDateString("vi-VN")
+                        : (editedProduct as any)[field]}
+                    </div>
                   )}
                 </div>
               ))}
+
             </div>
 
             {/* Cột 4: Ghi chú */}
