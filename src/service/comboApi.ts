@@ -39,3 +39,13 @@ export const getAllCombo = async (page = 0, size = 10) => {
         throw error;
     }
 }
+
+export const getAllComboList = async () => {
+    try {
+        const response = await api.get("/combo");
+        return response.data;
+    } catch (error) {
+        console.error("Error getting all combo list:", error);
+        throw error;
+    }
+}
