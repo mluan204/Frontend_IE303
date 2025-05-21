@@ -11,7 +11,7 @@ import {
 import { useEffect } from "react";
 import ComboDetail from "../components/ComboDetail";
 import AddComboModal from "../components/AddComboModal";
-import { getAllCombo } from "../service/comboApi";
+import { getAllCombo, getAllComboList } from "../service/comboApi";
 import { getAllProduct } from "../service/productApi";
 import { formatDate } from "../utils/FormatDate";
 
@@ -75,6 +75,11 @@ interface Product {
   categoryName: string;
 }
 
+interface ComboList {
+  id: number;
+  comboProducts: number[];
+}
+
 const ITEMS_PER_PAGE = 10; // Số sản phẩm hiển thị trên mỗi trang
 
 function Combo() {
@@ -82,6 +87,7 @@ function Combo() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [combos, setCombos] = useState<Combo[]>([]);
+  const [comboList, setComboList] = useState<ComboList[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
@@ -119,6 +125,9 @@ function Combo() {
           currentPage - 1,
           ITEMS_PER_PAGE
         );
+
+        const responeComboList: ComboList[] = await getAllComboList();
+        setComboList(responeComboList);
         setCombos(response.content);
         setTotalItems(response.totalElements);
       } catch (error) {
@@ -373,7 +382,12 @@ function Combo() {
 
       {/* Modal thêm sản phẩm */}
       {isAddModalOpen && (
-        <AddComboModal isOpen={true} onClose={() => setIsAddModalOpen(false)} />
+        <AddComboModal
+          isOpen={true}
+          onClose={() => setIsAddModalOpen(false)}
+          products={products}
+          comboList={comboList}
+        />
       )}
     </div>
   );

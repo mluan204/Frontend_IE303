@@ -9,7 +9,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { createCombo } from "../service/comboApi";
 import { generateComboSuggestion } from "./GeminiService";
-import { getAllProduct } from "../service/productApi";
 import { getProductQuantity } from "../service/billApi";
 
 interface Product {
@@ -33,6 +32,11 @@ interface ComboProduct {
   quantity: number;
 }
 
+interface ComboList {
+  id: number;
+  comboProducts: number[];
+}
+
 interface CreateComboRequest {
   timeEnd: string;
   comboProducts: ComboProduct[];
@@ -41,6 +45,8 @@ interface CreateComboRequest {
 interface AddComboModalProps {
   isOpen: boolean;
   onClose: () => void;
+  comboList: ComboList[];
+  products: Product[];
 }
 
 interface ProductSales {
@@ -48,10 +54,15 @@ interface ProductSales {
   totalQuantity: number;
 }
 
-export default function AddComboModal({ isOpen, onClose }: AddComboModalProps) {
+export default function AddComboModal({
+  isOpen,
+  onClose,
+  comboList,
+  products,
+}: AddComboModalProps) {
   const [search, setSearch] = useState("");
   const [selectedItems, setSelectedItems] = useState<ComboProduct[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  // const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [salesData, setSalesData] = useState<ProductSales[]>([]);
   const [comboInfo, setComboInfo] = useState<{
@@ -63,14 +74,6 @@ export default function AddComboModal({ isOpen, onClose }: AddComboModalProps) {
   });
 
   useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        const data = await getAllProduct();
-        setProducts(data);
-      } catch (error) {
-        console.error("Error loading products:", error);
-      }
-    };
     const loadSalesData = async () => {
       try {
         const data = await getProductQuantity();
@@ -79,7 +82,6 @@ export default function AddComboModal({ isOpen, onClose }: AddComboModalProps) {
         console.error("Error loading sales data:", error);
       }
     };
-    loadProducts();
     loadSalesData();
   }, []);
 
@@ -146,7 +148,11 @@ export default function AddComboModal({ isOpen, onClose }: AddComboModalProps) {
   const handleAIGenerate = async () => {
     try {
       setIsLoading(true);
-      const suggestedCombo = await generateComboSuggestion(products, salesData);
+      const suggestedCombo = await generateComboSuggestion(
+        products,
+        salesData,
+        comboList
+      );
       setComboInfo({
         timeEnd: suggestedCombo.timeEnd,
         comboProducts: [],
@@ -170,11 +176,12 @@ export default function AddComboModal({ isOpen, onClose }: AddComboModalProps) {
           <h2 className="text-lg font-semibold text-gray-800">
             Tạo combo sản phẩm
           </h2>
-          <FontAwesomeIcon
-            icon={faClose}
-            className="text-2xl text-gray-500 cursor-pointer hover:text-gray-700"
-            onClick={onClose}
-          />
+          <div className="items-center flex cursor-pointer " onClick={onClose}>
+            <FontAwesomeIcon
+              icon={faClose}
+              className="text-2xl text-gray-500 hover:text-gray-700"
+            />
+          </div>
         </div>
 
         {/* Content */}
@@ -280,7 +287,7 @@ export default function AddComboModal({ isOpen, onClose }: AddComboModalProps) {
                 type="text"
                 readOnly
                 value={new Date().toISOString().slice(0, 10)}
-                className="w-full border rounded px-3 py-1 bg-gray-100 text-sm"
+                className="w-full border rounded px-3 py-1 cursor-pointer bg-gray-100 text-sm"
               />
             </div>
             <div>
@@ -293,8 +300,14 @@ export default function AddComboModal({ isOpen, onClose }: AddComboModalProps) {
                 onChange={(e) =>
                   setComboInfo({ ...comboInfo, timeEnd: e.target.value })
                 }
-                className="w-full border rounded px-3 py-1 text-sm"
+                className="w-full border cursor-pointer rounded px-3 py-1 text-sm appearance-none bg-white"
                 disabled={isLoading}
+                min={new Date().toISOString().split("T")[0]}
+                style={{
+                  WebkitAppearance: "none",
+                  MozAppearance: "none",
+                  appearance: "none",
+                }}
               />
             </div>
 
