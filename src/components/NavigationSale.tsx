@@ -24,7 +24,7 @@ const NavigationSale = () => {
       {/* Overlay mờ nền khi mở menu */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black opacity-60 backdrop-blur-sm z-10"
+          className="fixed inset-0 bg-black opacity-60 backdrop-blur-sm z-20"
           onClick={() => setIsOpen(false)}
         ></div>
       )}

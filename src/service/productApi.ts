@@ -76,3 +76,37 @@ export const deleteProductById = async (id: number) => {
     return "Loi khi xoa san pham";
   }
 };
+
+
+export const fetchProductByCategory = async (
+    categoryId: number,
+    page: number,
+    size: number,
+    search?: string
+  ) => {
+    const params = new URLSearchParams();
+    params.append("categoryId", String(categoryId));
+    params.append("page", String(page));
+    params.append("size", String(size));
+    if (search) {
+      params.append("search", search);
+    }
+    const response = await api.get(`/products/by-category`, {
+      params,
+    });
+    return response.data;
+};
+
+export const searchProducts = async (
+  keyword?: string,
+  categoryId?: number | null,
+  page: number = 0,
+  size: number = 10
+) => {
+  const params: any = { page, size };
+  if (keyword) params.keyword = keyword;
+  if (categoryId && categoryId !== 0) params.categoryId = categoryId;
+
+  const response = await api.get('/products/search', { params });
+  return response.data;
+};
