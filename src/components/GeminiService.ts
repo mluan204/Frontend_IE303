@@ -34,9 +34,15 @@ interface CartItem {
   quantity: number;
 }
 
+interface ComboList {
+  id: number;
+  comboProducts: number[];
+}
+
+
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY }`;   
 
-export const generateComboSuggestion = async (products: Product[], salesData: ProductSales[]): Promise<CreateComboRequest> => {
+export const generateComboSuggestion = async (products: Product[], salesData: ProductSales[], comboList: ComboList[]): Promise<CreateComboRequest> => {
   try {
     // Get current date and calculate dates
     const now = new Date();
@@ -52,6 +58,7 @@ export const generateComboSuggestion = async (products: Product[], salesData: Pr
     3. Sets attractive prices that encourage quick sales while maintaining profitability
     4. Suggests reasonable quantities based on typical customer purchase patterns
     5. Focuses on products with low sales volume to help clear inventory
+    6. IMPORTANT: Do not create a combo that already exists in the comboList
 
     Return the response in this exact JSON format:
     {
@@ -73,17 +80,14 @@ export const generateComboSuggestion = async (products: Product[], salesData: Pr
     - Combo expiration date must be between 7-14 days from now (${oneWeekLater.toISOString().split('T')[0]} to ${twoWeeksLater.toISOString().split('T')[0]})
     - Prioritize products with low sales volume (totalQuantity) to help clear inventory
     - Consider pairing low-selling products with popular products to increase their appeal
+    - CRITICAL: The combination of product IDs in your suggestion must not match any existing combo in the comboList
     
-    Products:
-    ${JSON.stringify(products, null, 2)}
+    Products: ${JSON.stringify(products)}
     
+    Sales Data: ${JSON.stringify(salesData)}
 
-    Sales Data:
-    ${JSON.stringify(salesData, null, 2)}`;
-    console.log(products);
-    console.log(salesData);
-
-    // console.log("Sending prompt to Gemini:", prompt);
+    Existing Combos (DO NOT recreate these combinations): ${JSON.stringify(comboList)}`;
+    console.log(comboList);
 
     const response = await fetch(GEMINI_API_URL, {
       method: 'POST',
@@ -124,6 +128,18 @@ export const generateComboSuggestion = async (products: Product[], salesData: Pr
     const expirationDate = new Date(comboData.timeEnd);
     if (expirationDate < oneWeekLater || expirationDate > twoWeeksLater) {
       throw new Error('Invalid expiration date from Gemini');
+    }
+
+    // Validate that the suggested combo doesn't match any existing combo
+    const suggestedProductIds = comboData.comboProducts.map((p: ComboProduct) => p.productId).sort();
+    const isDuplicate = comboList.some(existingCombo => {
+      if (!existingCombo.comboProducts) return false;
+      const existingIds = existingCombo.comboProducts.sort();
+      return JSON.stringify(suggestedProductIds) === JSON.stringify(existingIds);
+    });
+
+    if (isDuplicate) {
+      throw new Error('Generated combo matches an existing combo');
     }
 
     return comboData as CreateComboRequest;
