@@ -5,11 +5,12 @@ import { faSearch, faAdd, faFileExport, faTrash, faEye} from "@fortawesome/free-
 import ProductDetail from "../components/ProductDetail"; 
 import AddProductModal from "../components/AddProductModal";
 import { useEffect } from "react";
-import { fetchProduct } from "../service/mainApi";
 import { fetchAllProduct } from "../service/mainApi";
 import { CommonUtils } from "../utils/CommonUtils";
 import { fetchAllCategory } from "../service/mainApi";
 import { deleteProductById } from "../service/productApi";
+import { searchProducts } from "../service/productApi";
+
 
 // Định nghĩa kiểu dữ liệu cho product
 interface Product {
@@ -35,13 +36,15 @@ const ITEMS_PER_PAGE = 10; // Số sản phẩm hiển thị trên mỗi trang
 
 function HangHoa() {
   // Cơ chế phân trang
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState(""); // giá trị nhập vào ô input
+  const [search, setSearch] = useState("");  
   const [currentPage, setCurrentPage] = useState(1);
   const [products, setProducts] = useState<Product[]>([]);
   const [totalItems, setTotalItems] = useState(0); 
   const [categories, setCategories] = useState<Category[]>([]);
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   const [searchCategory, setSearchCategory] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | 0>(0); // ID của danh mục hàng hóa được chọn, mặc định là 0 (Tất cả)
 
 
   // MODAL CHI TIẾT SẢN PHẨM
@@ -66,7 +69,7 @@ function HangHoa() {
 
   const getProducts = async () => {
     try {
-      const res = await fetchProduct(currentPage - 1, ITEMS_PER_PAGE, search);
+      const res = await searchProducts(search, selectedCategoryId, currentPage - 1, ITEMS_PER_PAGE);
       if (res && res.content) {
         setProducts(res.content);         // danh sách sản phẩm
         setTotalItems(res.totalElements); // tổng số sản phẩm
@@ -81,13 +84,15 @@ function HangHoa() {
       const res = await fetchAllCategory();
       console.log(res);
       if (res ) {
-        setCategories(res.data);
+        setCategories([{ id: 0, name: "Tất cả" }, ...res.data]);
       }
       console.log(res);
     } catch (err) {
       console.error("Lỗi khi lấy sản phẩm:", err);
     }
   };
+
+
   useEffect(() => {
     getCategory();
     getProducts();
@@ -95,7 +100,16 @@ function HangHoa() {
   useEffect(() => {  
     getProducts();
     getCategory();
-  }, [currentPage, search]);
+  }, [selectedCategoryId, currentPage, search]);
+
+  const removeVietnameseTones = (str: string): string => {
+    return str
+      .normalize("NFD") // tách dấu
+      .replace(/[\u0300-\u036f]/g, "") // xóa dấu
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D");
+  };
+
   
   const handleOnClickExport = async () => {
     const res = await fetchAllProduct() as Product[];
@@ -131,6 +145,7 @@ function HangHoa() {
     }
   };
 
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
@@ -152,10 +167,24 @@ function HangHoa() {
             </span>
             <input
               type="text"
-              placeholder="Tìm kiếm..."
+              placeholder="Tìm kiếm sản phẩm..."
               className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchInput(value);
+
+                if (value.trim() === "") {
+                  setSearch("");        // Reset tìm kiếm
+                  setCurrentPage(1);    // Quay về trang đầu
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput); // chỉ khi Enter mới cập nhật search
+                  setCurrentPage(1); // reset về trang đầu
+                }
+              }}
             />
           </div>
 
@@ -191,11 +220,17 @@ function HangHoa() {
         />
         <ul className="max-h-[300px] overflow-y-auto">
           {categories
-            .filter((c) => c.name.toLowerCase().includes(searchCategory.toLowerCase()))
+            .filter((c) => removeVietnameseTones(c.name.toLowerCase()).includes(removeVietnameseTones(searchCategory.toLowerCase())))
             .map((category) => (
               <li
                 key={category.id}
-                className="p-2 my-1 cursor-pointer hover:bg-gray-100 rounded"
+                className={`p-2 my-1 cursor-pointer rounded ${
+                  selectedCategoryId === category.id ? "bg-blue-100 " : "hover:bg-gray-100"
+                }`}
+                onClick={() => {
+                  setSelectedCategoryId(category.id);
+                  setCurrentPage(1); // reset về trang đầu khi chọn category mới
+                }}
               >
                 {category.name}
               </li>
@@ -212,15 +247,21 @@ function HangHoa() {
             placeholder="Tìm nhóm hàng"
             value={searchCategory}
             onChange={(e) => setSearchCategory(e.target.value)}
-            className="border px-2 py-1 w-full mb-2 rounded"
+            className="border px-2 py-1 w-full mb-2 rounded focus:outline-none"
           />
           <ul className="max-h-[300px] overflow-y-auto">
             {categories
-              .filter((c) => c.name.toLowerCase().includes(searchCategory.toLowerCase()))
+              .filter((c) => removeVietnameseTones(c.name.toLowerCase()).includes(removeVietnameseTones(searchCategory.toLowerCase())))
               .map((category) => (
                 <li
                   key={category.id}
-                  className="p-2 my-1 cursor-pointer hover:bg-gray-100 rounded"
+                  className={`p-2 my-1 cursor-pointer rounded ${
+                  selectedCategoryId === category.id ? "bg-blue-100 " : "hover:bg-gray-100"
+                }`}
+                onClick={() => {
+                  setSelectedCategoryId(category.id);
+                  setCurrentPage(1); // reset về trang đầu khi chọn category mới
+                }}
                 >
                   {category.name}
                 </li>

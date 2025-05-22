@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import BillItem from "../components/BillItem";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faSearch  } from "@fortawesome/free-solid-svg-icons";
 import PopupThanhToan from "./PopupThanhToan";
 import { fetchAllProduct } from "../service/mainApi";
 import { getProductQuantity } from "../service/billApi";
@@ -16,7 +16,16 @@ interface Product {
   price: number;
   image: string;
   quantity: number;
+  discount?: number; // Giá đã giảm, ví dụ: 5000
 }
+
+type Combo = {
+  products: {
+    id: number;
+    quantity: number;   // số lượng cần để combo hợp lệ
+    discount: number;   // giảm giá áp dụng cho sản phẩm trong combo
+  }[];
+};
 
 // Combo: mỗi combo là một nhóm sản phẩm có liên quan
 const comboList = [
@@ -56,16 +65,44 @@ function BanHang() {
 
   const addToCart = async (product: Product) => {
     setCart((prevCart) => {
-      const existingProduct = prevCart.find((item) => item.id === product.id);
-      if (existingProduct) {
-        return prevCart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: existingProduct.quantity + 1 }
-            : item
-        );
+    // Bước 1: Thêm hoặc tăng sản phẩm
+    let updatedCart: Product[] = [];
+
+    const existingProduct = prevCart.find((item) => item.id === product.id);
+    if (existingProduct) {
+      updatedCart = prevCart.map((item) =>
+        item.id === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      );
+    } else {
+      updatedCart = [...prevCart, { ...product, quantity: 1, discount: 0 }];
+    }
+
+    // Bước 2: Kiểm tra và áp dụng combo
+    for (const combo of comboList) {
+      const isComboSatisfied = combo.products.every((comboItem) => {
+        const itemInCart = updatedCart.find((ci) => ci.id === comboItem.id);
+        return itemInCart && itemInCart.quantity >= comboItem.quantity;
+      });
+
+      if (isComboSatisfied) {
+        // Áp dụng discount cho các sản phẩm thuộc combo
+        updatedCart = updatedCart.map((item) => {
+          const comboItem = combo.products.find((p) => p.id === item.id);
+          if (comboItem) {
+            return {
+              ...item,
+              discount: comboItem.price,
+            };
+          }
+          return item;
+        });
       }
-      return [...prevCart, { ...product, quantity: 1 }];
-    });
+    }
+
+    return updatedCart;
+  });
     setSearch("");
 
     // Generate suggestions when adding to cart
@@ -247,16 +284,7 @@ function BanHang() {
           onMouseLeave={() => setIsSearchOpen(false)}
         >
           {/* Icon Tìm Kiếm */}
-          {!isSearchOpen ? (
-            <button
-              onMouseEnter={() => setIsSearchOpen(true)}
-              onClick={() => setIsSearchOpen(true)}
-              className="py-2 px-3 bg-white rounded-br-lg shadow-md"
-            >
-              <FontAwesomeIcon icon={faSearch} className="text-gray-600" />
-            </button>
-          ) : (
-            // Thanh Tìm Kiếm
+
             <div className="relative w-96 bg-white shadow-lg rounded-md flex items-center">
               <span className="absolute pl-2 text-gray-400 ">
                 <FontAwesomeIcon icon={faSearch} />
@@ -275,7 +303,7 @@ function BanHang() {
                 }}
               />
             </div>
-          )}
+
         </div>
 
         <div
@@ -304,7 +332,7 @@ function BanHang() {
 
       {/* Hóa đơn */}
       <div
-        className={`h-full w-full lg:w-1/3 bg-white flex flex-col border-l-2 border-gray-300 z-40 transition-transform duration-300 ease-in-out
+        className={`h-full w-full lg:w-1/3 bg-white flex flex-col border-l-2 border-gray-300 z-10 transition-transform duration-300 ease-in-out
         ${
           showMobileBill
             ? "translate-x-0 fixed top-0 right-0"
@@ -463,7 +491,8 @@ function BanHang() {
           </div>
           <div className="flex flex-col gap-2 mt-2">
             <button
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded"
+              className={`w-full ${cart.length === 0 ? 'bg-gray-400' : 'bg-blue-500'} text-white py-2 px-4 rounded`}
+              disabled={cart.length === 0}
               onClick={() => {
                 setShowPopup(true);
                 setShowMobileBill(false);
@@ -471,6 +500,7 @@ function BanHang() {
             >
               Thanh toán
             </button>
+
             <button
               className="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded lg:hidden"
               onClick={() => setShowMobileBill(false)}
@@ -488,11 +518,12 @@ function BanHang() {
           onClick={() => setShowPopup(false)}
         ></div>
       )}
-      {showPopup && (
+      {showPopup && cart.length != 0 && (
         <PopupThanhToan
           total={calculateTotal()}
           cart={cart}
           onClose={() => setShowPopup(false)}
+          setCart={setCart}
         />
       )}
     </div>
