@@ -7,43 +7,76 @@ import { useAuth } from "../context/AuthContext";
 import { toast } from 'react-toastify';
 
 function Login() {
-  const {handleLogin} = useAuth();
+  const { handleLogin } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({
+    username: false,
+    password: false,
+    loginError: false
+  });
+
   useEffect(() => {
     const expired = localStorage.getItem("sessionExpired");
     if (expired === "true") {
-      toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",{
+      toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", {
         autoClose: 1500
       });
       localStorage.removeItem("sessionExpired");
     }
   }, []);
-  
-  
+
+  const validateForm = () => {
+    const newErrors = {
+      username: username.trim() === "",
+      password: password.trim() === "",
+      loginError: false
+    };
+    setErrors(newErrors);
+    return !newErrors.username && !newErrors.password;
+  };
+
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
+    setErrors(prev => ({ ...prev, username: false, loginError: false }));
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
+    setErrors(prev => ({ ...prev, password: false, loginError: false }));
   };
 
   const handleManageClick = async () => {
-    const result = await login(username,password);
-    handleLogin();
-    if(result){
-      navigate('/');
+    if (!validateForm()) {
+      toast.error("Vui lòng nhập đầy đủ thông tin đăng nhập");
+      return;
+    }
+
+    const result = await login(username, password);
+    if (result === 101) {
+      setErrors(prev => ({ ...prev, loginError: true }));
+      toast.error("Tài khoản hoặc mật khẩu không đúng");
+    } else {
+      setErrors(prev => ({ ...prev, loginError: false }));
+      handleLogin();
     }
   };
 
   const handleEmployeeClick = async () => {
-    const result = await login(username,password);
-    if(result){
+    if (!validateForm()) {
+      toast.error("Vui lòng nhập đầy đủ thông tin đăng nhập");
+      return;
+    }
+
+    const result = await login(username, password);
+    if (result === 101) {
+      setErrors(prev => ({ ...prev, loginError: true }));
+      toast.error("Tài khoản hoặc mật khẩu không đúng");
+    } else {
+      setErrors(prev => ({ ...prev, loginError: false }));
       navigate('/ban-hang');
     }
-    
   };
 
   return (
@@ -56,11 +89,23 @@ function Login() {
         <form>
           <div className="mb-4">
             <label className="block text-gray-700">Tài khoản</label>
-            <input type="text" value={username} onChange={handleUsernameChange} className="w-full px-3 py-2 border rounded-lg" />
+            <input
+              type="text"
+              value={username}
+              onChange={handleUsernameChange}
+              className={`w-full px-3 py-2 border rounded-lg ${(errors.username || errors.loginError) ? 'border-red-500 bg-red-50' : ''}`}
+            />
+            {errors.username && <p className="text-red-500 text-sm mt-1">Vui lòng nhập tài khoản</p>}
           </div>
           <div className="mb-4">
             <label className="block text-gray-700">Mật khẩu</label>
-            <input type="password" value={password} onChange={handlePasswordChange} className="w-full px-3 py-2 border rounded-lg" />
+            <input
+              type="password"
+              value={password}
+              onChange={handlePasswordChange}
+              className={`w-full px-3 py-2 border rounded-lg ${(errors.password || errors.loginError) ? 'border-red-500 bg-red-50' : ''}`}
+            />
+            {errors.password && <p className="text-red-500 text-sm mt-1">Vui lòng nhập mật khẩu</p>}
           </div>
           <div className="flex items-center justify-between mb-4">
             <div>

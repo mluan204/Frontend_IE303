@@ -1,6 +1,6 @@
 import axios from "axios";
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL, // base URL của backend
+  baseURL: "http://localhost:8080/api", // base URL của backend
 });
 
 // Thêm token vào mỗi request nếu có
