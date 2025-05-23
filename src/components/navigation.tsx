@@ -88,7 +88,7 @@ const Navigation = () => {
             <ul>
               <li>
                 <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 hover:rounded-t-lg"
                   onClick={() => {
                     setIsChangePasswordOpen(true);
                     setIsAccountPopupOpen(false);
@@ -100,7 +100,7 @@ const Navigation = () => {
               </li>
               <li>
                 <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 hover:rounded-b-lg"
                   onClick={handleLogout}
                 >
                   <i className="fas fa-sign-out-alt text-gray-600 mr-1"></i>{" "}

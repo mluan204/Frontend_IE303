@@ -4,9 +4,10 @@ import { useNavigate } from "react-router-dom";
 
 // Kiểu dữ liệu cho context
 interface AuthContextType {
-  handleLogin: () => void;
+  handleLogin: (username: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  username: string | null;
 }
 
 // Tạo context mặc định
@@ -14,22 +15,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Provider
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setAuthenticated] = useState<boolean> (false);
+  const [isAuthenticated, setAuthenticated] = useState<boolean>(false);
   const navigate = useNavigate();
+  const [username, setUsername] = useState<string | null>(null);
 
-  const handleLogin = () => {
+  const handleLogin = (username: string) => {
     setAuthenticated(true);
+    setUsername(username);
     navigate("/"); 
   };
 
   const logout = () => {
     sessionStorage.removeItem("token");
     setAuthenticated(false);
+    setUsername("");
     navigate("/login"); 
   };
 
   return (
-    <AuthContext.Provider value={{ handleLogin, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ handleLogin, logout, isAuthenticated, username }}>
       {children}
     </AuthContext.Provider>
   );

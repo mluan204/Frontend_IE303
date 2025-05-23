@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
 import bgLogo from "../assets/login-bg-update.png"
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { login } from "../service/mainApi";
 import { useAuth } from "../context/AuthContext";
 import { toast } from 'react-toastify';
@@ -48,6 +48,7 @@ function Login() {
   };
 
   const handleManageClick = async () => {
+
     if (!validateForm()) {
       toast.error("Vui lòng nhập đầy đủ thông tin đăng nhập");
       return;
@@ -60,6 +61,7 @@ function Login() {
     } else {
       setErrors(prev => ({ ...prev, loginError: false }));
       handleLogin();
+
     }
   };
 
