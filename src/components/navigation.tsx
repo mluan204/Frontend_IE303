@@ -49,7 +49,7 @@ const Navigation = () => {
   };
 
   return (
-    <div className="bg-white shadow-md z-20 relative">
+    <div className="bg-white shadow-md overflow-x-hidden">
       {/* Top bar */}
       <nav className="flex items-center justify-between py-3 px-4 md:px-8 border-b border-gray-100">
         <div className="flex items-center space-x-3">
@@ -72,7 +72,7 @@ const Navigation = () => {
           </button>
 
           {/* Hamburger icon - mobile only */}
-          <div className="md:hidden">
+          <div className="xl:hidden">
             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
               <i className="fas fa-bars text-xl text-gray-700"></i>
             </button>
@@ -113,7 +113,7 @@ const Navigation = () => {
       </nav>
 
       {/* Desktop menu */}
-      <nav className="bg-[#0070F4] px-4 md:px-6 overflow-x-auto hidden md:block">
+      <nav className="bg-[#0070F4] px-4 md:px-6 hidden xl:block w-full overflow-hidden">
         <ul className="flex min-w-max space-x-3 md:space-x-4 lg:space-x-6">
           {navItems.map((item) => (
             <li key={item.path} className="relative">
@@ -138,7 +138,7 @@ const Navigation = () => {
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-[#0070F4] px-4 py-2">
+        <div className="xl:hidden bg-[#0070F4] px-4 py-2">
           <ul className="space-y-1">
             {navItems.map((item) => (
               <li key={item.path}>

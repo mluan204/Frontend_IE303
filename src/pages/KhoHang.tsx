@@ -9,14 +9,12 @@ import AddReceiptModal from "../components/AddReceiptModal";
 import { deleteReceiptById } from "../service/receiptApi";
 
 interface Receipt {
-  id: number;
-  created_at: string;
-  total_cost: string;
-  employee_name: string;
+  id: string;
+  createdAt: string;
+  totalCost: string;
+  employeeName: string;
   note: string;
-
 }
-
 
 interface Product {
   id: number;
@@ -70,16 +68,23 @@ const getReceipts = async () => {
     setError(null);
     const response = await fetchReciept(currentPage - 1, ITEMS_PER_PAGE, search);
     if (typeof response === "string") {
-      console.error(response);
-      setError("Đã có lỗi xảy ra khi lấy dữ liệu."); // optional
-    } else {
-      const data = response.data;
-      setReceipts(data.content || []);
-      setTotalPages(data.totalPages || 1);
+      throw new Error(response);
     }
-  } catch (error) {
-    console.error("Lỗi khi fetch receipts:", error);
-    setError("Không thể tải danh sách phiếu nhập. Vui lòng thử lại sau.");
+
+    const data = response.data;
+    const mappedReceipts = (data.content || []).map((item: any) => ({
+      id: item.id,
+      createdAt: item.createdAt || item.created_at,
+      totalCost: item.totalCost || item.total_cost,
+      employeeName: item.employeeName || item.employee_name,
+      note: item.note || "",
+    }));
+
+    setReceipts(mappedReceipts);
+    setTotalPages(data.totalPages || 1);
+  } catch (err) {
+    console.error("Lỗi khi tải phiếu nhập:", err);
+    setError("Không thể tải dữ liệu phiếu nhập. Vui lòng thử lại.");
   } finally {
     setIsLoading(false);
   }
@@ -102,13 +107,13 @@ const getReceipts = async () => {
       const res = await fetchAllReciept();
       if (res) {
         const mappedData = res.data.map((item: Receipt) => ({
-          "Mã phiếu nhập": item.id,
-          "Thời gian": new Date(item.created_at).toLocaleString("vi-VN"),
-          "Nhân viên": item.employee_name,
-          "Tổng tiền": item.total_cost,
-          "Ghi chú": item.note || "",
-        }));
-        await CommonUtils.exportExcel(mappedData, "Danh sách phiếu nhập", "Phiếu nhập kho");
+        "Mã phiếu nhập": item.id,
+        "Thời gian": new Date(item.createdAt).toLocaleString("vi-VN"),
+        "Nhân viên": item.employeeName,
+        "Tổng tiền": item.totalCost,
+        "Ghi chú": item.note || "",
+      }));
+      await CommonUtils.exportExcel(mappedData, "Danh sách phiếu nhập", "Phiếu nhập kho");
 
       }
     } catch (error) {
@@ -309,9 +314,9 @@ const getReceipts = async () => {
                     {receipts.map((receipt) => (
                       <tr key={receipt.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(receipt.created_at).toLocaleString("vi-VN")}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.employee_name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.total_cost}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(receipt.createdAt).toLocaleString("vi-VN")}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.employeeName}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.totalCost}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
                           <button
                             onClick={() => handleOpenModal(receipt)}
