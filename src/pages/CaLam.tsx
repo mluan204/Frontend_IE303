@@ -33,7 +33,7 @@ const CaLam: React.FC = () => {
   );
 
   const weekStart = startOfWeek(viewDate, { weekStartsOn: 1 }); // Start from Monday
-  const weekDays = Array.from({ length: 6 }, (_, i) => addDays(weekStart, i));
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)); // Changed to 7 days
 
   useEffect(() => {
     fetchShifts();
@@ -94,6 +94,16 @@ const CaLam: React.FC = () => {
     setCreateShiftDate(date);
     setSelectedShiftType(shiftType);
     setShowEmployeeList(true);
+  };
+
+  const handleEmployeeSelect = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    // Set shift type based on employee position
+    if (employee.position === "FULLTIME") {
+      setSelectedShiftType("DAI1"); // 8-hour shift for full-time employees
+    } else if (employee.position === "PARTTIME") {
+      setSelectedShiftType("DAI2"); // 4-hour shift for part-time employees
+    }
   };
 
   const handleSubmitShift = async () => {
@@ -172,7 +182,12 @@ const CaLam: React.FC = () => {
               <tbody>
                 <tr>
                   <td className="border p-2 font-semibold bg-gray-50">
-                    Ca sáng (6h-14h)
+                    <div className="space-y-1">
+                      <div className="font-bold">Ca sáng</div>
+                      <div className="text-sm text-gray-600">
+                        8 tiếng (6h-14h)
+                      </div>
+                    </div>
                   </td>
                   {weekDays.map((day) => {
                     const dayShifts = getShiftsForDay(day, "DAI1");
@@ -185,8 +200,16 @@ const CaLam: React.FC = () => {
                               className="bg-green-100 p-2 rounded cursor-pointer hover:bg-green-200 transition-colors relative group"
                               onClick={() => handleShiftClick(shift)}
                             >
-                              {employeeDetails[shift.employeeId]?.name ||
-                                `Nhân viên #${shift.employeeId}`}
+                              <div className="font-medium">
+                                {employeeDetails[shift.employeeId]?.name ||
+                                  `Nhân viên #${shift.employeeId}`}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {employeeDetails[shift.employeeId]?.position ===
+                                "FULLTIME"
+                                  ? "Toàn thời gian"
+                                  : "Bán thời gian"}
+                              </div>
                               <button
                                 onClick={(e) => handleDeleteShift(shift, e)}
                                 className="absolute top-1 right-1 text-red-500 opacity-0 group-hover:opacity-100 hover:text-red-700 transition-opacity"
@@ -211,7 +234,12 @@ const CaLam: React.FC = () => {
                 </tr>
                 <tr>
                   <td className="border p-2 font-semibold bg-gray-50">
-                    Ca chiều (14h-22h)
+                    <div className="space-y-1">
+                      <div className="font-bold">Ca chiều</div>
+                      <div className="text-sm text-gray-600">
+                        8 tiếng (14h-22h)
+                      </div>
+                    </div>
                   </td>
                   {weekDays.map((day) => {
                     const dayShifts = getShiftsForDay(day, "DAI2");
@@ -224,8 +252,16 @@ const CaLam: React.FC = () => {
                               className="bg-blue-100 p-2 rounded cursor-pointer hover:bg-blue-200 transition-colors relative group"
                               onClick={() => handleShiftClick(shift)}
                             >
-                              {employeeDetails[shift.employeeId]?.name ||
-                                `Nhân viên #${shift.employeeId}`}
+                              <div className="font-medium">
+                                {employeeDetails[shift.employeeId]?.name ||
+                                  `Nhân viên #${shift.employeeId}`}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {employeeDetails[shift.employeeId]?.position ===
+                                "FULLTIME"
+                                  ? "Toàn thời gian"
+                                  : "Bán thời gian"}
+                              </div>
                               <button
                                 onClick={(e) => handleDeleteShift(shift, e)}
                                 className="absolute top-1 right-1 text-red-500 opacity-0 group-hover:opacity-100 hover:text-red-700 transition-opacity"
@@ -351,7 +387,7 @@ const CaLam: React.FC = () => {
                           ? "bg-blue-100 border-blue-500"
                           : "hover:bg-gray-50"
                       }`}
-                      onClick={() => setSelectedEmployee(employee)}
+                      onClick={() => handleEmployeeSelect(employee)}
                     >
                       <div className="flex items-center space-x-3">
                         <img
@@ -362,7 +398,9 @@ const CaLam: React.FC = () => {
                         <div>
                           <p className="font-medium">{employee.name}</p>
                           <p className="text-sm text-gray-500">
-                            {employee.position}
+                            {employee.position === "FULLTIME"
+                              ? "Toàn thời gian"
+                              : "Bán thời gian"}
                           </p>
                         </div>
                       </div>
