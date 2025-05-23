@@ -165,23 +165,16 @@ export const fetchSalesReport = async (startDate: string, endDate: string) => {
   }
 };
 
-// export const changePass = async (username: string, oldPass: string, newPass: string) => {
-//   try {
-//     const response = await axios.post(`${API_URL}/v1/change-pass`,
-//       {
-//         username: username,
-//         old_pass: oldPass,
-//         new_pass: newPass,
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${TOKEN}`,
-//         },
-//       }
-//     );
-//     return response.data;
-//   } catch (error) {
-//     console.error("Lỗi khi gọi API đổi mật khẩu", error);
-//     throw new Error("Đổi mật khẩu thất bại");
-//   }
-// };
+export const changePass = async (username: string, oldPass: string, newPass: string) => {
+  try {
+    const response = await api.post("/v1/change-pass", {
+      username: username,
+      old_pass: oldPass,
+      new_pass: newPass,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi gọi API đổi mật khẩu", error);
+    throw new Error("Đổi mật khẩu thất bại");
+  }
+};
