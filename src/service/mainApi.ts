@@ -1,5 +1,5 @@
 import api from "./api";
-
+import axios from "axios";
 export const fetchSummary = async () => {
   try {
     const response = await api.get(`/v1/thongke`);
@@ -14,7 +14,7 @@ export const fetchSummary = async () => {
 export const fetchBill = async (page = 0, size = 10, keyword = "", startDate = "", endDate = "") => {
   try {
     const response = await api.get("/bills/paged", {
-      params: {page, size, ...(keyword && { keyword }), ...(startDate && { startDate }), ...(endDate && { endDate }) },
+      params: { page, size, ...(keyword && { keyword }), ...(startDate && { startDate }), ...(endDate && { endDate }) },
     });
     console.log(`API URL called: /bills/paged?page=${page}&size=${size}${keyword ? '&keyword=' + keyword : ''}${startDate ? '&startDate=' + startDate : ''}${endDate ? '&endDate=' + endDate : ''}`);
     return response.data;
@@ -37,7 +37,7 @@ export const fetchBillById = async (id: number) => {
 export const deleteBillById = async (id: number) => {
   try {
     const response = await api.put(
-      `/bills/delete/${id}`, 
+      `/bills/delete/${id}`,
       {}, // Body rỗng (nếu API không cần body)
     );
 
@@ -51,18 +51,21 @@ export const deleteBillById = async (id: number) => {
 
 export const login = async (username: string, password: string) => {
   try {
-    const response = await api.post("/v1/login", {
+    const response = await axios.post("http://localhost:8080/api/v1/login", {
       username: username,
       password: password,
-    }, 
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
+    },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (response.data.status == 101) {
+      return 101;
     }
-  );
     const TOKEN = response.data.token;
-    if(sessionStorage.getItem('token')){
+    if (sessionStorage.getItem('token')) {
       sessionStorage.removeItem('token');
     }
     sessionStorage.setItem('token', TOKEN);
@@ -76,7 +79,7 @@ export const login = async (username: string, password: string) => {
 export const fetchProduct = async (page = 0, size = 10, keyword = "") => {
   try {
     const response = await api.get("/products/paged", {
-      params: {page, size, ...(keyword && { keyword })},
+      params: { page, size, ...(keyword && { keyword }) },
     });
     console.log(page, size, keyword);
     return response.data;
@@ -89,7 +92,7 @@ export const fetchAllProduct = async () => {
   try {
     const response = await api.get("/products", {
     });
-    
+
     return response.data;
   } catch (error) {
     return error + "Loi khi lay tat ca san pham";
@@ -101,7 +104,7 @@ export const fetchAllBill = async () => {
     const response = await api.get("/bills/get-all-bills");
     return response.data;
   } catch (error) {
-    return error+"Loi khi lay tat ca hoa don";
+    return error + "Loi khi lay tat ca hoa don";
   }
 }
 
@@ -133,7 +136,7 @@ export const fetchAllCategory = async () => {
 export const fetchReciept = async (page = 0, size = 10, keyword = "") => {
   try {
     const response = await api.get("/receipts/paged", {
-      params: {page, size, ...(keyword && { keyword })},
+      params: { page, size, ...(keyword && { keyword }) },
     });
     console.log(response);
     return response;

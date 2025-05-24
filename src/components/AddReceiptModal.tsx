@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faTrash, faSave } from "@fortawesome/free-solid-svg-icons";
 import { getAllEmployees } from "../service/employeeApi";
 import { addReceipt } from "../service/receiptApi";
+import { useNavigate } from "react-router-dom";
+
 
 interface Employee {
   id: number;
@@ -54,6 +56,7 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
     totalCost: 0,
   });
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -99,7 +102,7 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
 
   const handleSaveReceipt = async () => {
     const formData = {
-      created_at: receiptInfo.time,
+      created_at: new Date(receiptInfo.time).toISOString(),
       total_cost: totalCost,
       note: receiptInfo.note,
       employeeId: receiptInfo.employeeID,
@@ -113,7 +116,7 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
     console.log(formData);
     const id = await addReceipt(formData);
     console.log(id);
-    onClose();
+    window.location.reload();
   };
 
   const totalCost = selectedProducts.reduce(
