@@ -120,7 +120,26 @@ function KhachHang() {
       alert("Đã xảy ra lỗi khi xuất file!");
     }
   };
+  //PHÂN TRANG
+  const getPaginationRange = (current: number, total: number): (number | string)[] => {
+    const delta = 1;
+    const range: (number | string)[] = [];
+    const left = Math.max(1, current - delta);
+    const right = Math.min(total, current + delta + 1);
 
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= left && i < right)) {
+        range.push(i);
+      } else if (
+        (i === left - 1 && i !== 2) ||
+        (i === right && i !== total - 1)
+      ) {
+        range.push("...");
+      }
+    }
+
+    return [...new Set(range)];
+  };
   //LOADING
   if (isLoading) {
     return (
@@ -186,14 +205,14 @@ function KhachHang() {
           {/* Nút */}
           <div className="flex gap-2">
             <button
-              className="bg-green-500 text-white px-4 py-2 rounded"
+              className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
               onClick={() => setIsAddModalOpen(true)}
             >
               <FontAwesomeIcon icon={faAdd} className="mr-2" />
               Thêm mới
             </button>
             <button
-              className="bg-green-500 text-white px-4 py-2 rounded"
+              className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
               onClick={handleOnClickExport}
             >
               <FontAwesomeIcon icon={faFileExport} className="mr-2" />
@@ -224,7 +243,7 @@ function KhachHang() {
                     {displayedCustomers.map((customer) => (
                       <tr key={customer.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[120px] truncate">{customer.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.gender ? "Nam" : "Nữ"}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.phone_number}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.score}</td>
@@ -290,18 +309,28 @@ function KhachHang() {
                     >
                       Trang trước
                     </button>
-                    {[...Array(totalPages)].map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPage(index + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${currentPage === index + 1
-                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                    {getPaginationRange(currentPage, totalPages).map((page, index) =>
+                      typeof page === "number" ? (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPage(page)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
+                            currentPage === page
+                              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
                           }`}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
+                        >
+                          {page}
+                        </button>
+                      ) : (
+                        <span
+                          key={`ellipsis-${index}`}
+                          className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                        >
+                          ...
+                        </span>
+                      )
+                    )}
                     <button
                       onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}

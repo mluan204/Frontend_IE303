@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
 
 interface Receipt {
-  id: string;
+  id: number;
   createdAt: string;
   totalCost: string;
   employeeName: string;
