@@ -2,8 +2,8 @@ import { Helmet } from "react-helmet";
 import { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import BillItem from "../components/BillItem";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSearch  } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import PopupThanhToan from "./PopupThanhToan";
 import { fetchAllProduct } from "../service/mainApi";
 import { getProductQuantity } from "../service/billApi";
@@ -53,6 +53,7 @@ const comboList = [
 function BanHang() {
   // State để quản lý giỏ hàng và tìm kiếm
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [rawProductList, setRawProductList] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Product[]>([]);
@@ -221,6 +222,8 @@ function BanHang() {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const result = await fetchAllProduct();
       setRawProductList(result);
       const mapped: Product[] = result.map((item: any) => ({
@@ -231,9 +234,11 @@ function BanHang() {
         quantity: 0,
       }));
       setProducts(mapped);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.");
+    } finally {
       setLoading(false);
-    } catch (error) {
-      console.error("Error fetching data:", error);
     }
   };
 
@@ -261,6 +266,37 @@ function BanHang() {
     );
   };
 
+
+  // LOADING
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-4xl text-blue-500 animate-spin mb-4"
+          />
+          <p className="text-gray-600">Đang tải dữ liệu sản phẩm...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={fetchData}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex h-[calc(100vh-2.5rem)] bg-gray-100 relative">
       <Helmet>

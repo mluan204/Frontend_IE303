@@ -4,13 +4,12 @@ import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
 
 interface Receipt {
   id: number;
-  created_at: string;
-  total_cost: string;
-  employee_name: string;
+  createdAt: string;
+  totalCost: string;
+  employeeName: string;
   note: string;
-
-
 }
+
 interface ReceiptDetailProps {
   receipt: Receipt;
   isOpen: boolean;
@@ -22,11 +21,11 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
 
   const receipFieldLabels: Record<keyof Receipt, string> = {
     id: "Mã phiếu nhập",
-    created_at: "Thời gian",
-    total_cost: "Tổng tiền",
-    employee_name: "Nhân viên",
+    createdAt: "Thời gian",
+    totalCost: "Tổng tiền",
+    employeeName: "Nhân viên",
     note: "Ghi chú",
-  }
+  };
 
   const receiptDetails = [
     {
@@ -95,7 +94,7 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             {/* Cột 1 */}
             <div className="space-y-4">
-              {["id", "created_at"].map((field) => (
+              {["id", "createdAt"].map((field) => (
                 <div key={field}>
                   <label className="text-sm font-medium text-gray-500 block mb-1">
                     {receipFieldLabels[field as keyof Receipt]}
@@ -107,7 +106,7 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
 
             {/* Cột 2 */}
             <div className="space-y-4">
-              {["total_cost", "employee_name"].map((field) => (
+              {["totalCost", "employeeName"].map((field) => (
                 <div key={field}>
                   <label className="text-sm font-medium text-gray-500 block mb-1">
                     {receipFieldLabels[field as keyof Receipt]}

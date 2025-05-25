@@ -7,6 +7,7 @@ import {
   faFileExport,
   faTrash,
   faEye,
+  faSpinner
 } from "@fortawesome/free-solid-svg-icons";
 import { useEffect } from "react";
 import ComboDetail from "../components/ComboDetail";
@@ -90,6 +91,8 @@ function Combo() {
   const [comboList, setComboList] = useState<ComboList[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const categories = [
     { label: "Tất cả", value: "all" },
@@ -121,17 +124,21 @@ function Combo() {
   useEffect(() => {
     const fetchCombos = async () => {
       try {
+        setIsLoading(true);
+        setError(null);
         const response: ComboResponse = await getAllCombo(
           currentPage - 1,
           ITEMS_PER_PAGE
         );
-
         const responeComboList: ComboList[] = await getAllComboList();
         setComboList(responeComboList);
         setCombos(response.content);
         setTotalItems(response.totalElements);
       } catch (error) {
         console.error("Error fetching combos:", error);
+        setError("Không thể tải danh sách combo. Vui lòng thử lại.");
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchCombos();
@@ -170,6 +177,56 @@ function Combo() {
     </ul>
   );
 
+  //PHÂN TRANG
+  const getPaginationRange = (current: number, total: number): (number | string)[] => {
+    const delta = 1;
+    const range: (number | string)[] = [];
+    const left = Math.max(1, current - delta);
+    const right = Math.min(total, current + delta + 1);
+
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= left && i < right)) {
+        range.push(i);
+      } else if (
+        (i === left - 1 && i !== 2) ||
+        (i === right && i !== total - 1)
+      ) {
+        range.push("...");
+      }
+    }
+
+    return [...new Set(range)];
+  };
+  //LOADING
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-4xl text-blue-500 animate-spin mb-4"
+          />
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
@@ -203,13 +260,13 @@ function Combo() {
             {/* Nút */}
             <div className="flex gap-2">
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={() => setIsAddModalOpen(true)}
               >
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-2 rounded">
+              <button className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer">
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
                 Xuất file
               </button>
@@ -341,19 +398,28 @@ function Combo() {
                     >
                       Trang trước
                     </button>
-                    {[...Array(totalPages)].map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPage(index + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
-                          currentPage === index + 1
-                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
+                    {getPaginationRange(currentPage, totalPages).map((page, index) =>
+                      typeof page === "number" ? (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPage(page)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
+                            currentPage === page
+                              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ) : (
+                        <span
+                          key={`ellipsis-${index}`}
+                          className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                        >
+                          ...
+                        </span>
+                      )
+                    )}
                     <button
                       onClick={() =>
                         setCurrentPage((prev) => Math.min(prev + 1, totalPages))

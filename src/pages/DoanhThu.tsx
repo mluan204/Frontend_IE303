@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCalendarAlt } from "@fortawesome/free-solid-svg-icons";
+import { faCalendarAlt, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Bar } from "react-chartjs-2";
@@ -9,7 +9,9 @@ import { fetchSalesChart, fetchSalesReport } from "../service/mainApi";
 function DoanhThu() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [chartData, setChartData] = useState<any>(null);
-  const [reportData, setReportData] = useState<any>(null);
+  //loading
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadChartData();
@@ -17,61 +19,92 @@ function DoanhThu() {
   }, [selectedDate]);
 
   const loadChartData = async () => {
-    const startDate = new Date(selectedDate);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(selectedDate);
-    endDate.setHours(23, 59, 59, 999);
+    try {
+      setIsLoading(true);
+      setError(null);
 
-    // Convert to UTC to match backend timezone
-    const startDateUTC = new Date(
-      startDate.getTime() - startDate.getTimezoneOffset() * 60000
-    );
-    const endDateUTC = new Date(
-      endDate.getTime() - endDate.getTimezoneOffset() * 60000
-    );
+      const startDate = new Date(selectedDate);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(selectedDate);
+      endDate.setHours(23, 59, 59, 999);
+      // Convert to UTC to match backend timezone
+      const startDateUTC = new Date(startDate.getTime() - startDate.getTimezoneOffset() * 60000);
+      const endDateUTC = new Date(endDate.getTime() - endDate.getTimezoneOffset() * 60000);
 
-    const data = await fetchSalesChart(
-      "HOURLY",
-      startDateUTC.toISOString(),
-      endDateUTC.toISOString()
-    );
+      const data = await fetchSalesChart(
+        "HOURLY",
+        startDateUTC.toISOString(),
+        endDateUTC.toISOString()
+      );
 
-    if (data) {
-      setChartData({
-        labels: data.labels,
-        datasets: [
-          {
-            label: "Doanh thu",
-            data: data.data,
-            backgroundColor: "#3b82f6",
-            borderRadius: 6,
-            maxBarThickness: 30,
-            minBarLength: 4,
-          },
-        ],
-      });
+      if (data) {
+        setChartData({
+          labels: data.labels,
+          datasets: [
+            {
+              label: "Doanh thu",
+              data: data.data,
+              backgroundColor: "#3b82f6",
+              borderRadius: 6,
+              maxBarThickness: 30,
+              minBarLength: 4,
+            },
+          ],
+        });
+      } else {
+        setError("Dữ liệu trả về không hợp lệ.");
+      }
+    } catch (err) {
+      console.error("Lỗi khi tải biểu đồ:", err);
+      setError("Không thể tải biểu đồ doanh thu. Vui lòng thử lại.");
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const loadReportData = async () => {
-    const startDate = new Date(selectedDate);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(selectedDate);
-    endDate.setHours(23, 59, 59, 999);
-    const startDateUTC = new Date(
-      startDate.getTime() - startDate.getTimezoneOffset() * 60000
-    );
-    const endDateUTC = new Date(
-      endDate.getTime() - endDate.getTimezoneOffset() * 60000
-    );
-    const data = await fetchSalesReport(
-      startDateUTC.toISOString(),
-      endDateUTC.toISOString()
-    );
-    console.log(data);
-    setReportData(data);
+  const data = {
+    date: "Thứ Hai 07-04-2025",
+    dineIn: { transactions: 18, total: 1943000 },
+    takeAway: { transactions: 0, total: 0 },
+    details: {
+      totalCustomers: 18,
+      avgPerTransaction: 107944,
+      avgPerCustomer: 107944,
+      discount: 0,
+      refund: 0,
+      serviceFee: 0,
+    },
   };
 
+  // LOADING
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-4xl text-blue-500 animate-spin mb-4"
+          />
+          <p className="text-gray-600">Đang tải dữ liệu biểu đồ...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={loadChartData}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="w-full px-4 sm:px-6 md:px-8 max-w-6xl mx-auto bg-white py-6">
       <Helmet>

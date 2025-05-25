@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet";
 import { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faAdd, faFileExport, faTrash, faEye} from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faAdd, faFileExport, faTrash, faEye, faSpinner} from "@fortawesome/free-solid-svg-icons";
 import ProductDetail from "../components/ProductDetail"; 
 import AddProductModal from "../components/AddProductModal";
 import { useEffect } from "react";
@@ -46,6 +46,9 @@ function HangHoa() {
   const [searchCategory, setSearchCategory] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | 0>(0); // ID của danh mục hàng hóa được chọn, mặc định là 0 (Tất cả)
 
+  //loading
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // MODAL CHI TIẾT SẢN PHẨM
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -69,14 +72,21 @@ function HangHoa() {
 
   const getProducts = async () => {
     try {
+      setIsLoading(true);
+      setError(null);
       const res = await searchProducts(search, selectedCategoryId, currentPage - 1, ITEMS_PER_PAGE);
       if (res && res.content) {
         setProducts(res.content);         // danh sách sản phẩm
         setTotalItems(res.totalElements); // tổng số sản phẩm
+      } else {
+      setError("Không thể tải danh sách sản phẩm.");
       }
       console.log(res);
     } catch (err) {
       console.error("Lỗi khi lấy sản phẩm:", err);
+      setError("Đã xảy ra lỗi khi tải sản phẩm.");
+    } finally {
+      setIsLoading(false);
     }
   };
   const getCategory = async () => {
@@ -130,8 +140,7 @@ function HangHoa() {
       await CommonUtils.exportExcel(mappedData, "Danh sách sản phẩm", "Danh sách sản phẩm");
     }
   };
-
-  const onClickDeleteProduct = async (product: Product) => {
+   const onClickDeleteProduct = async (product: Product) => {
     const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${product.name}"?`);
     if (confirmDelete) {
       try {
@@ -144,8 +153,58 @@ function HangHoa() {
       }
     }
   };
+  ///PHÂN TRANG
+  const getPaginationRange = (current: number, total: number): (number | string)[] => {
+    const delta = 1;
+    const range: (number | string)[] = [];
+    const left = Math.max(1, current - delta);
+    const right = Math.min(total, current + delta + 1);
 
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= left && i < right)) {
+        range.push(i);
+      } else if (
+        (i === left - 1 && i !== 2) ||
+        (i === right && i !== total - 1)
+      ) {
+        range.push("...");
+      }
+    }
 
+    return [...new Set(range)];
+  };
+
+  
+  //  LOADING
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-4xl text-blue-500 animate-spin mb-4"
+          />
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={getProducts}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
@@ -191,14 +250,14 @@ function HangHoa() {
           {/* Nút */}
           <div className="flex gap-2">
             <button
-              className="bg-green-500 text-white px-4 py-2 rounded"
+              className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
               onClick={() => setIsAddModalOpen(true)}
             >
               <FontAwesomeIcon icon={faAdd} className="mr-2" />
               Thêm mới
             </button>
             <button
-              className="bg-green-500 text-white px-4 py-2 rounded"
+              className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
               onClick={handleOnClickExport}
             >
               <FontAwesomeIcon icon={faFileExport} className="mr-2" />
@@ -218,7 +277,7 @@ function HangHoa() {
           onChange={(e) => setSearchCategory(e.target.value)}
           className="border px-2 py-1 w-full mb-2 rounded"
         />
-        <ul className="max-h-[300px] overflow-y-auto">
+        <ul className="overflow-y-auto">
           {categories
             .filter((c) => removeVietnameseTones(c.name.toLowerCase()).includes(removeVietnameseTones(searchCategory.toLowerCase())))
             .map((category) => (
@@ -249,7 +308,7 @@ function HangHoa() {
             onChange={(e) => setSearchCategory(e.target.value)}
             className="border px-2 py-1 w-full mb-2 rounded focus:outline-none"
           />
-          <ul className="max-h-[300px] overflow-y-auto">
+          <ul className="overflow-y-auto">
             {categories
               .filter((c) => removeVietnameseTones(c.name.toLowerCase()).includes(removeVietnameseTones(searchCategory.toLowerCase())))
               .map((category) => (
@@ -292,7 +351,7 @@ function HangHoa() {
                         <img src={product.image} alt={product.name} className="w-12 h-12" />
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">{product.id}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{product.name}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900 max-w-[200px] truncate">{product.name}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{product.price}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{product.inputPrice}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{product.quantityAvailable}</td>
@@ -349,10 +408,7 @@ function HangHoa() {
                     của{" "}
                     <span className="font-medium">{totalItems}</span> kết quả
                   </p>
-                  <nav
-                    className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                    aria-label="Pagination"
-                  >
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                     <button
                       onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                       disabled={currentPage === 1}
@@ -360,23 +416,32 @@ function HangHoa() {
                     >
                       Trang trước
                     </button>
-                    {[...Array(totalPages)].map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPage(index + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
-                          currentPage === index + 1
-                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
+
+                    {getPaginationRange(currentPage, totalPages).map((page, index) =>
+                      typeof page === "number" ? (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPage(page)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
+                            currentPage === page
+                              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ) : (
+                        <span
+                          key={`ellipsis-${index}`}
+                          className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                        >
+                          ...
+                        </span>
+                      )
+                    )}
+
                     <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                      }
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
                       className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                     >
