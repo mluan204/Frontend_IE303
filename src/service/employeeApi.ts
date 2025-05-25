@@ -21,14 +21,14 @@ export interface Shift {
   id: number;
   employeeId: number;
   date: string;
-  shiftType: 'DAI1' | 'DAI2';
+  shiftType: 'DAI1' | 'DAI2' | 'NGAN1' | 'NGAN2' | 'NGAN3' | 'NGAN4';
 }
 
 export interface EmployeeShiftDTO {
   id?: number;
   employeeId: number;
   date: string;
-  shiftType: "DAI1" | "DAI2";
+  shiftType: 'DAI1' | 'DAI2' | 'NGAN1' | 'NGAN2' | 'NGAN3' | 'NGAN4';
 }
 
 export const getAllEmployees = async () => {
@@ -111,6 +111,8 @@ export const getWeeklyShifts = async (date: string): Promise<Shift[]> => {
 export const createShift = async (shiftData: EmployeeShiftDTO): Promise<EmployeeShiftDTO> => {
   try {
     const response = await api.post<EmployeeShiftDTO>('/shifts', shiftData);
+    console.log(shiftData);
+    console.log(response.data);
     return response.data;
   } catch (error) {
     console.error("Error creating shift:", error);

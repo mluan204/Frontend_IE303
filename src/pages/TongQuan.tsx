@@ -8,7 +8,7 @@ import {
   faUsers,
   faArrowTrendUp,
   faArrowTrendDown,
-  faSpinner
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { Bar } from "react-chartjs-2";
 import "chart.js/auto";
@@ -64,7 +64,6 @@ function TongQuan() {
 
   const loadChartData = async () => {
     try {
-      setIsLoading(true);
       const now = new Date();
       let startDate = new Date();
       let endDate = new Date();
@@ -133,8 +132,6 @@ function TongQuan() {
       }
     } catch (error) {
       console.error("Error loading chart data:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -190,7 +187,6 @@ function TongQuan() {
   };
 
   const timeRanges = ["Tháng này", "Tháng trước"];
-
 
   //  LOADING
   if (isLoading) {

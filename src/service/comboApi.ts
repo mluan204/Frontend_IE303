@@ -27,11 +27,11 @@ export const createCombo = async (combo: CreateComboRequest) => {
     }
 }
 
-export const getAllCombo = async (page = 0, size = 10) => {
+export const getAllCombo = async (page = 0, size = 10, isActive?: boolean) => {
     try {
         const response = await api.get("/combo/paged", {
-            params: {page, size },
-          });
+            params: { page, size, isActive },
+        });
         console.log(response.data);
         return response.data;
     } catch (error) {
@@ -46,6 +46,27 @@ export const getAllComboList = async () => {
         return response.data;
     } catch (error) {
         console.error("Error getting all combo list:", error);
+        throw error;
+    }
+}
+
+export const updateCombo = async (id: number, timeEnd: string) => {
+    try {
+        const response = await api.put(`/combo/${id}/update`, { timeEnd: timeEnd});
+        console.log(response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Error updating combo time end:", error);
+        throw error;
+    }
+}
+
+export const deleteCombo = async (id: number) => {
+    try {
+        const response = await api.delete(`/combo/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting combo:", error);
         throw error;
     }
 }
