@@ -19,12 +19,20 @@ function TongQuan() {
   const [activeTab, setActiveTab] = useState("Theo ngày");
   const [sumary, setSummary] = useState<any>(null);
   const [chartData, setChartData] = useState<any>(null);
-
-  //Loading
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  let calPercent = (today: number, yesterday: number) => {
+  let calPercent = (
+    today: number | undefined,
+    yesterday: number | undefined
+  ) => {
+    console.log(today, yesterday);
+    if (today === undefined || yesterday === undefined) {
+      return "0";
+    }
+    if (yesterday === 0) {
+      return today > 0 ? "100" : "0";
+    }
     let x = ((today - yesterday) / yesterday) * 100;
     if (x < 0) {
       x *= -1;
@@ -55,95 +63,133 @@ function TongQuan() {
   };
 
   const loadChartData = async () => {
-    const now = new Date();
-    let startDate = new Date();
-    let endDate = new Date();
+    try {
+      setIsLoading(true);
+      const now = new Date();
+      let startDate = new Date();
+      let endDate = new Date();
 
-    switch (timeRange) {
-      case "Hôm qua":
-        startDate.setDate(startDate.getDate() - 1);
-        startDate.setHours(0, 0, 0, 0);
-        endDate = new Date(startDate);
-        endDate.setHours(23, 59, 59, 999);
-        break;
-      case "Tháng này":
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-        break;
-      case "Tháng trước":
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-        break;
-    }
+      switch (timeRange) {
+        case "Tháng này":
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          endDate = new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            0,
+            23,
+            59,
+            59,
+            999
+          );
+          break;
+        case "Tháng trước":
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          endDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            0,
+            23,
+            59,
+            59,
+            999
+          );
+          break;
+      }
 
-    // Convert to UTC to match backend timezone
-    const startDateUTC = new Date(
-      startDate.getTime() - startDate.getTimezoneOffset() * 60000
-    );
-    const endDateUTC = new Date(
-      endDate.getTime() - endDate.getTimezoneOffset() * 60000
-    );
+      // Convert to UTC to match backend timezone
+      const startDateUTC = new Date(
+        startDate.getTime() - startDate.getTimezoneOffset() * 60000
+      );
+      const endDateUTC = new Date(
+        endDate.getTime() - endDate.getTimezoneOffset() * 60000
+      );
 
-    const type = activeTab === "Theo ngày" ? "DAILY" : activeTab === "Theo giờ" ? "HOURLY" : "WEEKLY";
-    const data = await fetchSalesChart(type, startDate.toISOString(), endDate.toISOString());
+      const type =
+        activeTab === "Theo ngày"
+          ? "DAILY"
+          : activeTab === "Theo giờ"
+          ? "HOURLY"
+          : "WEEKLY";
+      const data = await fetchSalesChart(
+        type,
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
 
-    if (data) {
-      setChartData({
-        labels: data.labels,
-        datasets: [
-          {
-            label: "Doanh thu",
-            data: data.data,
-            backgroundColor: "#3b82f6",
-            borderRadius: 6,
-            maxBarThickness: 30,
-            minBarLength: 4,
-          },
-        ],
-      });
+      if (data) {
+        setChartData({
+          labels: data.labels,
+          datasets: [
+            {
+              label: "Doanh thu",
+              data: data.data,
+              backgroundColor: "#3b82f6",
+              borderRadius: 6,
+              maxBarThickness: 30,
+              minBarLength: 4,
+            },
+          ],
+        });
+      }
+    } catch (error) {
+      console.error("Error loading chart data:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const summaryData = [
-    {
-      label: "Doanh thu",
-      value: sumary?.homnay?.doanhthu?.toLocaleString("vi") || 0,
-      percent:
-        sumary?.homqua?.doanhthu === 0 ? "0" : calPercent(sumary?.homnay?.doanhthu, sumary?.homqua?.doanhthu),
-      icon: faDollarSign,
-      color: "#4AD991",
-      positive: sumary?.homnay?.doanhthu >= sumary?.homqua?.doanhthu,
-    },
-    {
-      label: "Hóa đơn",
-      value: sumary?.homnay?.tongbill || 0,
-      percent:
-        sumary?.homqua?.tongbill === 0 ? "0" : calPercent(sumary?.homnay?.tongbill, sumary?.homqua?.tongbill),
-      icon: faReceipt,
-      color: "#0070F4",
-      positive: sumary?.homnay?.tongbill >= sumary?.homqua?.tongbill,
-    },
-    {
-      label: "Sản phẩm đã bán",
-      value: sumary?.homnay?.sanphamdaban || 0,
-      percent:
-        sumary?.homqua?.sanphamdaban === 0 ? "0" : calPercent(sumary?.homnay?.sanphamdaban, sumary?.homqua?.sanphamdaban),
-      icon: faBox,
-      color: "#FEC53D",
-      positive: sumary?.homnay?.sanphamdaban >= sumary?.homqua?.sanphamdaban,
-    },
-    {
-      label: "Khách hàng",
-      value: sumary?.homnay?.khachhangmoi || 0,
-      percent:
-        sumary?.homqua?.khachhangmoi === 0 ? "0" : calPercent(sumary?.homnay?.khachhangmoi, sumary?.homqua?.khachhangmoi),
-      icon: faUsers,
-      color: "#F93C65",
-      positive: sumary?.homnay?.khachhangmoi >= sumary?.homqua?.khachhangmoi,
-    },
-  ];
+  const getSummaryData = () => {
+    if (!sumary) return [];
 
-  const timeRanges = ["Hôm qua", "Tháng này", "Tháng trước"];
+    return [
+      {
+        label: "Doanh thu",
+        value: sumary.homnay?.doanhthu?.toLocaleString("vi") || 0,
+        percent: calPercent(sumary.homnay?.doanhthu, sumary.homqua?.doanhthu),
+        icon: faDollarSign,
+        color: "#4AD991",
+        positive:
+          (sumary.homnay?.doanhthu || 0) >= (sumary.homqua?.doanhthu || 0),
+      },
+      {
+        label: "Hóa đơn",
+        value: sumary.homnay?.tongbill || 0,
+        percent: calPercent(sumary.homnay?.tongbill, sumary.homqua?.tongbill),
+        icon: faReceipt,
+        color: "#0070F4",
+        positive:
+          (sumary.homnay?.tongbill || 0) >= (sumary.homqua?.tongbill || 0),
+      },
+      {
+        label: "Sản phẩm đã bán",
+        value: sumary.homnay?.sanphamdaban || 0,
+        percent: calPercent(
+          sumary.homnay?.sanphamdaban,
+          sumary.homqua?.sanphamdaban
+        ),
+        icon: faBox,
+        color: "#FEC53D",
+        positive:
+          (sumary.homnay?.sanphamdaban || 0) >=
+          (sumary.homqua?.sanphamdaban || 0),
+      },
+      {
+        label: "Khách hàng",
+        value: sumary.homnay?.khachhangmoi || 0,
+        percent: calPercent(
+          sumary.homnay?.khachhangmoi,
+          sumary.homqua?.khachhangmoi
+        ),
+        icon: faUsers,
+        color: "#F93C65",
+        positive:
+          (sumary.homnay?.khachhangmoi || 0) >=
+          (sumary.homqua?.khachhangmoi || 0),
+      },
+    ];
+  };
+
+  const timeRanges = ["Tháng này", "Tháng trước"];
 
 
   //  LOADING
@@ -192,48 +238,69 @@ function TongQuan() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-          {summaryData.map((item, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">
-                    {item.label}
-                  </h3>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
-                    {item.value}
-                  </p>
-                  <div className="flex items-center">
-                    <FontAwesomeIcon
-                      icon={item.positive ? faArrowTrendUp : faArrowTrendDown}
-                      className={`mr-2 ${
-                        item.positive ? "text-green-500" : "text-red-500"
-                      }`}
-                    />
-                    <span
-                      className={`text-sm ${
-                        item.positive ? "text-green-500" : "text-red-500"
-                      }`}
+          {isLoading
+            ? // Loading skeleton
+              Array(4)
+                .fill(0)
+                .map((_, index) => (
+                  <div
+                    key={index}
+                    className="bg-white rounded-xl shadow-sm p-4 sm:p-6 animate-pulse"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="w-full">
+                        <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                        <div className="h-8 bg-gray-200 rounded w-2/3 mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+                    </div>
+                  </div>
+                ))
+            : getSummaryData().map((item, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-xl shadow-sm p-4 sm:p-6 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 mb-1">
+                        {item.label}
+                      </h3>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
+                        {item.value}
+                      </p>
+                      <div className="flex items-center">
+                        <FontAwesomeIcon
+                          icon={
+                            item.positive ? faArrowTrendUp : faArrowTrendDown
+                          }
+                          className={`mr-2 ${
+                            item.positive ? "text-green-500" : "text-red-500"
+                          }`}
+                        />
+                        <span
+                          className={`text-sm ${
+                            item.positive ? "text-green-500" : "text-red-500"
+                          }`}
+                        >
+                          {item.percent}% so với hôm qua
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg"
+                      style={{ backgroundColor: `${item.color}20` }}
                     >
-                      {item.percent}% so với hôm qua
-                    </span>
+                      <FontAwesomeIcon
+                        icon={item.icon}
+                        color={item.color}
+                        className="text-lg sm:text-xl"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div
-                  className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg"
-                  style={{ backgroundColor: `${item.color}20` }}
-                >
-                  <FontAwesomeIcon
-                    icon={item.icon}
-                    color={item.color}
-                    className="text-lg sm:text-xl"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
+              ))}
         </div>
 
         {/* Chart Section */}
@@ -279,32 +346,38 @@ function TongQuan() {
           </div>
 
           <div className="h-[300px] sm:h-[400px]">
-            {chartData && (
-              <Bar
-                data={chartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      display: false,
-                    },
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      grid: {
-                        display: true,
-                      },
-                    },
-                    x: {
-                      grid: {
+            {isLoading ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              </div>
+            ) : (
+              chartData && (
+                <Bar
+                  data={chartData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
                         display: false,
                       },
                     },
-                  },
-                }}
-              />
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          display: true,
+                        },
+                      },
+                      x: {
+                        grid: {
+                          display: false,
+                        },
+                      },
+                    },
+                  }}
+                />
+              )
             )}
           </div>
         </div>
