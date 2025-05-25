@@ -12,6 +12,7 @@ function DoanhThu() {
   //loading
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reportData, setReportData] = useState<any>(null);
 
   useEffect(() => {
     loadChartData();
@@ -28,8 +29,12 @@ function DoanhThu() {
       const endDate = new Date(selectedDate);
       endDate.setHours(23, 59, 59, 999);
       // Convert to UTC to match backend timezone
-      const startDateUTC = new Date(startDate.getTime() - startDate.getTimezoneOffset() * 60000);
-      const endDateUTC = new Date(endDate.getTime() - endDate.getTimezoneOffset() * 60000);
+      const startDateUTC = new Date(
+        startDate.getTime() - startDate.getTimezoneOffset() * 60000
+      );
+      const endDateUTC = new Date(
+        endDate.getTime() - endDate.getTimezoneOffset() * 60000
+      );
 
       const data = await fetchSalesChart(
         "HOURLY",
@@ -61,18 +66,24 @@ function DoanhThu() {
       setIsLoading(false);
     }
   };
-  const data = {
-    date: "Thứ Hai 07-04-2025",
-    dineIn: { transactions: 18, total: 1943000 },
-    takeAway: { transactions: 0, total: 0 },
-    details: {
-      totalCustomers: 18,
-      avgPerTransaction: 107944,
-      avgPerCustomer: 107944,
-      discount: 0,
-      refund: 0,
-      serviceFee: 0,
-    },
+
+  const loadReportData = async () => {
+    const startDate = new Date(selectedDate);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(selectedDate);
+    endDate.setHours(23, 59, 59, 999);
+    const startDateUTC = new Date(
+      startDate.getTime() - startDate.getTimezoneOffset() * 60000
+    );
+    const endDateUTC = new Date(
+      endDate.getTime() - endDate.getTimezoneOffset() * 60000
+    );
+    const data = await fetchSalesReport(
+      startDateUTC.toISOString(),
+      endDateUTC.toISOString()
+    );
+    console.log(data);
+    setReportData(data);
   };
 
   // LOADING
