@@ -7,7 +7,8 @@ import {
   faPlus,
   faUser,
   faUserTie,
-  faUserTag 
+  faUserTag,
+  faSpinner
 } from "@fortawesome/free-solid-svg-icons";
 import { createBill } from "../service/billApi";
 import { ca, it } from "date-fns/locale";
@@ -76,7 +77,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
   const [isAddingCustomer, setIsAddingCustomer] = useState(false);
   const [customer, setCustomer] = useState({ name: "", phone_number: "", gender: "male" });
   const [search, setSearch] = useState("");
-
+  const [isLoading, setIsLoading] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
 
@@ -115,158 +116,170 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
   console.log("Nhân viên hôm nay:", employees);
   
 
- const handleCreateBill = async () => {
-  if (!selectedEmployee || !selectedCustomer) {
-    alert("Vui lòng chọn nhân viên và khách hàng.");
-    return;
-  }
+  const handleCreateBill = async () => {
+    if (!selectedEmployee || !selectedCustomer) {
+      alert("Vui lòng chọn nhân viên và khách hàng.");
+      return;
+    }
 
-  const payload = {
-    employee: { id: selectedEmployee.id },
-    customer: { id: selectedCustomer.id },
-    billDetails: cart.map(item => ({
-      productId: item.id,
-      afterDiscount: item.discount ?? item.price,
-      quantity: item.quantity
-    })),
-    pointsToUse: discount,
-    notes: paymentMethods.find(method => method.label === selectedMethod)?.label,
-  };
+    const payload = {
+      employee: { id: selectedEmployee.id },
+      customer: { id: selectedCustomer.id },
+      billDetails: cart.map(item => ({
+        productId: item.id,
+        afterDiscount: item.discount? item.discount: item.price,
+        quantity: item.quantity
+      })),
+      pointsToUse: discount,
+      notes: paymentMethods.find(method => method.label === selectedMethod)?.label,
+    };
 
-  console.log("Payload tạo hóa đơn:", payload);
+    console.log("Payload tạo hóa đơn:", payload);
 
-    try {
-      const response = await createBill(payload);
+      try {
+        const response = await createBill(payload);
 
-      if (!response || typeof response !== "number") {
-        alert("Tạo hóa đơn thất bại.");
-        return;
+        if (!response || typeof response !== "number") {
+          alert("Tạo hóa đơn thất bại.");
+          return;
+        }
+
+        const newBill: Bill = {
+          id: response,
+          total_cost: total,
+          after_discount: total - discount,
+          customer: customers.find((c) => c.id === payload.customer.id)!,
+          employee: employees.find((e) => e.id === payload.employee.id)!,
+          isDeleted: false,
+          billDetails: cart.map((p) => ({
+            productId: p.id,
+            productName: p.name,
+            price: p.price,
+            afterDiscount: p.discount ?? p.price,
+            quantity: p.quantity,
+          })),
+          createdAt: new Date().toISOString(),
+          totalQuantity: cart.length,
+          notes: payload.notes,
+          pointsToUse: discount,
+          is_error: false,
+        };
+
+        
+        alert("Tạo hóa đơn thành công!");
+        await printBillToPDF(newBill);
+        setCart([]);
+        onClose(); 
+
+      } catch (error) {
+        console.error("Lỗi khi gửi yêu cầu:", error);
+        alert("Lỗi khi gửi yêu cầu.");
       }
 
-      const newBill: Bill = {
-        id: response,
-        total_cost: total,
-        after_discount: total - discount,
-        customer: customers.find((c) => c.id === payload.customer.id)!,
-        employee: employees.find((e) => e.id === payload.employee.id)!,
-        isDeleted: false,
-        billDetails: cart.map((p) => ({
-          productId: p.id,
-          productName: p.name,
-          price: p.price,
-          afterDiscount: p.discount ?? p.price,
-          quantity: p.quantity,
-        })),
-        createdAt: new Date().toISOString(),
-        totalQuantity: cart.length,
-        notes: payload.notes,
-        pointsToUse: discount,
-        is_error: false,
-      };
+  };
 
-      
-      alert("Tạo hóa đơn thành công!");
-      await printBillToPDF(newBill);
-      setCart([]);
-      onClose(); 
+  const fetchData = async () => {
+    setIsLoading(true);
+    const resultCustomer = await getAllCustomer();
+    const resultEmployee = await getAllEmployees();
+    if ( resultCustomer ) {
+      setCustomers(resultCustomer);
+    } 
+    if ( resultEmployee ) {
+      setEmployees(resultEmployee);
+    }
+    setIsLoading(false);
+  };
 
+
+  const fetchTodayShifts = async () => {
+    const today = format(new Date(), "yyyy-MM-dd'T'00:00:00");
+
+    try {
+      const weeklyShifts = await getWeeklyShifts(today);
+      const todayDate = new Date().toISOString().split("T")[0];
+
+      const todayShifts: Shift[] = weeklyShifts.filter(
+        (shift) => shift.date.split("T")[0] === todayDate
+      );
+
+      const todayEmployees: Employee[] = employees.filter(emp =>
+        todayShifts.some(shift => shift.employeeId === emp.id)
+      );
+
+      setEmployeesToday(todayEmployees);
+      console.log("Nhân viên hôm nay:", todayEmployees);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+
+  const handleSaveCustomer = async () => {
+    // Kiểm tra dữ liệu bắt buộc
+    if (!customer.name.trim() || !customer.phone_number.trim() || !customer.gender) {
+      alert("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
+
+    // Có thể thêm kiểm tra định dạng số điện thoại nếu muốn
+    const phoneRegex = /^\d{9,12}$/; // ví dụ 9-12 chữ số
+    if (!phoneRegex.test(customer.phone_number)) {
+      alert("Số điện thoại không hợp lệ");
+      return;
+    }
+
+    const customerData = {
+      name: customer.name,
+      phone_number: customer.phone_number,
+      score: 0,
+      gender: customer.gender === "male" ? true : false,
+      id: 0,
+      created_at: "",
+    };
+
+    setCustomers(prev => [...prev, customerData]);
+
+    try {
+      const newCustomerId = await createCustomer(customerData);
+      console.log("Khách hàng mới tạo id:", newCustomerId);
+      setIsAddingCustomer(false);
+      setCustomer({ name: "", phone_number: "", gender: "male" });
+
+      // TODO: Nếu cần cập nhật danh sách khách hàng, gọi fetch lại hoặc callback
+      // fetchCustomers(); hoặc props.onCustomerAdded(newCustomerId);
     } catch (error) {
-      console.error("Lỗi khi gửi yêu cầu:", error);
-      alert("Lỗi khi gửi yêu cầu.");
+      console.error("Lỗi tạo khách hàng:", error);
+      alert("Tạo khách hàng thất bại, vui lòng thử lại.");
     }
 
   };
 
-  const fetchCustomers = async () => {
-      const result = await getAllCustomer();
-      if ( result ) {
-        setCustomers(result);
-      } else {
-        
-      }
-    };
-
-  const fetchEmployees = async () => {
-      const result = await getAllEmployees();
-      if ( result ) {
-        setEmployees(result);
-      } else {
-        
-      }
-    };
-
-
+  
   useEffect(() => {
-    fetchCustomers();
+    fetchData();
     fetchTodayShifts();
-    fetchEmployees();
   }
   , []);
 
   
 
-  const fetchTodayShifts = async () => {
-  const today = format(new Date(), "yyyy-MM-dd'T'00:00:00");
+  if (isLoading) {
+      return (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-5xl max-h-[90vh] min-h-96 flex items-center justify-center overflow-y-auto p-4 md:p-6">
+            <div className="text-center justify-center">
+              <FontAwesomeIcon
+                icon={faSpinner}
+                className="text-4xl text-blue-500 animate-spin mb-4"
+              />
+              <p className="text-gray-600">Đang tải dữ liệu</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
-  try {
-    const weeklyShifts = await getWeeklyShifts(today);
-    const todayDate = new Date().toISOString().split("T")[0];
-
-    const todayShifts: Shift[] = weeklyShifts.filter(
-      (shift) => shift.date.split("T")[0] === todayDate
-    );
-
-    const todayEmployees: Employee[] = employees.filter(emp =>
-      todayShifts.some(shift => shift.employeeId === emp.id)
-    );
-
-    setEmployeesToday(todayEmployees);
-    console.log("Nhân viên hôm nay:", todayEmployees);
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-
-  const handleSaveCustomer = async () => {
-  // Kiểm tra dữ liệu bắt buộc
-  if (!customer.name.trim() || !customer.phone_number.trim() || !customer.gender) {
-    alert("Vui lòng nhập đầy đủ thông tin");
-    return;
-  }
-
-  // Có thể thêm kiểm tra định dạng số điện thoại nếu muốn
-  const phoneRegex = /^\d{9,12}$/; // ví dụ 9-12 chữ số
-  if (!phoneRegex.test(customer.phone_number)) {
-    alert("Số điện thoại không hợp lệ");
-    return;
-  }
-
-  const customerData = {
-    name: customer.name,
-    phone_number: customer.phone_number,
-    score: 0,
-    gender: customer.gender === "male" ? true : false,
-    id: 0,
-    created_at: "",
-  };
-
-  setCustomers(prev => [...prev, customerData]);
-
-  try {
-    const newCustomerId = await createCustomer(customerData);
-    console.log("Khách hàng mới tạo id:", newCustomerId);
-    setIsAddingCustomer(false);
-    setCustomer({ name: "", phone_number: "", gender: "male" });
-
-    // TODO: Nếu cần cập nhật danh sách khách hàng, gọi fetch lại hoặc callback
-    // fetchCustomers(); hoặc props.onCustomerAdded(newCustomerId);
-  } catch (error) {
-    console.error("Lỗi tạo khách hàng:", error);
-    alert("Tạo khách hàng thất bại, vui lòng thử lại.");
-  }
-
-};
 
 
   return (

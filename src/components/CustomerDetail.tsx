@@ -62,7 +62,7 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 flex justify-center items-center">
+    <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-30">
       <div className="bg-white rounded-2xl w-[95%] md:w-4/5 max-h-[90vh] shadow-lg overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-start px-4 py-3 bg-white mb-4 sticky top-0 z-10">

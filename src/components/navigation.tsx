@@ -116,13 +116,14 @@ const Navigation = () => {
       </nav>
 
       {/* Desktop menu */}
-      <nav className="bg-[#0070F4] px-4 md:px-6 hidden xl:block w-full overflow-visible relative z-30">
+      <nav className="bg-[#0070F4] px-4 md:px-6 hidden xl:block w-full overflow-visible relative">
         <ul className="flex min-w-max space-x-3 md:space-x-4 lg:space-x-6 relative">
           <li>
             <Link
               to="/"
               className="flex items-center py-3 px-2 text-white hover:text-blue-100"
             >
+              
               <i className="fas fa-eye mr-2"></i> Tổng quan
             </Link>
           </li>
@@ -145,7 +146,7 @@ const Navigation = () => {
                 <li>
                   <Link
                     to="/combo"
-                    className="block px-4 py-2 hover:bg-blue-600 flex items-center gap-2"
+                    className="block px-4 py-2 hover:bg-blue-600 items-center gap-2"
                     onClick={() => setIsProductOpen(false)}
                   >
                     <i className="fas fa-layer-group"></i> Combo
@@ -173,7 +174,7 @@ const Navigation = () => {
                 <li>
                   <Link
                     to="/ca-lam"
-                    className="block px-4 py-2 hover:bg-blue-600 flex items-center gap-2"
+                    className="block px-4 py-2 hover:bg-blue-600 items-center gap-2"
                     onClick={() => setIsEmployeeOpen(false)}
                   >
                     <i className="fas fa-clock"></i> Ca làm
