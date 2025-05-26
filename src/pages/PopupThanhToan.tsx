@@ -16,6 +16,7 @@ import { getAllEmployees, getWeeklyShifts } from "../service/employeeApi";
 import { format } from "date-fns";
 import type { Shift } from "../service/employeeApi";
 import { createCustomer } from "../service/customerApi";
+import {printBillToPDF} from "../components/PrintBill";
 
 const paymentMethods = [
   { label: "Tiền mặt", icon: faMoneyBillWave },
@@ -31,6 +32,27 @@ interface PopupThanhToanProps {
   onClose: () => void;
 }
 
+interface Bill {
+  id: number;
+  total_cost: number;
+  after_discount: number;
+  customer: Customer;
+  employee: Employee;
+  isDeleted: boolean;
+  billDetails: BillDetail[];
+  createdAt: string;
+  totalQuantity: number;
+  notes: string | null;
+  pointsToUse: number | null;
+  is_error: boolean;
+}
+interface BillDetail {
+  productId: number;
+  productName: string;
+  price: number;
+  afterDiscount: number | null;
+  quantity: number;
+}
 
 interface Customer {
   id: number;
@@ -50,7 +72,7 @@ interface Employee {
 export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupThanhToanProps) {
   const [selectedMethod, setSelectedMethod] = useState("Tiền mặt");
   const [discount, setDiscount] = useState(0);
-  const [received, setReceived] = useState(total - discount);
+  const [received, setReceived] = useState(total-discount);
   const [isAddingCustomer, setIsAddingCustomer] = useState(false);
   const [customer, setCustomer] = useState({ name: "", phone_number: "", gender: "male" });
   const [search, setSearch] = useState("");
@@ -61,10 +83,10 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-   const [employeesToday, setEmployeesToday] = useState<Employee[]>([]);
+  const [employeesToday, setEmployeesToday] = useState<Employee[]>([]);
 
   const filteredCustomers = customers.filter((customer) =>
-    customer.name.toLowerCase().includes(search.toLowerCase())
+    customer.phone_number.toLowerCase().includes(search.toLowerCase())
   );
 
   const suggestCashAmounts = (amount: number): number[] => {
@@ -90,42 +112,69 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
     }));
   };
 
-  console.log("Khách hàng:", customer);
+  console.log("Nhân viên hôm nay:", employees);
+  
 
-  const handleCreateBill = async () => {
-    if (!selectedEmployee || !selectedCustomer) {
-      alert("Vui lòng chọn nhân viên và khách hàng.");
-      return;
-    }
+ const handleCreateBill = async () => {
+  if (!selectedEmployee || !selectedCustomer) {
+    alert("Vui lòng chọn nhân viên và khách hàng.");
+    return;
+  }
 
-    const payload = {
-      employee: { id:selectedEmployee.id },
-      customer: { id:selectedCustomer.id },
-      billDetails: cart.map(item => ({
-        productId: item.id,
-        afterDiscount:  item.discount? item.discount : item.price,
-        quantity: item.quantity
-      })),
-      pointsToUse: discount,
-      notes: paymentMethods.find(method => method.label === selectedMethod)?.label,
-    };
+  const payload = {
+    employee: { id: selectedEmployee.id },
+    customer: { id: selectedCustomer.id },
+    billDetails: cart.map(item => ({
+      productId: item.id,
+      afterDiscount: item.discount ?? item.price,
+      quantity: item.quantity
+    })),
+    pointsToUse: discount,
+    notes: paymentMethods.find(method => method.label === selectedMethod)?.label,
+  };
+
+  console.log("Payload tạo hóa đơn:", payload);
 
     try {
       const response = await createBill(payload);
 
-      if (response) {
-        alert("Tạo hóa đơn thành công!");
-        setCart([])
-        onClose();
-      } else {
-        const err = await response.json();
-        console.error("Lỗi khi tạo hóa đơn:", err);
+      if (!response || typeof response !== "number") {
         alert("Tạo hóa đơn thất bại.");
+        return;
       }
+
+      const newBill: Bill = {
+        id: response,
+        total_cost: total,
+        after_discount: total - discount,
+        customer: customers.find((c) => c.id === payload.customer.id)!,
+        employee: employees.find((e) => e.id === payload.employee.id)!,
+        isDeleted: false,
+        billDetails: cart.map((p) => ({
+          productId: p.id,
+          productName: p.name,
+          price: p.price,
+          afterDiscount: p.discount ?? p.price,
+          quantity: p.quantity,
+        })),
+        createdAt: new Date().toISOString(),
+        totalQuantity: cart.length,
+        notes: payload.notes,
+        pointsToUse: discount,
+        is_error: false,
+      };
+
+      
+      alert("Tạo hóa đơn thành công!");
+      await printBillToPDF(newBill);
+      setCart([]);
+      onClose(); 
+
     } catch (error) {
-      console.error("Lỗi mạng:", error);
+      console.error("Lỗi khi gửi yêu cầu:", error);
       alert("Lỗi khi gửi yêu cầu.");
     }
+
   };
 
   const fetchCustomers = async () => {
@@ -151,7 +200,6 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
     fetchCustomers();
     fetchTodayShifts();
     fetchEmployees();
-    fetchTodayShifts();
   }
   , []);
 
@@ -252,10 +300,10 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
             {/* Khách hàng */}
             <div className="mb-4 flex items-center gap-4">
               {/* Chọn nhân viên */}
-              <div className="flex items-center gap-2 w-1/2">
+              <div className="flex items-center gap-2 w-1/2 max-h-44 overflow-auto relative">
                 <FontAwesomeIcon icon={faUserTie} className=" absolute ml-2 mr-1 text-gray-500" />
                 <select
-                  className="border rounded-lg pl-6 pr-3 py-2 w-full text-sm focus:outline-none"
+                  className="border rounded-lg pl-6 pr-3 py-2 w-full text-sm focus:outline-none max-h-44 overflow-y-auto"
                   value={selectedEmployee?.id ?? ''}
                   onChange={(e) => {
                     const id = Number(e.target.value);
@@ -264,13 +312,13 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
                   }}
                 >
                   <option value="">Chọn nhân viên</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name}
-                    </option>
-                  ))}
+                    {employees.map((emp) => (  
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name}
+                      </option>
+                    ))}
+                  
                 </select>
-
               </div>
 
               {/* Tìm và chọn khách hàng */}
@@ -298,7 +346,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
 
                 {/* Gợi ý danh sách khách hàng khi chưa chọn */}
                 {!selectedCustomer && search && (
-                  <ul className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-md shadow z-10 max-h-40 overflow-y-auto text-sm">
+                  <ul className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-md shadow z-10 max-h-44 overflow-y-auto text-sm">
                     {filteredCustomers.length > 0 ? (
                       filteredCustomers.map((c) => (
                         <li
@@ -398,7 +446,10 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
                 <input
                   type="number"
                   value={discount}
-                  onChange={(e) => setDiscount(Number(e.target.value))}
+                  onChange={(e) => {
+                    setDiscount(Number(e.target.value))
+                    setReceived(total - Number(e.target.value))
+                  }}
                   className="w-32 text-right border-b border-gray-400 focus:outline-none"
                 />
               </div>
@@ -438,6 +489,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
                 ))}
               </div>
             )}
+            
 
             {/* Xác nhận thanh toán */}
             <div className="mt-6">
