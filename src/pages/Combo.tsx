@@ -7,11 +7,17 @@ import {
   faFileExport,
   faTrash,
   faEye,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { useEffect } from "react";
 import ComboDetail from "../components/ComboDetail";
 import AddComboModal from "../components/AddComboModal";
-import { getAllCombo, getAllComboList } from "../service/comboApi";
+import {
+  getAllCombo,
+  getAllComboList,
+  deleteCombo,
+  updateCombo,
+} from "../service/comboApi";
 import { getAllProduct } from "../service/productApi";
 import { formatDate } from "../utils/FormatDate";
 
@@ -84,12 +90,17 @@ const ITEMS_PER_PAGE = 10; // Số sản phẩm hiển thị trên mỗi trang
 
 function Combo() {
   // Cơ chế phân trang
-  const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [combos, setCombos] = useState<Combo[]>([]);
   const [comboList, setComboList] = useState<ComboList[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isTableLoading, setIsTableLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [comboToDelete, setComboToDelete] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const categories = [
     { label: "Tất cả", value: "all" },
@@ -97,6 +108,18 @@ function Combo() {
     { label: "Hết thời hạn", value: "expired" },
   ];
   const [selectedTime, setSelectedTime] = useState("all");
+
+  // Convert selectedTime to isActive parameter
+  const getIsActiveParam = () => {
+    switch (selectedTime) {
+      case "valid":
+        return true;
+      case "expired":
+        return false;
+      default:
+        return undefined;
+    }
+  };
 
   // MODAL CHI TIẾT SẢN PHẨM
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -121,21 +144,27 @@ function Combo() {
   useEffect(() => {
     const fetchCombos = async () => {
       try {
+        setIsTableLoading(true);
+        setError(null);
         const response: ComboResponse = await getAllCombo(
           currentPage - 1,
-          ITEMS_PER_PAGE
+          ITEMS_PER_PAGE,
+          getIsActiveParam()
         );
-
         const responeComboList: ComboList[] = await getAllComboList();
         setComboList(responeComboList);
         setCombos(response.content);
         setTotalItems(response.totalElements);
       } catch (error) {
         console.error("Error fetching combos:", error);
+        setError("Không thể tải danh sách combo. Vui lòng thử lại.");
+      } finally {
+        setIsTableLoading(false);
+        setIsLoading(false);
       }
     };
     fetchCombos();
-  }, [currentPage, isAddModalOpen]);
+  }, [currentPage, isAddModalOpen, selectedTime]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -170,6 +199,94 @@ function Combo() {
     </ul>
   );
 
+  //PHÂN TRANG
+  const getPaginationRange = (
+    current: number,
+    total: number
+  ): (number | string)[] => {
+    const delta = 1;
+    const range: (number | string)[] = [];
+    const left = Math.max(1, current - delta);
+    const right = Math.min(total, current + delta + 1);
+
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= left && i < right)) {
+        range.push(i);
+      } else if (
+        (i === left - 1 && i !== 2) ||
+        (i === right && i !== total - 1)
+      ) {
+        range.push("...");
+      }
+    }
+
+    return [...new Set(range)];
+  };
+
+  const handleDeleteClick = (comboId: number) => {
+    setComboToDelete(comboId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!comboToDelete) return;
+
+    try {
+      setDeleteLoading(true);
+      await deleteCombo(comboToDelete);
+      setIsDeleteModalOpen(false);
+      setComboToDelete(null);
+      // Refresh the combos list
+      const response: ComboResponse = await getAllCombo(
+        currentPage - 1,
+        ITEMS_PER_PAGE,
+        getIsActiveParam()
+      );
+      setCombos(response.content);
+      setTotalItems(response.totalElements);
+    } catch (err) {
+      console.error("Delete Error:", err);
+      setError("Không thể xóa combo. Vui lòng thử lại sau.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
+    setComboToDelete(null);
+  };
+
+  //LOADING
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-4xl text-blue-500 animate-spin mb-4"
+          />
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
@@ -185,31 +302,17 @@ function Combo() {
             </h1>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
-            {/* Tìm kiếm */}
-            <div className="relative w-full sm:w-1/2">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <FontAwesomeIcon icon={faSearch} />
-              </span>
-              <input
-                type="text"
-                placeholder="Tìm kiếm..."
-                className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             {/* Nút */}
-            <div className="flex gap-2">
+            <div className="flex self-end gap-2">
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={() => setIsAddModalOpen(true)}
               >
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-2 rounded">
+              <button className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer">
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
                 Xuất file
               </button>
@@ -221,8 +324,6 @@ function Combo() {
         <div className="mb-4 md:hidden bg-white shadow rounded-lg p-4">
           <h2 className="font-bold mb-2">Trạng thái</h2>
           {renderCategoryList()}
-
-          {/* Sidebar mobile */}
         </div>
 
         <div className="flex flex-col md:flex-row gap-4">
@@ -235,63 +336,78 @@ function Combo() {
           {/* Table content */}
           <div className="w-full md:w-3/4">
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-max w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Mã combo
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Ngày tạo
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Ngày hết hạn
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Số sản phẩm
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Thao tác
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {combos.map((combo) => (
-                      <tr key={combo.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {combo.id}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {formatDate(combo.createdAt)}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {formatDate(combo.timeEnd)}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {combo.comboProducts.length}
-                        </td>
-                        <td className="px-6 py-4 space-x-4">
-                          <button
-                            onClick={() => handleOpenModal(combo)}
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            <FontAwesomeIcon icon={faEye} className="mr-1" />{" "}
-                            Chi tiết
-                          </button>
-                          <button
-                            onClick={() => alert(`Xóa combo ${combo.id}`)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <FontAwesomeIcon icon={faTrash} className="mr-1" />{" "}
-                            Xóa
-                          </button>
-                        </td>
+              {isTableLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="text-center">
+                    <FontAwesomeIcon
+                      icon={faSpinner}
+                      className="text-2xl text-blue-500 animate-spin mb-2"
+                    />
+                    <p className="text-gray-600">Đang tải dữ liệu...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-max w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Mã combo
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Ngày tạo
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Ngày hết hạn
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Số sản phẩm
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Thao tác
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {combos.map((combo) => (
+                        <tr key={combo.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            {combo.id}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            {formatDate(combo.createdAt)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            {formatDate(combo.timeEnd)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            {combo.comboProducts.length}
+                          </td>
+                          <td className="px-6 py-4 space-x-4">
+                            <button
+                              onClick={() => handleOpenModal(combo)}
+                              className="text-blue-600 hover:text-blue-900 cursor-pointer"
+                            >
+                              <FontAwesomeIcon icon={faEye} className="mr-1" />{" "}
+                              Chi tiết
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(combo.id)}
+                              className="text-red-600 hover:text-red-900 cursor-pointer"
+                            >
+                              <FontAwesomeIcon
+                                icon={faTrash}
+                                className="mr-1"
+                              />{" "}
+                              Xóa
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {/* Pagination */}
               <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
@@ -341,19 +457,29 @@ function Combo() {
                     >
                       Trang trước
                     </button>
-                    {[...Array(totalPages)].map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPage(index + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
-                          currentPage === index + 1
-                            ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                            : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
+                    {getPaginationRange(currentPage, totalPages).map(
+                      (page, index) =>
+                        typeof page === "number" ? (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentPage(page)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
+                              currentPage === page
+                                ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ) : (
+                          <span
+                            key={`ellipsis-${index}`}
+                            className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                          >
+                            ...
+                          </span>
+                        )
+                    )}
                     <button
                       onClick={() =>
                         setCurrentPage((prev) => Math.min(prev + 1, totalPages))
@@ -388,6 +514,41 @@ function Combo() {
           products={products}
           comboList={comboList}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Xác nhận xóa combo
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Bạn có chắc chắn muốn xóa combo #{comboToDelete}? Hành động này
+              không thể hoàn tác.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleteLoading}
+                className="px-4 py-2 cursor-pointer text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteLoading}
+                className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+              >
+                {deleteLoading ? (
+                  <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                ) : (
+                  "Xác nhận xóa"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

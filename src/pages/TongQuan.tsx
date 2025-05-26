@@ -8,6 +8,7 @@ import {
   faUsers,
   faArrowTrendUp,
   faArrowTrendDown,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { Bar } from "react-chartjs-2";
 import "chart.js/auto";
@@ -19,6 +20,7 @@ function TongQuan() {
   const [sumary, setSummary] = useState<any>(null);
   const [chartData, setChartData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   let calPercent = (
     today: number | undefined,
@@ -49,10 +51,12 @@ function TongQuan() {
   const loadData = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const rs = await fetchSummary();
       setSummary(rs);
-    } catch (error) {
-      console.error("Error loading summary data:", error);
+    } catch (err) {
+      console.error("Lỗi khi tải dữ liệu tổng quan:", err);
+      setError("Không thể tải dữ liệu tổng quan. Vui lòng thử lại.");
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +64,6 @@ function TongQuan() {
 
   const loadChartData = async () => {
     try {
-      setIsLoading(true);
       const now = new Date();
       let startDate = new Date();
       let endDate = new Date();
@@ -129,8 +132,6 @@ function TongQuan() {
       }
     } catch (error) {
       console.error("Error loading chart data:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -187,6 +188,36 @@ function TongQuan() {
 
   const timeRanges = ["Tháng này", "Tháng trước"];
 
+  //  LOADING
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-4xl text-blue-500 animate-spin mb-4"
+          />
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={loadData}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>

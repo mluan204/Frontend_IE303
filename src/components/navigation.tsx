@@ -20,6 +20,7 @@ const Navigation = () => {
     { path: "/hoa-don", icon: "fas fa-receipt", label: "Hóa đơn" },
     { path: "/kho-hang", icon: "fas fa-warehouse", label: "Kho hàng" },
     { path: "/nhan-vien", icon: "fas fa-users", label: "Nhân viên" },
+    { path: "/ca-lam", icon: "fas fa-clock", label: "Ca làm" },
     { path: "/bao-cao", icon: "fas fa-chart-bar", label: "Báo cáo" },
     { path: "/khach-hang", icon: "fas fa-user", label: "Khách hàng" },
   ];
@@ -48,8 +49,10 @@ const Navigation = () => {
     navigate("/login");
   };
 
+  const [isProductOpen, setIsProductOpen] = useState(false);
+  const [isEmployeeOpen, setIsEmployeeOpen] = useState(false);
   return (
-    <div className="bg-white shadow-md z-20 relative">
+    <div className="bg-white shadow-md overflow-visible relative">
       {/* Top bar */}
       <nav className="flex items-center justify-between py-3 px-4 md:px-8 border-b border-gray-100">
         <div className="flex items-center space-x-3">
@@ -72,7 +75,7 @@ const Navigation = () => {
           </button>
 
           {/* Hamburger icon - mobile only */}
-          <div className="md:hidden">
+          <div className="xl:hidden">
             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
               <i className="fas fa-bars text-xl text-gray-700"></i>
             </button>
@@ -83,7 +86,7 @@ const Navigation = () => {
         {isAccountPopupOpen && (
           <div
             ref={popupRef}
-            className="absolute right-4 top-[60px] w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+            className="absolute right-4 top-[60px] w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[999]"
           >
             <ul>
               <li>
@@ -113,32 +116,111 @@ const Navigation = () => {
       </nav>
 
       {/* Desktop menu */}
-      <nav className="bg-[#0070F4] px-4 md:px-6 overflow-x-auto hidden md:block">
-        <ul className="flex min-w-max space-x-3 md:space-x-4 lg:space-x-6">
-          {navItems.map((item) => (
-            <li key={item.path} className="relative">
-              <Link
-                to={item.path}
-                className={`flex items-center py-3 px-2 text-sm md:text-base text-white transition-colors relative ${
-                  location.pathname === item.path
-                    ? "font-semibold"
-                    : "hover:text-blue-100"
-                }`}
-              >
-                <i className={`${item.icon} mr-2`}></i>
-                {item.label}
-                {location.pathname === item.path && (
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white"></span>
-                )}
-              </Link>
-            </li>
-          ))}
+      <nav className="bg-[#0070F4] px-4 md:px-6 hidden xl:block w-full overflow-visible relative z-30">
+        <ul className="flex min-w-max space-x-3 md:space-x-4 lg:space-x-6 relative">
+          <li>
+            <Link
+              to="/"
+              className="flex items-center py-3 px-2 text-white hover:text-blue-100"
+            >
+              <i className="fas fa-eye mr-2"></i> Tổng quan
+            </Link>
+          </li>
+
+          {/* Hàng hóa + Combo */}
+          <li
+            className="relative"
+            onMouseEnter={() => setIsProductOpen(true)}
+            onMouseLeave={() => setIsProductOpen(false)}
+          >
+            <div
+              className="flex items-center py-3 px-2 text-white hover:text-blue-100 cursor-pointer"
+              onClick={() => navigate("/hang-hoa")}
+            >
+              <i className="fas fa-box mr-2"></i> Hàng hóa
+              <i className="fas fa-caret-down ml-1"></i>
+            </div>
+            {isProductOpen && (
+              <ul className="absolute left-0 top-full bg-[#0070F4] text-white shadow-md w-full z-30">
+                <li>
+                  <Link
+                    to="/combo"
+                    className="block px-4 py-2 hover:bg-blue-600 flex items-center gap-2"
+                    onClick={() => setIsProductOpen(false)}
+                  >
+                    <i className="fas fa-layer-group"></i> Combo
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </li>
+
+          {/* Nhân viên + Ca làm */}
+          <li
+            className="relative"
+            onMouseEnter={() => setIsEmployeeOpen(true)}
+            onMouseLeave={() => setIsEmployeeOpen(false)}
+          >
+            <div
+              className="flex items-center py-3 px-2 text-white hover:text-blue-100 cursor-pointer"
+              onClick={() => navigate("/nhan-vien")}
+            >
+              <i className="fas fa-users mr-2"></i> Nhân viên
+              <i className="fas fa-caret-down ml-1"></i>
+            </div>
+            {isEmployeeOpen && (
+              <ul className="absolute left-0 top-full bg-[#0070F4] text-white shadow-md w-full z-50">
+                <li>
+                  <Link
+                    to="/ca-lam"
+                    className="block px-4 py-2 hover:bg-blue-600 flex items-center gap-2"
+                    onClick={() => setIsEmployeeOpen(false)}
+                  >
+                    <i className="fas fa-clock"></i> Ca làm
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </li>
+
+          <li>
+            <Link
+              to="/hoa-don"
+              className="flex items-center py-3 px-2 text-white hover:text-blue-100"
+            >
+              <i className="fas fa-receipt mr-2"></i> Hóa đơn
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/kho-hang"
+              className="flex items-center py-3 px-2 text-white hover:text-blue-100"
+            >
+              <i className="fas fa-warehouse mr-2"></i> Kho hàng
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/bao-cao"
+              className="flex items-center py-3 px-2 text-white hover:text-blue-100"
+            >
+              <i className="fas fa-chart-bar mr-2"></i> Báo cáo
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/khach-hang"
+              className="flex items-center py-3 px-2 text-white hover:text-blue-100"
+            >
+              <i className="fas fa-user mr-2"></i> Khách hàng
+            </Link>
+          </li>
         </ul>
       </nav>
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-[#0070F4] px-4 py-2">
+        <div className="xl:hidden bg-[#0070F4] px-4 py-2">
           <ul className="space-y-1">
             {navItems.map((item) => (
               <li key={item.path}>

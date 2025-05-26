@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faAdd, faFileExport, faTrash, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faAdd, faFileExport, faTrash, faEye, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import ReceiptDetail from "../components/ReceiptDetail";
 import { fetchAllProduct, fetchAllReciept, fetchReciept } from "../service/mainApi";
 import { CommonUtils } from "../utils/CommonUtils";
@@ -10,13 +10,11 @@ import { deleteReceiptById } from "../service/receiptApi";
 
 interface Receipt {
   id: number;
-  created_at: string;
-  total_cost: string;
-  employee_name: string;
+  createdAt: string;
+  totalCost: string;
+  employeeName: string;
   note: string;
-
 }
-
 
 interface Product {
   id: number;
@@ -39,6 +37,7 @@ function KhoHang() {
   const [totalPages, setTotalPages] = useState(1);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [selectedTime, setSelectedTime] = useState("thisMonth");
   const [startDate, setStartDate] = useState("");
@@ -63,21 +62,34 @@ function KhoHang() {
   };
   
 
-  const getReceipts = async () => {
+const getReceipts = async () => {
+  try {
     setIsLoading(true);
+    setError(null);
     const response = await fetchReciept(currentPage - 1, ITEMS_PER_PAGE, search);
-    console.log(response);
     if (typeof response === "string") {
-      console.error(response);
-    } else {
-      const data = response.data;
-      setReceipts(data.content || []);
-      setTotalPages(data.totalPages || 1);
+      throw new Error(response);
     }
 
+    const data = response.data;
+    const mappedReceipts = (data.content || []).map((item: any) => ({
+      id: item.id,
+      createdAt: item.createdAt || item.created_at,
+      totalCost: item.totalCost || item.total_cost,
+      employeeName: item.employeeName || item.employee_name,
+      note: item.note || "",
+    }));
 
+    setReceipts(mappedReceipts);
+    setTotalPages(data.totalPages || 1);
+  } catch (err) {
+    console.error("Lỗi khi tải phiếu nhập:", err);
+    setError("Không thể tải dữ liệu phiếu nhập. Vui lòng thử lại.");
+  } finally {
     setIsLoading(false);
-  };
+  }
+};
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -95,13 +107,13 @@ function KhoHang() {
       const res = await fetchAllReciept();
       if (res) {
         const mappedData = res.data.map((item: Receipt) => ({
-          "Mã phiếu nhập": item.id,
-          "Thời gian": new Date(item.created_at).toLocaleString("vi-VN"),
-          "Nhân viên": item.employee_name,
-          "Tổng tiền": item.total_cost,
-          "Ghi chú": item.note || "",
-        }));
-        await CommonUtils.exportExcel(mappedData, "Danh sách phiếu nhập", "Phiếu nhập kho");
+        "Mã phiếu nhập": item.id,
+        "Thời gian": new Date(item.createdAt).toLocaleString("vi-VN"),
+        "Nhân viên": item.employeeName,
+        "Tổng tiền": item.totalCost,
+        "Ghi chú": item.note || "",
+      }));
+      await CommonUtils.exportExcel(mappedData, "Danh sách phiếu nhập", "Phiếu nhập kho");
 
       }
     } catch (error) {
@@ -123,6 +135,56 @@ function KhoHang() {
       }
     }
   };
+  //PHÂN TRANG
+  const getPaginationRange = (current: number, total: number): (number | string)[] => {
+    const delta = 1;
+    const range: (number | string)[] = [];
+    const left = Math.max(1, current - delta);
+    const right = Math.min(total, current + delta + 1);
+
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= left && i < right)) {
+        range.push(i);
+      } else if (
+        (i === left - 1 && i !== 2) ||
+        (i === right && i !== total - 1)
+      ) {
+        range.push("...");
+      }
+    }
+
+    return [...new Set(range)];
+  };
+  //LOADING
+  if (isLoading) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <FontAwesomeIcon
+          icon={faSpinner}
+          className="text-4xl text-blue-500 animate-spin mb-4"
+        />
+        <p className="text-gray-600">Đang tải dữ liệu...</p>
+      </div>
+    </div>
+  );
+}
+
+if (error) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-red-500 mb-4">{error}</p>
+        <button
+          onClick={getReceipts}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          Thử lại
+        </button>
+      </div>
+    </div>
+  );
+}
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
@@ -154,14 +216,14 @@ function KhoHang() {
             {/* Nút chức năng */}
             <div className="flex gap-2">
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={() => setOpenModalAdd(true)}
               >
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={handleOnClickExport}
               >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
@@ -302,9 +364,9 @@ function KhoHang() {
                     {receipts.map((receipt) => (
                       <tr key={receipt.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(receipt.created_at).toLocaleString("vi-VN")}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.employee_name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.total_cost}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(receipt.createdAt).toLocaleString("vi-VN")}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.employeeName}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.totalCost}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
                           <button
                             onClick={() => handleOpenModal(receipt)}
@@ -372,18 +434,28 @@ function KhoHang() {
                     >
                       Trang trước
                     </button>
-                    {[...Array(totalPages)].map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPage(index + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${currentPage === index + 1
-                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                    {getPaginationRange(currentPage, totalPages).map((page, index) =>
+                      typeof page === "number" ? (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPage(page)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
+                            currentPage === page
+                              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
                           }`}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
+                        >
+                          {page}
+                        </button>
+                      ) : (
+                        <span
+                          key={`ellipsis-${index}`}
+                          className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                        >
+                          ...
+                        </span>
+                      )
+                    )}
                     <button
                       onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
