@@ -60,8 +60,7 @@ function Login() {
       toast.error("Tài khoản hoặc mật khẩu không đúng");
     } else {
       setErrors(prev => ({ ...prev, loginError: false }));
-      handleLogin();
-
+      handleLogin(result);
     }
   };
 
