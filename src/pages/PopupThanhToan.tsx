@@ -7,7 +7,8 @@ import {
   faPlus,
   faUser,
   faUserTie,
-  faUserTag 
+  faUserTag,
+  faSpinner
 } from "@fortawesome/free-solid-svg-icons";
 import { createBill } from "../service/billApi";
 import { ca, it } from "date-fns/locale";
@@ -16,6 +17,7 @@ import { getAllEmployees, getWeeklyShifts } from "../service/employeeApi";
 import { format } from "date-fns";
 import type { Shift } from "../service/employeeApi";
 import { createCustomer } from "../service/customerApi";
+import {printBillToPDF} from "../components/PrintBill";
 
 const paymentMethods = [
   { label: "Tiền mặt", icon: faMoneyBillWave },
@@ -31,6 +33,27 @@ interface PopupThanhToanProps {
   onClose: () => void;
 }
 
+interface Bill {
+  id: number;
+  total_cost: number;
+  after_discount: number;
+  customer: Customer;
+  employee: Employee;
+  isDeleted: boolean;
+  billDetails: BillDetail[];
+  createdAt: string;
+  totalQuantity: number;
+  notes: string | null;
+  pointsToUse: number | null;
+  is_error: boolean;
+}
+interface BillDetail {
+  productId: number;
+  productName: string;
+  price: number;
+  afterDiscount: number | null;
+  quantity: number;
+}
 
 interface Customer {
   id: number;
@@ -50,21 +73,21 @@ interface Employee {
 export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupThanhToanProps) {
   const [selectedMethod, setSelectedMethod] = useState("Tiền mặt");
   const [discount, setDiscount] = useState(0);
-  const [received, setReceived] = useState(total - discount);
+  const [received, setReceived] = useState(total-discount);
   const [isAddingCustomer, setIsAddingCustomer] = useState(false);
   const [customer, setCustomer] = useState({ name: "", phone_number: "", gender: "male" });
   const [search, setSearch] = useState("");
-
+  const [isLoading, setIsLoading] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
 
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-   const [employeesToday, setEmployeesToday] = useState<Employee[]>([]);
+  const [employeesToday, setEmployeesToday] = useState<Employee[]>([]);
 
   const filteredCustomers = customers.filter((customer) =>
-    customer.name.toLowerCase().includes(search.toLowerCase())
+    customer.phone_number.toLowerCase().includes(search.toLowerCase())
   );
 
   const suggestCashAmounts = (amount: number): number[] => {
@@ -90,7 +113,8 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
     }));
   };
 
-  console.log("Khách hàng:", customer);
+  console.log("Nhân viên hôm nay:", employees);
+  
 
   const handleCreateBill = async () => {
     if (!selectedEmployee || !selectedCustomer) {
@@ -99,126 +123,163 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
     }
 
     const payload = {
-      employee: { id:selectedEmployee.id },
-      customer: { id:selectedCustomer.id },
+      employee: { id: selectedEmployee.id },
+      customer: { id: selectedCustomer.id },
       billDetails: cart.map(item => ({
         productId: item.id,
-        afterDiscount:  item.discount? item.discount : item.price,
+        afterDiscount: item.discount? item.discount: item.price,
         quantity: item.quantity
       })),
       pointsToUse: discount,
       notes: paymentMethods.find(method => method.label === selectedMethod)?.label,
     };
 
-    try {
-      const response = await createBill(payload);
+    console.log("Payload tạo hóa đơn:", payload);
 
-      if (response) {
+      try {
+        const response = await createBill(payload);
+
+        if (!response || typeof response !== "number") {
+          alert("Tạo hóa đơn thất bại.");
+          return;
+        }
+
+        const newBill: Bill = {
+          id: response,
+          total_cost: total,
+          after_discount: total - discount,
+          customer: customers.find((c) => c.id === payload.customer.id)!,
+          employee: employees.find((e) => e.id === payload.employee.id)!,
+          isDeleted: false,
+          billDetails: cart.map((p) => ({
+            productId: p.id,
+            productName: p.name,
+            price: p.price,
+            afterDiscount: p.discount ?? p.price,
+            quantity: p.quantity,
+          })),
+          createdAt: new Date().toISOString(),
+          totalQuantity: cart.length,
+          notes: payload.notes,
+          pointsToUse: discount,
+          is_error: false,
+        };
+
+        
         alert("Tạo hóa đơn thành công!");
-        setCart([])
-        onClose();
-      } else {
-        const err = await response.json();
-        console.error("Lỗi khi tạo hóa đơn:", err);
-        alert("Tạo hóa đơn thất bại.");
+        await printBillToPDF(newBill);
+        setCart([]);
+        onClose(); 
+
+      } catch (error) {
+        console.error("Lỗi khi gửi yêu cầu:", error);
+        alert("Lỗi khi gửi yêu cầu.");
       }
-    } catch (error) {
-      console.error("Lỗi mạng:", error);
-      alert("Lỗi khi gửi yêu cầu.");
+
+  };
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    const resultCustomer = await getAllCustomer();
+    const resultEmployee = await getAllEmployees();
+    if ( resultCustomer ) {
+      setCustomers(resultCustomer);
+    } 
+    if ( resultEmployee ) {
+      setEmployees(resultEmployee);
+    }
+    setIsLoading(false);
+  };
+
+
+  const fetchTodayShifts = async () => {
+    const today = format(new Date(), "yyyy-MM-dd'T'00:00:00");
+
+    try {
+      const weeklyShifts = await getWeeklyShifts(today);
+      const todayDate = new Date().toISOString().split("T")[0];
+
+      const todayShifts: Shift[] = weeklyShifts.filter(
+        (shift) => shift.date.split("T")[0] === todayDate
+      );
+
+      const todayEmployees: Employee[] = employees.filter(emp =>
+        todayShifts.some(shift => shift.employeeId === emp.id)
+      );
+
+      setEmployeesToday(todayEmployees);
+      console.log("Nhân viên hôm nay:", todayEmployees);
+    } catch (err) {
+      console.log(err);
     }
   };
 
-  const fetchCustomers = async () => {
-      const result = await getAllCustomer();
-      if ( result ) {
-        setCustomers(result);
-      } else {
-        
-      }
+
+  const handleSaveCustomer = async () => {
+    // Kiểm tra dữ liệu bắt buộc
+    if (!customer.name.trim() || !customer.phone_number.trim() || !customer.gender) {
+      alert("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
+
+    // Có thể thêm kiểm tra định dạng số điện thoại nếu muốn
+    const phoneRegex = /^\d{9,12}$/; // ví dụ 9-12 chữ số
+    if (!phoneRegex.test(customer.phone_number)) {
+      alert("Số điện thoại không hợp lệ");
+      return;
+    }
+
+    const customerData = {
+      name: customer.name,
+      phone_number: customer.phone_number,
+      score: 0,
+      gender: customer.gender === "male" ? true : false,
+      id: 0,
+      created_at: "",
     };
 
-  const fetchEmployees = async () => {
-      const result = await getAllEmployees();
-      if ( result ) {
-        setEmployees(result);
-      } else {
-        
-      }
-    };
+    setCustomers(prev => [...prev, customerData]);
 
+    try {
+      const newCustomerId = await createCustomer(customerData);
+      console.log("Khách hàng mới tạo id:", newCustomerId);
+      setIsAddingCustomer(false);
+      setCustomer({ name: "", phone_number: "", gender: "male" });
 
+      // TODO: Nếu cần cập nhật danh sách khách hàng, gọi fetch lại hoặc callback
+      // fetchCustomers(); hoặc props.onCustomerAdded(newCustomerId);
+    } catch (error) {
+      console.error("Lỗi tạo khách hàng:", error);
+      alert("Tạo khách hàng thất bại, vui lòng thử lại.");
+    }
+
+  };
+
+  
   useEffect(() => {
-    fetchCustomers();
-    fetchTodayShifts();
-    fetchEmployees();
+    fetchData();
     fetchTodayShifts();
   }
   , []);
 
   
 
-  const fetchTodayShifts = async () => {
-  const today = format(new Date(), "yyyy-MM-dd'T'00:00:00");
+  if (isLoading) {
+      return (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-5xl max-h-[90vh] min-h-96 flex items-center justify-center overflow-y-auto p-4 md:p-6">
+            <div className="text-center justify-center">
+              <FontAwesomeIcon
+                icon={faSpinner}
+                className="text-4xl text-blue-500 animate-spin mb-4"
+              />
+              <p className="text-gray-600">Đang tải dữ liệu</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
-  try {
-    const weeklyShifts = await getWeeklyShifts(today);
-    const todayDate = new Date().toISOString().split("T")[0];
-
-    const todayShifts: Shift[] = weeklyShifts.filter(
-      (shift) => shift.date.split("T")[0] === todayDate
-    );
-
-    const todayEmployees: Employee[] = employees.filter(emp =>
-      todayShifts.some(shift => shift.employeeId === emp.id)
-    );
-
-    setEmployeesToday(todayEmployees);
-    console.log("Nhân viên hôm nay:", todayEmployees);
-  } catch (err) {
-    console.log(err);
-  }
-};
-
-
-  const handleSaveCustomer = async () => {
-  // Kiểm tra dữ liệu bắt buộc
-  if (!customer.name.trim() || !customer.phone_number.trim() || !customer.gender) {
-    alert("Vui lòng nhập đầy đủ thông tin");
-    return;
-  }
-
-  // Có thể thêm kiểm tra định dạng số điện thoại nếu muốn
-  const phoneRegex = /^\d{9,12}$/; // ví dụ 9-12 chữ số
-  if (!phoneRegex.test(customer.phone_number)) {
-    alert("Số điện thoại không hợp lệ");
-    return;
-  }
-
-  const customerData = {
-    name: customer.name,
-    phone_number: customer.phone_number,
-    score: 0,
-    gender: customer.gender === "male" ? true : false,
-    id: 0,
-    created_at: "",
-  };
-
-  setCustomers(prev => [...prev, customerData]);
-
-  try {
-    const newCustomerId = await createCustomer(customerData);
-    console.log("Khách hàng mới tạo id:", newCustomerId);
-    setIsAddingCustomer(false);
-    setCustomer({ name: "", phone_number: "", gender: "male" });
-
-    // TODO: Nếu cần cập nhật danh sách khách hàng, gọi fetch lại hoặc callback
-    // fetchCustomers(); hoặc props.onCustomerAdded(newCustomerId);
-  } catch (error) {
-    console.error("Lỗi tạo khách hàng:", error);
-    alert("Tạo khách hàng thất bại, vui lòng thử lại.");
-  }
-
-};
 
 
   return (
@@ -252,10 +313,10 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
             {/* Khách hàng */}
             <div className="mb-4 flex items-center gap-4">
               {/* Chọn nhân viên */}
-              <div className="flex items-center gap-2 w-1/2">
+              <div className="flex items-center gap-2 w-1/2 max-h-44 overflow-auto relative">
                 <FontAwesomeIcon icon={faUserTie} className=" absolute ml-2 mr-1 text-gray-500" />
                 <select
-                  className="border rounded-lg pl-6 pr-3 py-2 w-full text-sm focus:outline-none"
+                  className="border rounded-lg pl-6 pr-3 py-2 w-full text-sm focus:outline-none max-h-44 overflow-y-auto"
                   value={selectedEmployee?.id ?? ''}
                   onChange={(e) => {
                     const id = Number(e.target.value);
@@ -264,13 +325,13 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
                   }}
                 >
                   <option value="">Chọn nhân viên</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name}
-                    </option>
-                  ))}
+                    {employees.map((emp) => (  
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name}
+                      </option>
+                    ))}
+                  
                 </select>
-
               </div>
 
               {/* Tìm và chọn khách hàng */}
@@ -298,7 +359,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
 
                 {/* Gợi ý danh sách khách hàng khi chưa chọn */}
                 {!selectedCustomer && search && (
-                  <ul className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-md shadow z-10 max-h-40 overflow-y-auto text-sm">
+                  <ul className="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-md shadow z-10 max-h-44 overflow-y-auto text-sm">
                     {filteredCustomers.length > 0 ? (
                       filteredCustomers.map((c) => (
                         <li
@@ -398,7 +459,10 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
                 <input
                   type="number"
                   value={discount}
-                  onChange={(e) => setDiscount(Number(e.target.value))}
+                  onChange={(e) => {
+                    setDiscount(Number(e.target.value))
+                    setReceived(total - Number(e.target.value))
+                  }}
                   className="w-32 text-right border-b border-gray-400 focus:outline-none"
                 />
               </div>
@@ -438,6 +502,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
                 ))}
               </div>
             )}
+            
 
             {/* Xác nhận thanh toán */}
             <div className="mt-6">

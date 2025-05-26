@@ -22,5 +22,6 @@
     "alwaysStrict": false,
     "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": false
-  }
+  },
+  "exclude": ["node_modules"]
 }
