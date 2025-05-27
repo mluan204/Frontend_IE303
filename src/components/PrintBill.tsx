@@ -100,7 +100,7 @@ export async function printBillToPDF(bill: Bill) {
       <span><strong>${(bill.after_discount-bill.pointsToUse).toLocaleString()}</strong></span>
 
     </div>
-    <p style ="font-size: 14px;">+ ${bill.notes}</p>
+    <p style ="font-size: 13px;">+ ${bill.notes}</p>
     <p style="text-align:center;margin-top:30px; font-size: 12px;"><i>Cảm ơn quý khách đã mua hàng tại JDK Store!</i></p>
   `;
   document.body.appendChild(container);

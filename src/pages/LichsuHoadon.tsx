@@ -38,7 +38,7 @@ interface Invoice {
 function LishsuHoadon() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(true);
+  const [error, setError] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(
     invoices[0]
   );
@@ -88,9 +88,9 @@ function LishsuHoadon() {
     setSelectedInvoice(mapped[0] || null);
   } catch (error) {
     console.error("Lỗi khi gọi API:", error);
-  } finally {
-    setLoading(false);
+    setError(true);
   }
+  setLoading(false);
 };
 
 

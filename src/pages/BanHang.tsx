@@ -8,6 +8,8 @@ import PopupThanhToan from "./PopupThanhToan";
 import { fetchAllProduct } from "../service/mainApi";
 import { getProductQuantity } from "../service/billApi";
 import { generateProductSuggestions } from "../components/GeminiService";
+import { getAllCustomer } from "../service/customerApi";
+import { getAllEmployees, getWeeklyShifts } from "../service/employeeApi";
 
 // Định nghĩa kiểu dữ liệu cho product
 interface Product {
@@ -49,10 +51,23 @@ const comboList = [
     ],
   },
 ];
+interface Customer {
+  id: number;
+  gender: boolean;
+  name: string;
+  phone_number: string;
+  score: number;
+  created_at: string;
+}
+
+interface Employee {
+  id: number;   
+  name: string;
+}
 
 function BanHang() {
   // State để quản lý giỏ hàng và tìm kiếm
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rawProductList, setRawProductList] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -63,6 +78,10 @@ function BanHang() {
   const [showMobileBill, setShowMobileBill] = useState(false);
   const [suggestedProducts, setSuggestedProducts] = useState<Product[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+
+  
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [employees, setEmployees] = useState<Employee[]>([]);
 
   const addToCart = async (product: Product) => {
     setCart((prevCart) => {
@@ -224,8 +243,10 @@ function BanHang() {
     try {
       setLoading(true);
       setError(null);
+
       const result = await fetchAllProduct();
       setRawProductList(result);
+
       const mapped: Product[] = result.map((item: any) => ({
         id: item.id.toString(),
         name: item.name,
@@ -234,6 +255,19 @@ function BanHang() {
         quantity: 0,
       }));
       setProducts(mapped);
+
+      const resultCustomer = await getAllCustomer();
+      const resultEmployee = await getAllEmployees();
+
+      if (resultCustomer) setCustomers(resultCustomer);
+      if (resultEmployee) setEmployees(resultEmployee);
+
+      // Lưu dữ liệu và ngày gọi vào localStorage
+      const today = new Date().toISOString().split("T")[0];
+      localStorage.setItem("lastFetchDate", today);
+      localStorage.setItem("products", JSON.stringify(mapped));
+      localStorage.setItem("customers", JSON.stringify(resultCustomer));
+      localStorage.setItem("employees", JSON.stringify(resultEmployee));
     } catch (err) {
       console.error("Error fetching data:", err);
       setError("Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.");
@@ -243,8 +277,32 @@ function BanHang() {
   };
 
   useEffect(() => {
-    fetchData();
+    const loadData = () => {
+      const today = new Date().toISOString().split("T")[0];
+      const lastFetchDate = localStorage.getItem("lastFetchDate");
+
+      // Lấy dữ liệu từ localStorage
+      const localProducts = localStorage.getItem("products");
+      const localCustomers = localStorage.getItem("customers");
+      const localEmployees = localStorage.getItem("employees");
+
+      // Nếu có dữ liệu trong localStorage thì load vào state
+      if (localProducts && localCustomers && localEmployees) {
+        setProducts(JSON.parse(localProducts));
+        setCustomers(JSON.parse(localCustomers));
+        setEmployees(JSON.parse(localEmployees));
+      }
+
+      // Nếu chưa fetch hôm nay thì gọi API
+      if (lastFetchDate !== today) {
+        fetchData();
+      }
+    };
+
+    loadData();
   }, []);
+
+
 
   const removeVietnameseTones = (str: string): string => {
     return str
@@ -560,6 +618,9 @@ function BanHang() {
           cart={cart}
           onClose={() => setShowPopup(false)}
           setCart={setCart}
+          customers={customers}
+          employees={employees}
+          setCustomers={setCustomers}
         />
       )}
     </div>
