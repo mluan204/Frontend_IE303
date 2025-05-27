@@ -11,54 +11,44 @@ test.describe('Navigation & UI Tests', () => {
   test('should display main navigation correctly', async ({ page }) => {
     // Check for navigation elements
     const navElements = [
-      page.locator('nav, .navigation, .sidebar, .menu'),
-      page.locator('text=Tổng quan'),
-      page.locator('text=Hàng hóa'),
-      page.locator('text=Bán hàng'),
-      page.locator('text=Khách hàng'),
-      page.locator('text=Nhân viên')
+      // page.locator('nav, .navigation, .sidebar, .menu'),
+      page.locator('li:has-text("Tổng quan")'),
+      page.locator('li:has-text("Hàng hóa")'),
+      page.locator('li:has-text("Combo")'),
+      page.locator('li:has-text("Hóa đơn")'),
+      page.locator('li:has-text("Khách hàng")'),
+      page.locator('li:has-text("Nhân viên")'),
     ];
     
-    let navFound = false;
     for (const element of navElements) {
-      try {
-        if (await element.isVisible()) {
-          navFound = true;
-          break;
-        }
-      } catch (error) {
-        // Continue checking
-      }
+      await expect(element).toBeVisible();
     }
-    expect(navFound).toBeTruthy();
   });
 
-  test('should navigate to all main pages', async ({ page }) => {
+  test('should click and navigate to all main pages', async ({ page }) => {
     const pages = [
-      { name: 'Tổng quan', route: '/', text: ['Tổng quan', 'Dashboard', 'Overview'] },
-      { name: 'Hàng hóa', route: '/hang-hoa', text: ['Hàng hóa', 'Products', 'Sản phẩm'] },
-      { name: 'Kho hàng', route: '/kho-hang', text: ['Kho hàng', 'Inventory', 'Warehouse'] },
-      { name: 'Bán hàng', route: '/ban-hang', text: ['Bán hàng', 'Sales', 'POS'] },
-      { name: 'Hóa đơn', route: '/hoa-don', text: ['Hóa đơn', 'Invoices', 'Bills'] },
-      { name: 'Khách hàng', route: '/khach-hang', text: ['Khách hàng', 'Customers', 'Clients'] },
-      { name: 'Nhân viên', route: '/nhan-vien', text: ['Nhân viên', 'Employees', 'Staff'] },
-      { name: 'Doanh thu', route: '/doanh-thu', text: ['Doanh thu', 'Revenue', 'Sales Report'] },
-      { name: 'Combo', route: '/combo', text: ['Combo', 'Bundle', 'Package'] },
-      { name: 'Ca làm', route: '/ca-lam', text: ['Ca làm', 'Shifts', 'Work Schedule'] }
+      { name: 'Tổng quan', route: '/', text: ['Doạnh thu.*', 'KẾT QUẢ.*'] },
+      { name: 'Hàng hóa', route: '/hang-hoa', text: ['Nhóm hàng', '.*SẢN PHẨM.*'] },
+      { name: 'Kho hàng', route: '/kho-han', text: ['Tìm kiếm.*', '.*PHIẾU NHẬP.*'] },
+      { name: 'Hóa đơn', route: '/hoa-don', text: ['Mã HĐ', 'Thời gian'] },
+      { name: 'Khách hàng', route: '/khach-hang', text: ['Mã KH', 'Giới tính'] },
+      { name: 'Nhân viên', route: '/nhan-vien', text: ['Mã NV', 'Tên', 'Chức vụ'] },
+      { name: 'Combo', route: '/combo', text: ['Mã combo', 'Combo sản phẩm'] },
     ];
 
     for (const pageInfo of pages) {
       try {
-        await page.goto(pageInfo.route);
+        await page.getByText(pageInfo.name).click();
         await waitForPageLoad(page);
         
         // Verify we're on the correct page
         await expect(page).toHaveURL(pageInfo.route);
+        await page.waitForTimeout(2000);
         
         // Check for page-specific content
         let pageContentFound = false;
         for (const text of pageInfo.text) {
-          const element = page.locator(`text=${text}`);
+          const element = page.getByText(new RegExp(text, 'i'));
           if (await element.isVisible().catch(() => false)) {
             pageContentFound = true;
             break;
@@ -72,39 +62,16 @@ test.describe('Navigation & UI Tests', () => {
     }
   });
 
-  test('should handle navigation menu clicks', async ({ page }) => {
-    const menuItems = [
-      { text: 'Tổng quan', expectedUrl: '/' },
-      { text: 'Hàng hóa', expectedUrl: '/hang-hoa' },
-      { text: 'Bán hàng', expectedUrl: '/ban-hang' },
-      { text: 'Khách hàng', expectedUrl: '/khach-hang' }
-    ];
-
-    for (const item of menuItems) {
-      try {
-        const menuLink = page.locator(`a:has-text("${item.text}"), button:has-text("${item.text}"), [href="${item.expectedUrl}"]`).first();
-        
-        if (await menuLink.isVisible()) {
-          await menuLink.click();
-          await waitForPageLoad(page);
-          
-          // Check if URL changed correctly
-          const currentUrl = page.url();
-          const isCorrectPage = currentUrl.includes(item.expectedUrl) || currentUrl.endsWith(item.expectedUrl);
-          expect(isCorrectPage).toBeTruthy();
-        }
-      } catch (error) {
-        console.warn(`Failed to click menu item ${item.text}: ${error}`);
-      }
-    }
-  });
-
   test('should display correct page titles', async ({ page }) => {
     const pages = [
-      { route: '/', titles: ['Tổng quan', 'Dashboard', 'POS'] },
-      { route: '/hang-hoa', titles: ['Hàng hóa', 'Products', 'Quản lý sản phẩm'] },
-      { route: '/ban-hang', titles: ['Bán hàng', 'Sales', 'Point of Sale'] },
-      { route: '/khach-hang', titles: ['Khách hàng', 'Customers', 'Quản lý khách hàng'] }
+      { route: '/', titles: 'Tổng quan' },
+      { route: '/tong-quan', titles: 'Tổng quan' },
+      { route: '/hang-hoa', titles: 'Hàng hoá' },
+      { route: '/kho-hang', titles: 'Kho hàng' },
+      { route: '/hoa-don', titles: 'Hóa đơn' },
+      { route: '/khach-hang', titles: 'Khách hàng' },
+      { route: '/nhan-vien', titles: 'Nhân viên' },
+      { route: '/combo', titles: 'Combo' },
     ];
 
     for (const pageInfo of pages) {
@@ -113,19 +80,14 @@ test.describe('Navigation & UI Tests', () => {
         await waitForPageLoad(page);
         
         const title = await page.title();
-        const hasValidTitle = pageInfo.titles.some(expectedTitle => 
-          title.toLowerCase().includes(expectedTitle.toLowerCase())
-        );
+        const hasValidTitle = title.toLowerCase().includes(pageInfo.titles.toLowerCase());
         
         // If page title doesn't match, check for heading on page
         if (!hasValidTitle) {
           let headingFound = false;
-          for (const expectedTitle of pageInfo.titles) {
-            const heading = page.locator(`h1:has-text("${expectedTitle}"), h2:has-text("${expectedTitle}"), .page-title:has-text("${expectedTitle}")`);
-            if (await heading.isVisible().catch(() => false)) {
-              headingFound = true;
-              break;
-            }
+          const heading = page.locator(`h1:has-text("${pageInfo.titles}"), h2:has-text("${pageInfo.titles}"), .page-title:has-text("${pageInfo.titles}")`);
+          if (await heading.isVisible().catch(() => false)) {
+            headingFound = true;
           }
           expect(headingFound).toBeTruthy();
         } else {
@@ -145,9 +107,7 @@ test.describe('Navigation & UI Tests', () => {
     
     // Check if mobile navigation exists
     const mobileNavElements = [
-      page.locator('.mobile-menu, .hamburger, .menu-toggle'),
-      page.locator('button:has-text("☰")').or(page.locator('button:has-text("Menu")')),
-      page.locator('[data-testid="mobile-menu"]')
+      page.locator('[data-testid="mobile-menu-icon"]')
     ];
     
     let mobileNavFound = false;

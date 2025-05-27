@@ -73,7 +73,7 @@ const Navigation = () => {
           </button>
 
           {/* Hamburger icon - mobile only */}
-          <div className="md:hidden">
+          <div data-testid="mobile-menu-icon" className="md:hidden">
             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
               <i className="fas fa-bars text-xl text-gray-700"></i>
             </button>
@@ -114,7 +114,7 @@ const Navigation = () => {
       </nav>
 
       {/* Desktop menu */}
-      <nav className="bg-[#0070F4] px-4 md:px-6 overflow-x-auto hidden md:block">
+      <nav data-testid="desktop-menu" className="bg-[#0070F4] px-4 md:px-6 overflow-x-auto hidden md:block">
         <ul className="flex min-w-max space-x-3 md:space-x-4 lg:space-x-6">
           {navItems.map((item) => (
             <li key={item.path} className="relative">
@@ -139,7 +139,7 @@ const Navigation = () => {
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-[#0070F4] px-4 py-2">
+        <div data-testid="mobile-menu" className="md:hidden bg-[#0070F4] px-4 py-2">
           <ul className="space-y-1">
             {navItems.map((item) => (
               <li key={item.path}>
