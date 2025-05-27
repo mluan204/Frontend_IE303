@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faAdd, faFileExport, faTrash, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faAdd, faFileExport, faTrash, faEye, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import EmployeeDetail from "../components/EmployeeDetail";
 import AddEmployeeModal from "../components/AddEmployeeModal";
 import { deleteEmployeeById, getAllEmployees } from "../service/employeeApi";
@@ -21,48 +21,53 @@ interface Employee {
   salary: number;
 }
 
-// Danh sách nhân viên mẫu
-const mockEmployees: Employee[] = Array.from({ length: 30 }, (_, i) => ({
-  id: i + 1,
-  name: `Nhân viên ${i + 1}`,
-  address: `Địa chỉ ${i + 1}`,
-  birthday: `199${i % 10}-01-01`,
-  created_at: `2023-0${(i % 9) + 1}-15`,
-  email: `nhanvien${i + 1}@gmail.com`,
-  gender: i % 2 === 0,
-  image: "https://static.wikia.nocookie.net/menes-suecos/images/b/bc/Revendedor1.jpg",
-  phone_number: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
-  position: i % 2 === 0 ? "Quản lý" : "Nhân viên",
-  salary: 8000000 + i * 250000,
-}));
 const ITEMS_PER_PAGE = 10;
 
 function NhanVien() {
-  // const [employees, setEmployees] = useState<Employee[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const result = await getAllEmployees();
-      setEmployees(result);
-      console.log(result);
-    }
+      try {
+        setIsLoading(true);
+        setError(null);
+        const result = await getAllEmployees();
+        setEmployees(result);
+        setDisplayedEmployees(result.slice(
+          currentPage * ITEMS_PER_PAGE,
+          (currentPage + 1) * ITEMS_PER_PAGE
+        ));
+      } catch (err) {
+        console.error("Lỗi khi tải danh sách nhân viên:", err);
+        setError("Không thể tải dữ liệu nhân viên. Vui lòng thử lại sau.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     fetchData();
-  }, [])
+  }, []);
 
   const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
 
-  const totalPages = Math.ceil(employees.length / ITEMS_PER_PAGE);
-  const displayedEmployees = employees.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
+  const [totalPages, setTotalPages] = useState(Math.ceil(employees.length / ITEMS_PER_PAGE));
+  const [displayedEmployees, setDisplayedEmployees] = useState<Employee[]>([]);
   // Modal chi tiết nhân viên
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [totalItems, setTotalItems] = useState(employees.length);
+  const [pagination, setPagination] = useState<(string | number)[]>([]);
+
+  useEffect(() => {
+    setDisplayedEmployees(employees.slice(
+      currentPage * ITEMS_PER_PAGE,
+      (currentPage + 1) * ITEMS_PER_PAGE
+    ));
+    setPagination(getPaginationRange(currentPage + 1, totalPages));
+  }, [currentPage]);
 
   const handleOpenModal = (employee: Employee) => {
     setSelectedEmployee(employee);
@@ -79,7 +84,88 @@ function NhanVien() {
   };
   // MODAL THÊM NHÂN VIÊN
   const [showAddModal, setShowAddModal] = useState(false);
+  //PHÂN TRANG
+  function getPaginationRange(currentPage: number, totalPages: number): (number | string)[] {
+    const delta = 1; // số trang kề trước và sau currentPage được hiển thị
+    const range: (number | string)[] = [];
 
+    if (totalPages <= 5) {
+      // Nếu tổng số trang ít hơn hoặc bằng 5 thì hiển thị toàn bộ
+      for (let i = 1; i <= totalPages; i++) {
+        range.push(i);
+      }
+    } else {
+      // Luôn hiển thị trang đầu tiên
+      range.push(1);
+
+      if (currentPage > 3) {
+        range.push("...");
+      }
+
+      const start = Math.max(2, currentPage - delta);
+      const end = Math.min(totalPages - 1, currentPage + delta);
+
+      for (let i = start; i <= end; i++) {
+        range.push(i);
+      }
+
+      if (currentPage < totalPages - 2) {
+        range.push("...");
+      }
+
+      // Luôn hiển thị trang cuối
+      range.push(totalPages);
+    }
+    return range;
+  }
+
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setCurrentPage(0); // Reset to the first page
+    
+    const filteredEmployees = employees.filter(employee => 
+      employee.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setTotalItems(filteredEmployees.length);
+    setTotalPages(Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE));
+    setPagination(getPaginationRange(0, filteredEmployees.length / ITEMS_PER_PAGE));
+
+    setDisplayedEmployees(filteredEmployees.slice(
+      0, // Use 0 for the first page
+      ITEMS_PER_PAGE 
+    ));
+  }
+
+  //LOADING
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="text-4xl text-blue-500 animate-spin mb-4"
+          />
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
   const handleOnClickExport = async () => {
     try {
       const res = await getAllEmployees();
@@ -130,21 +216,21 @@ function NhanVien() {
                 placeholder="Tìm kiếm..."
                 className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
 
             {/* Nút chức năng */}
             <div className="space-x-5">
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={() => setShowAddModal(true)}
               >
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={handleOnClickExport}
               >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
@@ -174,7 +260,7 @@ function NhanVien() {
                     {displayedEmployees.map((employee) => (
                       <tr key={employee.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-[200px] truncate">{employee.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.position}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.phone_number}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.salary.toLocaleString("vi-VN")}₫</td>
@@ -224,35 +310,39 @@ function NhanVien() {
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <p className="text-sm text-gray-700">
                     Hiển thị{" "}
-                    <span className="font-medium">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span>{" "}
+                    <span className="font-medium">{currentPage * ITEMS_PER_PAGE + 1}</span>{" "}
                     đến{" "}
-                    <span className="font-medium">{Math.min(currentPage * ITEMS_PER_PAGE, employees.length)}</span>{" "}
+                    <span className="font-medium">{Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalItems)}</span>{" "}
                     của{" "}
-                    <span className="font-medium">{employees.length}</span> kết quả
+                    <span className="font-medium">{totalItems}</span> kết quả
                   </p>
                   <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                     <button
-                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((prev) => Math.min(prev - 1, 0))}
+                      disabled={currentPage === 0}
                       className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                     >
                       Trang trước
                     </button>
-                    {[...Array(totalPages)].map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPage(index + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${currentPage === index + 1
-                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                          }`}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
+                    {pagination.map((page, index) =>
+                      typeof page === "number" ? (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPage(index)} // vì page hiển thị bắt đầu từ 1
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${currentPage === page - 1
+                              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                            }`}
+                        >
+                          {page}
+                        </button>
+                      ) : (
+                        <span key={`ellipsis-${index}`} className="...">...</span>
+                      )
+                    )}
                     <button
-                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage((prev) => Math.max(prev + 1, totalPages-1))}
+                      disabled={currentPage === totalPages-1}
                       className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                     >
                       Trang sau
@@ -275,12 +365,12 @@ function NhanVien() {
       </div>
 
       {/* Modal thêm mới nhân viên */}
-      <AddEmployeeModal 
-        isOpen={showAddModal} 
-        onClose={() => setShowAddModal(false)} 
+      <AddEmployeeModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
         onEmployeeAdded={(newEmployee) => {
-            setEmployees((prev) => [...prev, newEmployee]);
-          }} 
+          setEmployees((prev) => [...prev, newEmployee]);
+        }}
       />
     </div>
   );

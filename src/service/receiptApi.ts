@@ -20,3 +20,35 @@ export const deleteReceiptById = async (id: number) => {
     return "Loi khi xoa nhap hang";
   }
 };
+
+export const searchReceipts = async ({
+  employeeName,
+  fromDate,
+  toDate,
+  page = 0,
+  size = 10,
+}: {
+  employeeName?: string;
+  fromDate?: string; 
+  toDate?: string;   
+  page?: number;
+  size?: number;
+}) => {
+  try {
+    const params: any = {
+      page,
+      size,
+    };
+
+    if (employeeName) params.employeeName = employeeName;
+    if (fromDate) params.fromDate = fromDate;
+    if (toDate) params.toDate = toDate;
+
+    const response = await api.get("/receipts/search", { params });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi tìm kiếm receipt:", error);
+    return null;
+  }
+};
+

@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { login, TEST_USERS, navigateToPage, waitForToast, waitForPageLoad } from './test-utils';
+import { loginManager, TEST_USERS, navigateToPage, waitForToast, waitForPageLoad } from './test-utils';
 
 test.describe('Sales Workflow Tests', () => {
   
   test.beforeEach(async ({ page }) => {
-    await login(page, TEST_USERS.admin);
+    await loginManager(page, TEST_USERS.admin);
     await navigateToPage(page, 'ban-hang');
     await waitForPageLoad(page);
   });

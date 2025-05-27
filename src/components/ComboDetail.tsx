@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faEdit, faSave } from "@fortawesome/free-solid-svg-icons";
 import { formatDate } from "../utils/FormatDate";
+import { updateCombo } from "../service/comboApi";
 interface ComboProduct {
   productId: number;
   price: number;
@@ -26,9 +27,15 @@ function ComboDetail({ combo, isOpen, onClose }: ComboDetailProps) {
   const [editedCombo, setEditedCombo] = useState(combo);
 
   const handleEdit = () => setIsEditing(true);
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsEditing(false);
-    // Save logic here
+    try {
+      await updateCombo(editedCombo.id, editedCombo.timeEnd);
+      // Optionally, you can add a success message or notification here
+    } catch (error) {
+      console.error("Failed to update combo", error);
+      // Optionally, you can add an error message or notification here
+    }
   };
   const handleClose = () => {
     setIsEditing(false);
@@ -74,9 +81,9 @@ function ComboDetail({ combo, isOpen, onClose }: ComboDetailProps) {
                     ? "Ngày kết thúc"
                     : field}
                 </label>
-                {isEditing ? (
+                {field === "timeEnd" && isEditing ? (
                   <input
-                    type="text"
+                    type="date"
                     name={field}
                     value={(editedCombo as any)[field] || ""}
                     onChange={handleChange}
@@ -84,9 +91,7 @@ function ComboDetail({ combo, isOpen, onClose }: ComboDetailProps) {
                   />
                 ) : (
                   <div className="text-gray-900 text-sm">
-                    {field === "createdAt"
-                      ? formatDate((editedCombo as any)[field])
-                      : field === "timeEnd"
+                    {field === "createdAt" || field === "timeEnd"
                       ? formatDate((editedCombo as any)[field])
                       : (editedCombo as any)[field]}
                   </div>

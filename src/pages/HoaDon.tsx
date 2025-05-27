@@ -257,6 +257,43 @@ function HoaDon() {
     setBillToDelete(null);
   };
 
+  //PHÂN TRANG
+  function getPaginationRange(currentPage: number, totalPages: number): (number | string)[] {
+  const delta = 1; // số trang kề trước và sau currentPage được hiển thị
+  const range: (number | string)[] = [];
+
+  if (totalPages <= 5) {
+    // Nếu tổng số trang ít hơn hoặc bằng 5 thì hiển thị toàn bộ
+    for (let i = 1; i <= totalPages; i++) {
+      range.push(i);
+    }
+  } else {
+    // Luôn hiển thị trang đầu tiên
+    range.push(1);
+
+    if (currentPage > 3) {
+      range.push("...");
+    }
+
+    const start = Math.max(2, currentPage - delta);
+    const end = Math.min(totalPages - 1, currentPage + delta);
+
+    for (let i = start; i <= end; i++) {
+      range.push(i);
+    }
+
+    if (currentPage < totalPages - 2) {
+      range.push("...");
+    }
+
+    // Luôn hiển thị trang cuối
+    range.push(totalPages);
+  }
+
+  return range;
+}
+
+  ///LOADING
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -319,13 +356,13 @@ function HoaDon() {
             {/* Nút chức năng */}
             <div className="flex gap-2">
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={() => setIsAddModalOpen(true)}
               >
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-2 rounded">
+              <button className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer">
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
                 Xuất file
               </button>
@@ -717,18 +754,28 @@ function HoaDon() {
                             >
                               Trang trước
                             </button>
-                            {[...Array(totalPages)].map((_, index) => (
-                              <button
-                                key={index}
-                                onClick={() => setCurrentPage(index)}
-                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${currentPage === index
-                                  ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                                  : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                            {getPaginationRange(currentPage + 1, totalPages).map((page, index) =>
+                              typeof page === "number" ? (
+                                <button
+                                  key={index}
+                                  onClick={() => setCurrentPage(page - 1)}
+                                  className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
+                                    currentPage === page - 1
+                                      ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                                      : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
                                   }`}
-                              >
-                                {index + 1}
-                              </button>
-                            ))}
+                                >
+                                  {page}
+                                </button>
+                              ) : (
+                                <span
+                                  key={`ellipsis-${index}`}
+                                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                                >
+                                  ...
+                                </span>
+                              )
+                            )}
                             <button
                               onClick={() =>
                                 setCurrentPage((prev) =>

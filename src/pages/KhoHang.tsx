@@ -1,12 +1,13 @@
 import { Helmet } from "react-helmet";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faAdd, faFileExport, faTrash, faEye } from "@fortawesome/free-solid-svg-icons";
+import { faSearch, faAdd, faFileExport, faTrash, faEye, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import ReceiptDetail from "../components/ReceiptDetail";
 import { fetchAllProduct, fetchAllReciept, fetchReciept } from "../service/mainApi";
 import { CommonUtils } from "../utils/CommonUtils";
 import AddReceiptModal from "../components/AddReceiptModal";
 import { deleteReceiptById } from "../service/receiptApi";
+import { searchReceipts } from "../service/receiptApi";
 
 interface Receipt {
   id: number;
@@ -14,9 +15,15 @@ interface Receipt {
   total_cost: string;
   employee_name: string;
   note: string;
-
+  receipt_details: {
+    productId: number, 
+    supplier: String, 
+    quantity: number, 
+    input_price: number,
+    check: boolean,
+    productName: string,
+  }[];
 }
-
 
 interface Product {
   id: number;
@@ -34,95 +41,205 @@ interface Product {
 const ITEMS_PER_PAGE = 10;
 
 function KhoHang() {
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [receipts, setReceipts] = useState<Receipt[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+const [inputValue, setInputValue] = useState(""); // giữ giá trị input tạm thời
+const [search, setSearch] = useState(""); // giá trị thực sự dùng để lọc
 
-  const [selectedTime, setSelectedTime] = useState("thisMonth");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
-  // // MODAL CHI TIẾT SẢN PHẨM
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null)
-  //MODAL THÊM MỚI
-  const [openModalAdd, setOpenModalAdd] = useState(false);
+const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === "Enter") {
+    const trimmed = inputValue.trim();
 
-  // // Mở modal và truyền thông tin sản phẩm
-  const handleOpenModal = (bill: Receipt) => {
-    setSelectedReceipt(bill);
-    setIsModalOpen(true);
-  };
-
-  // // Đóng modal
-  const handleCloseModal = () => {
-    setSelectedReceipt(null);
-    setIsModalOpen(false);
-  };
-  
-
-  const getReceipts = async () => {
-    setIsLoading(true);
-    const response = await fetchReciept(currentPage - 1, ITEMS_PER_PAGE, search);
-    console.log(response);
-    if (typeof response === "string") {
-      console.error(response);
+    if (trimmed === "") {
+      setSearch(""); // reset search → backend sẽ trả về tất cả
     } else {
-      const data = response.data;
-      setReceipts(data.content || []);
-      setTotalPages(data.totalPages || 1);
+      setSearch(trimmed); // trigger tìm kiếm
     }
 
+    // KHÔNG reset inputValue → giữ nguyên input
+  }
+};
 
+
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [receipts, setReceipts] = useState<Receipt[]>([]);
+const [isLoading, setIsLoading] = useState(false);
+const [error, setError] = useState<string | null>(null);
+
+const [products, setProducts] = useState<Product[]>([]);
+
+const [selectedTime, setSelectedTime] = useState("allTime");
+const [startDate, setStartDate] = useState("");
+const [endDate, setEndDate] = useState("");
+
+const [openModalAdd, setOpenModalAdd] = useState(false);
+const [isModalOpen, setIsModalOpen] = useState(false);
+const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
+
+const ITEMS_PER_PAGE = 10;
+
+useEffect(() => {
+  fetchProducts();
+}, []);
+
+const fetchProducts = async () => {
+  const response = await fetchAllProduct();
+  setProducts(response);
+};
+
+const handleOpenModal = (bill: Receipt) => {
+  setSelectedReceipt(bill);
+  setIsModalOpen(true);
+};
+
+const handleCloseModal = () => {
+  setSelectedReceipt(null);
+  setIsModalOpen(false);
+};
+ const formatDateToDDMMYYYY = (date: Date | string): string => {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+const handleApplyFilter = async () => {
+  setIsLoading(true);
+  setError(null);
+
+  let fromDate: string | undefined;
+  let toDate: string | undefined;
+
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  if (selectedTime === "thisMonth") {
+    fromDate = formatDateToDDMMYYYY(firstDayOfMonth);
+    toDate = formatDateToDDMMYYYY(today);
+  } else if (selectedTime === "customTime") {
+    fromDate = startDate ? formatDateToDDMMYYYY(startDate) : undefined;
+    toDate = endDate ? formatDateToDDMMYYYY(endDate) : undefined;
+  }
+
+  try {
+    const result = await searchReceipts({
+      employeeName: search || undefined,
+      fromDate,
+      toDate,
+      page: currentPage - 1,
+      size: ITEMS_PER_PAGE,
+    });
+
+    if (result) {
+      setReceipts(result.content || []);
+      setTotalPages(result.totalPages || 1);
+    }
+  } catch (err) {
+    setError("Không thể tải dữ liệu phiếu nhập. Vui lòng thử lại.");
+  } finally {
     setIsLoading(false);
-  };
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-  const fetchProducts = async () => {
-    const response = await fetchAllProduct();
-    setProducts(response);
-  };
+  }
+};
 
-  useEffect(() => {
-    getReceipts();
-  }, [currentPage, search]);
+useEffect(() => {
+  if (selectedTime === "customTime") {
+    if (startDate && endDate && (new Date(startDate) <= new Date(endDate))) {
+      handleApplyFilter();
+    }
+    if((new Date(startDate) > new Date(endDate))) {
+      alert("Vui lòng chọn ngày bắt đầu và kết thúc hợp lệ.");
+    }
+  } else {
+    handleApplyFilter();
+  }
+}, [currentPage, selectedTime, startDate, endDate, search]);
 
-  const handleOnClickExport = async () => {
+
+console.log("receipts", receipts);
+
+const handleOnClickExport = async () => {
+  try {
+    const res = await fetchAllReciept();
+    if (res) {
+      const mappedData = res.data.map((item: Receipt) => ({
+        "Mã phiếu nhập": item.id,
+        "Thời gian": new Date(item.created_at).toLocaleString("vi-VN"),
+        "Nhân viên": item.employee_name,
+        "Tổng tiền": item.total_cost,
+        "Ghi chú": item.note || "",
+      }));
+
+      await CommonUtils.exportExcel(mappedData, "Danh sách phiếu nhập", "Phiếu nhập kho");
+    }
+  } catch (error) {
+    console.error("Error exporting product list:", error);
+    alert("Đã xảy ra lỗi khi xuất file!");
+  }
+};
+
+const onClickDeleteProduct = async (receipt: Receipt) => {
+  const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa phiếu nhập hàng này?`);
+  if (confirmDelete) {
     try {
-      const res = await fetchAllReciept();
-      if (res) {
-        const mappedData = res.data.map((item: Receipt) => ({
-          "Mã phiếu nhập": item.id,
-          "Thời gian": new Date(item.created_at).toLocaleString("vi-VN"),
-          "Nhân viên": item.employee_name,
-          "Tổng tiền": item.total_cost,
-          "Ghi chú": item.note || "",
-        }));
-        await CommonUtils.exportExcel(mappedData, "Danh sách phiếu nhập", "Phiếu nhập kho");
-
-      }
+      await deleteReceiptById(receipt.id);
+      handleApplyFilter(); // Refresh sau khi xóa
     } catch (error) {
-      console.error("Error exporting product list:", error);
-      alert("Đã xảy ra lỗi khi xuất file!");
+      alert("Lỗi khi xóa sản phẩm!");
+      console.error(error);
     }
-  };
+  }
+};
 
-  const onClickDeleteProduct = async (receipt: Receipt) => {
-    const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa phiếu nhập hàng này?`);
-    if (confirmDelete) {
-      try {
-        const result = await deleteReceiptById(receipt.id);
-        console.log(result);
-        getReceipts(); // Refresh lại danh sách
-      } catch (error) {
-        alert("Lỗi khi xóa sản phẩm!");
-        console.error(error);
-      }
-    }
-  };
+// Pagination logic...
+function getPaginationRange(currentPage: number, totalPages: number): (number | string)[] {
+  const delta = 1;
+  const range: (number | string)[] = [];
+
+  if (totalPages <= 5) {
+    for (let i = 1; i <= totalPages; i++) range.push(i);
+  } else {
+    range.push(1);
+    if (currentPage > 3) range.push("...");
+    const start = Math.max(2, currentPage - delta);
+    const end = Math.min(totalPages - 1, currentPage + delta);
+    for (let i = start; i <= end; i++) range.push(i);
+    if (currentPage < totalPages - 2) range.push("...");
+    range.push(totalPages);
+  }
+
+  return range;
+}
+
+
+  //LOADING
+  if (isLoading) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <FontAwesomeIcon
+          icon={faSpinner}
+          className="text-4xl text-blue-500 animate-spin mb-4"
+        />
+        <p className="text-gray-600">Đang tải dữ liệu...</p>
+      </div>
+    </div>
+  );
+}
+
+if (error) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-red-500 mb-4">{error}</p>
+        <button
+          onClick={handleApplyFilter}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          Thử lại
+        </button>
+      </div>
+    </div>
+  );
+}
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
@@ -146,22 +263,24 @@ function KhoHang() {
                 type="text"
                 placeholder="Tìm kiếm..."
                 className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
+
             </div>
 
             {/* Nút chức năng */}
             <div className="flex gap-2">
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={() => setOpenModalAdd(true)}
               >
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={handleOnClickExport}
               >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
@@ -179,6 +298,18 @@ function KhoHang() {
               <input
                 type="radio"
                 name="timeFilter"
+                id="allTimeMobile"
+                value="allTimeMobile"
+                checked={selectedTime === "allTime"}
+                onChange={() => setSelectedTime("allTime")}
+                className="cursor-pointer"
+              />
+              <label htmlFor="thisMonthMobile" className="cursor-pointer">Tất cả</label>
+            </li>
+            <li className="flex items-center space-x-2">
+              <input
+                type="radio"
+                name="timeFilter"
                 id="thisMonthMobile"
                 value="thisMonth"
                 checked={selectedTime === "thisMonth"}
@@ -192,7 +323,7 @@ function KhoHang() {
                 type="radio"
                 name="timeFilter"
                 id="customTimeMobile"
-                value="customTime"
+                value="customTimeMobile"
                 checked={selectedTime === "customTime"}
                 onChange={() => setSelectedTime("customTime")}
                 className="cursor-pointer"
@@ -236,6 +367,18 @@ function KhoHang() {
                 <input
                   type="radio"
                   name="timeFilter"
+                  id="allTime"
+                  value="allTime"
+                  className="cursor-pointer"
+                  checked={selectedTime === "allTime"}
+                  onChange={() => setSelectedTime("allTime")}
+                />
+                <label htmlFor="allTime" className="cursor-pointer">Tất cả</label>
+              </li>
+              <li className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="timeFilter"
                   id="thisMonth"
                   value="thisMonth"
                   className="cursor-pointer"
@@ -248,12 +391,11 @@ function KhoHang() {
                 <input
                   type="radio"
                   name="timeFilter"
-                  id="customTime"
                   value="customTime"
-                  className="cursor-pointer"
                   checked={selectedTime === "customTime"}
                   onChange={() => setSelectedTime("customTime")}
-                />
+                /> 
+
                 <label htmlFor="customTime" className="cursor-pointer">Thời gian khác</label>
               </li>
               {selectedTime === "customTime" && (
@@ -372,18 +514,28 @@ function KhoHang() {
                     >
                       Trang trước
                     </button>
-                    {[...Array(totalPages)].map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPage(index + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${currentPage === index + 1
-                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                    {getPaginationRange(currentPage, totalPages).map((page, index) =>
+                      typeof page === "number" ? (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPage(page)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
+                            currentPage === page
+                              ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
                           }`}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
+                        >
+                          {page}
+                        </button>
+                      ) : (
+                        <span
+                          key={`ellipsis-${index}`}
+                          className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                        >
+                          ...
+                        </span>
+                      )
+                    )}
                     <button
                       onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
@@ -396,8 +548,10 @@ function KhoHang() {
               </div>
             </div>
 
+
             {/* Chi tiết phiếu */}
             {selectedReceipt && (
+              
               <ReceiptDetail
                 receipt={selectedReceipt}
                 isOpen={isModalOpen}
