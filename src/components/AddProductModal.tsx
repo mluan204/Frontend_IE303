@@ -200,12 +200,10 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
                 { name: "quantityAvailable", label: "Tồn kho" },
                 { name: "inputPrice", label: "Giá nhập" },
                 { name: "price", label: "Giá bán" },
-                { name: "dateExpired", label: "Hạn sử dụng", type: "date" },
               ].map((field) => (
                 <div key={field.name}>
                   <label className="text-sm font-medium text-gray-500 block mb-1">{field.label}</label>
                   <input
-                    type={field.type || "text"}
                     name={field.name}
                     value={field.name === "dateExpired" ? (newProduct.dateExpired.toISOString().split("T")[0]) : (newProduct as any)[field.name]}
                     onChange={handleChange}
@@ -217,14 +215,36 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
 
             {/* Cột 4 - Ghi chú */}
             <div className="space-y-4">
-              <label className="text-sm font-medium text-gray-500 block mb-1">Ghi chú</label>
-              <textarea
-                name="description"
-                value={newProduct.description}
-                onChange={handleChange}
-                className="border rounded px-2 py-1 w-full text-gray-700 text-sm h-24"
-              />
+              {[
+                { name: "dateExpired", label: "Hạn sử dụng", type: "date" },
+              ].map((field) => (
+                <div key={field.name}>
+                  <label className="text-sm font-medium text-gray-500 block mb-1">{field.label}</label>
+                  <input
+                    type={field.type} // dùng type="date"
+                    name={field.name}
+                    value={
+                      field.name === "dateExpired"
+                        ? newProduct.dateExpired?.toISOString().split("T")[0]
+                        : (newProduct as any)[field.name]
+                    }
+                    onChange={handleChange}
+                    className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                  />
+                </div>
+              ))}
+
+              <div className="space-y-4">
+                <label className="text-sm font-medium text-gray-500 block mb-1">Ghi chú</label>
+                <textarea
+                  name="description"
+                  value={newProduct.description}
+                  onChange={handleChange}
+                  className="border rounded px-2 py-1 w-full text-gray-700 text-sm h-24"
+                />
+              </div>
             </div>
+            
           </div>
 
           {/* Nút Lưu */}

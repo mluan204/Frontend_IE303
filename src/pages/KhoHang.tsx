@@ -7,13 +7,22 @@ import { fetchAllProduct, fetchAllReciept, fetchReciept } from "../service/mainA
 import { CommonUtils } from "../utils/CommonUtils";
 import AddReceiptModal from "../components/AddReceiptModal";
 import { deleteReceiptById } from "../service/receiptApi";
+import { searchReceipts } from "../service/receiptApi";
 
 interface Receipt {
   id: number;
-  createdAt: string;
-  totalCost: string;
-  employeeName: string;
+  created_at: string;
+  total_cost: string;
+  employee_name: string;
   note: string;
+  receipt_details: {
+    productId: number, 
+    supplier: String, 
+    quantity: number, 
+    input_price: number,
+    check: boolean,
+    productName: string,
+  }[];
 }
 
 interface Product {
@@ -32,129 +41,175 @@ interface Product {
 const ITEMS_PER_PAGE = 10;
 
 function KhoHang() {
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [receipts, setReceipts] = useState<Receipt[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const [inputValue, setInputValue] = useState(""); // giữ giá trị input tạm thời
+const [search, setSearch] = useState(""); // giá trị thực sự dùng để lọc
 
-  const [selectedTime, setSelectedTime] = useState("thisMonth");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
-  // // MODAL CHI TIẾT SẢN PHẨM
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null)
-  //MODAL THÊM MỚI
-  const [openModalAdd, setOpenModalAdd] = useState(false);
+const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === "Enter") {
+    const trimmed = inputValue.trim();
 
-  // // Mở modal và truyền thông tin sản phẩm
-  const handleOpenModal = (bill: Receipt) => {
-    setSelectedReceipt(bill);
-    setIsModalOpen(true);
-  };
-
-  // // Đóng modal
-  const handleCloseModal = () => {
-    setSelectedReceipt(null);
-    setIsModalOpen(false);
-  };
-  
-
-const getReceipts = async () => {
-  try {
-    setIsLoading(true);
-    setError(null);
-    const response = await fetchReciept(currentPage - 1, ITEMS_PER_PAGE, search);
-    if (typeof response === "string") {
-      throw new Error(response);
+    if (trimmed === "") {
+      setSearch(""); // reset search → backend sẽ trả về tất cả
+    } else {
+      setSearch(trimmed); // trigger tìm kiếm
     }
 
-    const data = response.data;
-    const mappedReceipts = (data.content || []).map((item: any) => ({
-      id: item.id,
-      createdAt: item.createdAt || item.created_at,
-      totalCost: item.totalCost || item.total_cost,
-      employeeName: item.employeeName || item.employee_name,
-      note: item.note || "",
-    }));
+    // KHÔNG reset inputValue → giữ nguyên input
+  }
+};
 
-    setReceipts(mappedReceipts);
-    setTotalPages(data.totalPages || 1);
+
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [receipts, setReceipts] = useState<Receipt[]>([]);
+const [isLoading, setIsLoading] = useState(false);
+const [error, setError] = useState<string | null>(null);
+
+const [products, setProducts] = useState<Product[]>([]);
+
+const [selectedTime, setSelectedTime] = useState("allTime");
+const [startDate, setStartDate] = useState("");
+const [endDate, setEndDate] = useState("");
+
+const [openModalAdd, setOpenModalAdd] = useState(false);
+const [isModalOpen, setIsModalOpen] = useState(false);
+const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
+
+const ITEMS_PER_PAGE = 10;
+
+useEffect(() => {
+  fetchProducts();
+}, []);
+
+const fetchProducts = async () => {
+  const response = await fetchAllProduct();
+  setProducts(response);
+};
+
+const handleOpenModal = (bill: Receipt) => {
+  setSelectedReceipt(bill);
+  setIsModalOpen(true);
+};
+
+const handleCloseModal = () => {
+  setSelectedReceipt(null);
+  setIsModalOpen(false);
+};
+ const formatDateToDDMMYYYY = (date: Date | string): string => {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+const handleApplyFilter = async () => {
+  setIsLoading(true);
+  setError(null);
+
+  let fromDate: string | undefined;
+  let toDate: string | undefined;
+
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  if (selectedTime === "thisMonth") {
+    fromDate = formatDateToDDMMYYYY(firstDayOfMonth);
+    toDate = formatDateToDDMMYYYY(today);
+  } else if (selectedTime === "customTime") {
+    fromDate = startDate ? formatDateToDDMMYYYY(startDate) : undefined;
+    toDate = endDate ? formatDateToDDMMYYYY(endDate) : undefined;
+  }
+
+  try {
+    const result = await searchReceipts({
+      employeeName: search || undefined,
+      fromDate,
+      toDate,
+      page: currentPage - 1,
+      size: ITEMS_PER_PAGE,
+    });
+
+    if (result) {
+      setReceipts(result.content || []);
+      setTotalPages(result.totalPages || 1);
+    }
   } catch (err) {
-    console.error("Lỗi khi tải phiếu nhập:", err);
     setError("Không thể tải dữ liệu phiếu nhập. Vui lòng thử lại.");
   } finally {
     setIsLoading(false);
   }
 };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-  const fetchProducts = async () => {
-    const response = await fetchAllProduct();
-    setProducts(response);
-  };
+useEffect(() => {
+  if (selectedTime === "customTime") {
+    if (startDate && endDate && (new Date(startDate) <= new Date(endDate))) {
+      handleApplyFilter();
+    }
+    if((new Date(startDate) > new Date(endDate))) {
+      alert("Vui lòng chọn ngày bắt đầu và kết thúc hợp lệ.");
+    }
+  } else {
+    handleApplyFilter();
+  }
+}, [currentPage, selectedTime, startDate, endDate, search]);
 
-  useEffect(() => {
-    getReceipts();
-  }, [currentPage, search]);
 
-  const handleOnClickExport = async () => {
-    try {
-      const res = await fetchAllReciept();
-      if (res) {
-        const mappedData = res.data.map((item: Receipt) => ({
+console.log("receipts", receipts);
+
+const handleOnClickExport = async () => {
+  try {
+    const res = await fetchAllReciept();
+    if (res) {
+      const mappedData = res.data.map((item: Receipt) => ({
         "Mã phiếu nhập": item.id,
-        "Thời gian": new Date(item.createdAt).toLocaleString("vi-VN"),
-        "Nhân viên": item.employeeName,
-        "Tổng tiền": item.totalCost,
+        "Thời gian": new Date(item.created_at).toLocaleString("vi-VN"),
+        "Nhân viên": item.employee_name,
+        "Tổng tiền": item.total_cost,
         "Ghi chú": item.note || "",
       }));
+
       await CommonUtils.exportExcel(mappedData, "Danh sách phiếu nhập", "Phiếu nhập kho");
+    }
+  } catch (error) {
+    console.error("Error exporting product list:", error);
+    alert("Đã xảy ra lỗi khi xuất file!");
+  }
+};
 
-      }
+const onClickDeleteProduct = async (receipt: Receipt) => {
+  const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa phiếu nhập hàng này?`);
+  if (confirmDelete) {
+    try {
+      await deleteReceiptById(receipt.id);
+      handleApplyFilter(); // Refresh sau khi xóa
     } catch (error) {
-      console.error("Error exporting product list:", error);
-      alert("Đã xảy ra lỗi khi xuất file!");
+      alert("Lỗi khi xóa sản phẩm!");
+      console.error(error);
     }
-  };
+  }
+};
 
-  const onClickDeleteProduct = async (receipt: Receipt) => {
-    const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa phiếu nhập hàng này?`);
-    if (confirmDelete) {
-      try {
-        const result = await deleteReceiptById(receipt.id);
-        console.log(result);
-        getReceipts(); // Refresh lại danh sách
-      } catch (error) {
-        alert("Lỗi khi xóa sản phẩm!");
-        console.error(error);
-      }
-    }
-  };
-  //PHÂN TRANG
-  const getPaginationRange = (current: number, total: number): (number | string)[] => {
-    const delta = 1;
-    const range: (number | string)[] = [];
-    const left = Math.max(1, current - delta);
-    const right = Math.min(total, current + delta + 1);
+// Pagination logic...
+function getPaginationRange(currentPage: number, totalPages: number): (number | string)[] {
+  const delta = 1;
+  const range: (number | string)[] = [];
 
-    for (let i = 1; i <= total; i++) {
-      if (i === 1 || i === total || (i >= left && i < right)) {
-        range.push(i);
-      } else if (
-        (i === left - 1 && i !== 2) ||
-        (i === right && i !== total - 1)
-      ) {
-        range.push("...");
-      }
-    }
+  if (totalPages <= 5) {
+    for (let i = 1; i <= totalPages; i++) range.push(i);
+  } else {
+    range.push(1);
+    if (currentPage > 3) range.push("...");
+    const start = Math.max(2, currentPage - delta);
+    const end = Math.min(totalPages - 1, currentPage + delta);
+    for (let i = start; i <= end; i++) range.push(i);
+    if (currentPage < totalPages - 2) range.push("...");
+    range.push(totalPages);
+  }
 
-    return [...new Set(range)];
-  };
+  return range;
+}
+
+
   //LOADING
   if (isLoading) {
   return (
@@ -176,7 +231,7 @@ if (error) {
       <div className="text-center">
         <p className="text-red-500 mb-4">{error}</p>
         <button
-          onClick={getReceipts}
+          onClick={handleApplyFilter}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
         >
           Thử lại
@@ -208,9 +263,11 @@ if (error) {
                 type="text"
                 placeholder="Tìm kiếm..."
                 className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
+
             </div>
 
             {/* Nút chức năng */}
@@ -241,6 +298,18 @@ if (error) {
               <input
                 type="radio"
                 name="timeFilter"
+                id="allTimeMobile"
+                value="allTimeMobile"
+                checked={selectedTime === "allTime"}
+                onChange={() => setSelectedTime("allTime")}
+                className="cursor-pointer"
+              />
+              <label htmlFor="thisMonthMobile" className="cursor-pointer">Tất cả</label>
+            </li>
+            <li className="flex items-center space-x-2">
+              <input
+                type="radio"
+                name="timeFilter"
                 id="thisMonthMobile"
                 value="thisMonth"
                 checked={selectedTime === "thisMonth"}
@@ -254,7 +323,7 @@ if (error) {
                 type="radio"
                 name="timeFilter"
                 id="customTimeMobile"
-                value="customTime"
+                value="customTimeMobile"
                 checked={selectedTime === "customTime"}
                 onChange={() => setSelectedTime("customTime")}
                 className="cursor-pointer"
@@ -298,6 +367,18 @@ if (error) {
                 <input
                   type="radio"
                   name="timeFilter"
+                  id="allTime"
+                  value="allTime"
+                  className="cursor-pointer"
+                  checked={selectedTime === "allTime"}
+                  onChange={() => setSelectedTime("allTime")}
+                />
+                <label htmlFor="allTime" className="cursor-pointer">Tất cả</label>
+              </li>
+              <li className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="timeFilter"
                   id="thisMonth"
                   value="thisMonth"
                   className="cursor-pointer"
@@ -310,12 +391,11 @@ if (error) {
                 <input
                   type="radio"
                   name="timeFilter"
-                  id="customTime"
                   value="customTime"
-                  className="cursor-pointer"
                   checked={selectedTime === "customTime"}
                   onChange={() => setSelectedTime("customTime")}
-                />
+                /> 
+
                 <label htmlFor="customTime" className="cursor-pointer">Thời gian khác</label>
               </li>
               {selectedTime === "customTime" && (
@@ -364,9 +444,9 @@ if (error) {
                     {receipts.map((receipt) => (
                       <tr key={receipt.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(receipt.createdAt).toLocaleString("vi-VN")}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.employeeName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.totalCost}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(receipt.created_at).toLocaleString("vi-VN")}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.employee_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{receipt.total_cost}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
                           <button
                             onClick={() => handleOpenModal(receipt)}
@@ -468,8 +548,10 @@ if (error) {
               </div>
             </div>
 
+
             {/* Chi tiết phiếu */}
             {selectedReceipt && (
+              
               <ReceiptDetail
                 receipt={selectedReceipt}
                 isOpen={isModalOpen}

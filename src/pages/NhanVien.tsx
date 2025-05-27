@@ -75,26 +75,41 @@ function NhanVien() {
   // MODAL THÊM NHÂN VIÊN
   const [showAddModal, setShowAddModal] = useState(false);
   //PHÂN TRANG
-  const getPaginationRange = (current: number, total: number): (number | string)[] => {
-    const delta = 1;
-    const range: (number | string)[] = [];
+  function getPaginationRange(currentPage: number, totalPages: number): (number | string)[] {
+  const delta = 1; // số trang kề trước và sau currentPage được hiển thị
+  const range: (number | string)[] = [];
 
-    const left = Math.max(1, current - delta);
-    const right = Math.min(total, current + delta);
+  if (totalPages <= 5) {
+    // Nếu tổng số trang ít hơn hoặc bằng 5 thì hiển thị toàn bộ
+    for (let i = 1; i <= totalPages; i++) {
+      range.push(i);
+    }
+  } else {
+    // Luôn hiển thị trang đầu tiên
+    range.push(1);
 
-    for (let i = 1; i <= total; i++) {
-      if (i === 1 || i === total || (i >= left && i <= right)) {
-        range.push(i);
-      } else if (
-        (i === left - 1 && i > 2) ||
-        (i === right + 1 && i < total - 1)
-      ) {
-        range.push("...");
-      }
+    if (currentPage > 3) {
+      range.push("...");
     }
 
-    return [...new Set(range)];
-  };
+    const start = Math.max(2, currentPage - delta);
+    const end = Math.min(totalPages - 1, currentPage + delta);
+
+    for (let i = start; i <= end; i++) {
+      range.push(i);
+    }
+
+    if (currentPage < totalPages - 2) {
+      range.push("...");
+    }
+
+    // Luôn hiển thị trang cuối
+    range.push(totalPages);
+  }
+
+  return range;
+}
+
   //LOADING
   if (isLoading) {
     return (
@@ -182,14 +197,14 @@ function NhanVien() {
             {/* Nút chức năng */}
             <div className="space-x-5">
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={() => setShowAddModal(true)}
               >
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
               <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={handleOnClickExport}
               >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />

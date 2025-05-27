@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faMoneyBillWave,
@@ -14,7 +14,7 @@ import { createBill } from "../service/billApi";
 import { ca, it } from "date-fns/locale";
 import { getAllCustomer } from "../service/customerApi";
 import { getAllEmployees, getWeeklyShifts } from "../service/employeeApi";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import type { Shift } from "../service/employeeApi";
 import { createCustomer } from "../service/customerApi";
 import {printBillToPDF} from "../components/PrintBill";
@@ -31,6 +31,9 @@ interface PopupThanhToanProps {
   cart: any[];
   setCart: React.Dispatch<React.SetStateAction<any[]>>;
   onClose: () => void;
+  customers: Customer[];
+  employees: Employee[];
+  setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
 }
 
 interface Bill {
@@ -70,7 +73,7 @@ interface Employee {
 }
 
 
-export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupThanhToanProps) {
+export default function PopupThanhToan({ total, cart, onClose, setCart, customers, employees, setCustomers }: PopupThanhToanProps) {
   const [selectedMethod, setSelectedMethod] = useState("Tiền mặt");
   const [discount, setDiscount] = useState(0);
   const [received, setReceived] = useState(total-discount);
@@ -78,13 +81,16 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
   const [customer, setCustomer] = useState({ name: "", phone_number: "", gender: "male" });
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
 
+  const [loadingCreateBill, setLoadingCreateBill] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   const [employeesToday, setEmployeesToday] = useState<Employee[]>([]);
+
+  const [QRCode, setQRCode] = useState<string>("");
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const filteredCustomers = customers.filter((customer) =>
     customer.phone_number.toLowerCase().includes(search.toLowerCase())
@@ -111,16 +117,10 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
       ...prev,
       [name === "phone" ? "phone_number" : name]: value,
     }));
-  };
+  };  
 
-  console.log("Nhân viên hôm nay:", employees);
-  
-
-  const handleCreateBill = async () => {
-    if (!selectedEmployee || !selectedCustomer) {
-      alert("Vui lòng chọn nhân viên và khách hàng.");
-      return;
-    }
+  const handleCreateBill = async () => {   
+    setLoadingCreateBill(true);
 
     const payload = {
       employee: { id: selectedEmployee.id },
@@ -165,9 +165,9 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
           is_error: false,
         };
 
-        
-        alert("Tạo hóa đơn thành công!");
-        await printBillToPDF(newBill);
+        setLoadingCreateBill(false);
+        printBillToPDF(newBill);
+        total = 0;
         setCart([]);
         onClose(); 
 
@@ -178,21 +178,85 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
 
   };
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    const resultCustomer = await getAllCustomer();
-    const resultEmployee = await getAllEmployees();
-    if ( resultCustomer ) {
-      setCustomers(resultCustomer);
-    } 
-    if ( resultEmployee ) {
-      setEmployees(resultEmployee);
+
+  const fetchVCB = async () => {    
+    
+    try {
+      const response = await fetch(
+        "https://script.google.com/macros/s/AKfycbxtvZmanV753BRnK9UxfqvvjdOS-vtay25bcLCMOHwwTMDAmjI2EZJzNMhqI3qx11D9sA/exec"
+      );
+
+      if (!response.ok) throw new Error("Lỗi kết nối server");
+
+      const json = await response.json();
+      const data = json.data;
+
+      // Kiểm tra nếu có giao dịch đúng số tiền
+      const matched = data.some(
+        (item) => item["Giá trị"] === total - discount
+      );
+
+      if (matched) {
+        console.log("Đã tìm thấy giao dịch phù hợp!");
+        handleCreateBill();
+        clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+
+        // Dừng gọi API nếu tìm thấy
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+      }
+    } catch (err: any) {
+      console.error(" Lỗi khi lấy dữ liệu từ server:", err.message);
     }
-    setIsLoading(false);
   };
+
+  useEffect(() => {
+    if (selectedMethod === "Chuyển khoản" && selectedCustomer && selectedEmployee) {      
+      // Bắt đầu gọi API mỗi giây
+      intervalRef.current = setInterval(fetchVCB, 1000);
+
+      // Dừng sau 15 phút
+      timeoutRef.current = setTimeout(() => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          console.log("Đã dừng gọi API sau 15 phút.");
+        }
+      }, 15 * 60 * 1000);
+    } else {
+      // Dừng nếu chọn phương thức khác
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [selectedMethod, selectedCustomer, selectedEmployee]);
+
+
+    
+
 
 
   const fetchTodayShifts = async () => {
+    set
     const today = format(new Date(), "yyyy-MM-dd'T'00:00:00");
 
     try {
@@ -208,10 +272,10 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
       );
 
       setEmployeesToday(todayEmployees);
-      console.log("Nhân viên hôm nay:", todayEmployees);
     } catch (err) {
       console.log(err);
     }
+    setIsLoading(false);
   };
 
 
@@ -245,9 +309,6 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
       console.log("Khách hàng mới tạo id:", newCustomerId);
       setIsAddingCustomer(false);
       setCustomer({ name: "", phone_number: "", gender: "male" });
-
-      // TODO: Nếu cần cập nhật danh sách khách hàng, gọi fetch lại hoặc callback
-      // fetchCustomers(); hoặc props.onCustomerAdded(newCustomerId);
     } catch (error) {
       console.error("Lỗi tạo khách hàng:", error);
       alert("Tạo khách hàng thất bại, vui lòng thử lại.");
@@ -255,9 +316,20 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
 
   };
 
+  // Tạo QR mỗi khi chọn chuyển khoản
+  const creatQR = () => {
+    if (selectedMethod === "Chuyển khoản"  ) {
+      let myBank = {
+        id: "VCB",
+        accountNo: "1026732041",
+      }
+      let QR = `https://img.vietqr.io/image/${myBank.id}-${myBank.accountNo}-qr_only.png?amount=${total-discount}&addInfo="Thanh toán hóa đơn"`;
+      setQRCode(QR);
+    }};
+
   
+
   useEffect(() => {
-    fetchData();
     fetchTodayShifts();
   }
   , []);
@@ -279,19 +351,27 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
         </div>
       );
     }
+    
 
 
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 p-4">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-5xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
+    <div className="fixed inset-0 flex items-center justify-center z-30 bg-black/50 p-4">
+      
+      <div className="bg-white relative rounded-lg shadow-lg w-full max-w-5xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
+        {loadingCreateBill && (
+          <div className="absolute inset-0 rounded-lg shadow-lg z-60 flex items-center justify-center">
+            <FontAwesomeIcon icon={faSpinner} className="text-4xl text-blue-500 animate-spin" />
+          </div>
+        )}
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Thanh toán - {total.toLocaleString()}đ</h2>
           <button onClick={onClose} className="text-gray-600 hover:text-black text-xl">×</button>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col md:flex-row  gap-4">
+        
           {/* Phương thức thanh toán */}
           <div className="md:w-1/4 space-y-2">
             {paymentMethods.map((method) => (
@@ -310,6 +390,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
 
           {/* Nội dung thanh toán */}
           <div className="md:w-3/4">
+            
             {/* Khách hàng */}
             <div className="mb-4 flex items-center gap-4">
               {/* Chọn nhân viên */}
@@ -325,7 +406,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
                   }}
                 >
                   <option value="">Chọn nhân viên</option>
-                    {employees.map((emp) => (  
+                    {employeesToday.map((emp) => (  
                       <option key={emp.id} value={emp.id}>
                         {emp.name}
                       </option>
@@ -489,7 +570,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
             </div>
 
             {/* Gợi ý nhanh */}
-            {selectedMethod === "Tiền mặt" && (
+            {selectedMethod === "Tiền mặt" &&  (
               <div className="flex flex-wrap gap-4 py-3 mr-2 md:mr-7 ml-2 md:ml-5">
                 {suggestions.map((amount) => (
                   <button
@@ -502,16 +583,45 @@ export default function PopupThanhToan({ total, cart, onClose, setCart }: PopupT
                 ))}
               </div>
             )}
+            { QRCode && (
+              <div className="flex flex-wrap items-center justify-center gap-4 py-3 mr-2 md:mr-7 ml-2 md:ml-5">
+              <img src={QRCode} alt="QR Code" className="w-44 h-44" />
+              </div>
+            )}
             
 
             {/* Xác nhận thanh toán */}
-            <div className="mt-6">
-              <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded"
-                onClick={handleCreateBill}
-              >
-                In hóa đơn và hoàn tất
-              </button>
-            </div>
+            { selectedMethod !== "Chuyển khoản" && (
+              <div className="mt-6">
+                <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded"
+                  onClick={() => {
+                    if (!selectedEmployee || !selectedCustomer) {
+                      alert("Vui lòng chọn nhân viên và khách hàng.");
+                      return;
+                    }
+                    handleCreateBill();
+                  }}
+                >
+                  In hóa đơn và hoàn tất
+                </button>
+              </div>
+              )}
+            { selectedMethod === "Chuyển khoản" && QRCode === "" && selectedCustomer && selectedEmployee && (
+              <div className="mt-6">
+                <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded"
+                  onClick={() => {
+                    if (!selectedEmployee || !selectedCustomer) {
+                      alert("Vui lòng chọn nhân viên và khách hàng.");
+                      return;
+                    }
+                    creatQR();
+                  }}
+                >
+                  Thanh toán
+                </button>
+              </div>
+              )}
+            
           </div>
         </div>
       </div>

@@ -312,10 +312,6 @@ function Combo() {
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer">
-                <FontAwesomeIcon icon={faFileExport} className="mr-2" />
-                Xuất file
-              </button>
             </div>
           </div>
         </div>
