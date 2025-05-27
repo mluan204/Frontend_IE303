@@ -68,6 +68,7 @@ const Navigation = () => {
         <div className="flex items-center space-x-4">
           {/* Account Icon */}
           <button
+            data-testid="account-icon"
             className="border border-gray-200 px-2 py-1 bg-gray-100 hover:bg-gray-300 rounded-full transition-colors"
             onClick={() => setIsAccountPopupOpen(!isAccountPopupOpen)}
           >

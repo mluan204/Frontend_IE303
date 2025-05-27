@@ -35,6 +35,10 @@ function NhanVien() {
         setError(null);
         const result = await getAllEmployees();
         setEmployees(result);
+        setDisplayedEmployees(result.slice(
+          currentPage * ITEMS_PER_PAGE,
+          (currentPage + 1) * ITEMS_PER_PAGE
+        ));
       } catch (err) {
         console.error("Lỗi khi tải danh sách nhân viên:", err);
         setError("Không thể tải dữ liệu nhân viên. Vui lòng thử lại sau.");
@@ -49,15 +53,21 @@ function NhanVien() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
 
-  const totalPages = Math.ceil(employees.length / ITEMS_PER_PAGE);
-  const displayedEmployees = employees.slice(
-    currentPage * ITEMS_PER_PAGE,
-    (currentPage + 1) * ITEMS_PER_PAGE
-  );
-
+  const [totalPages, setTotalPages] = useState(Math.ceil(employees.length / ITEMS_PER_PAGE));
+  const [displayedEmployees, setDisplayedEmployees] = useState<Employee[]>([]);
   // Modal chi tiết nhân viên
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [totalItems, setTotalItems] = useState(employees.length);
+  const [pagination, setPagination] = useState<(string | number)[]>([]);
+
+  useEffect(() => {
+    setDisplayedEmployees(employees.slice(
+      currentPage * ITEMS_PER_PAGE,
+      (currentPage + 1) * ITEMS_PER_PAGE
+    ));
+    setPagination(getPaginationRange(currentPage + 1, totalPages));
+  }, [currentPage]);
 
   const handleOpenModal = (employee: Employee) => {
     setSelectedEmployee(employee);
@@ -76,39 +86,55 @@ function NhanVien() {
   const [showAddModal, setShowAddModal] = useState(false);
   //PHÂN TRANG
   function getPaginationRange(currentPage: number, totalPages: number): (number | string)[] {
-  const delta = 1; // số trang kề trước và sau currentPage được hiển thị
-  const range: (number | string)[] = [];
+    const delta = 1; // số trang kề trước và sau currentPage được hiển thị
+    const range: (number | string)[] = [];
 
-  if (totalPages <= 5) {
-    // Nếu tổng số trang ít hơn hoặc bằng 5 thì hiển thị toàn bộ
-    for (let i = 1; i <= totalPages; i++) {
-      range.push(i);
+    if (totalPages <= 5) {
+      // Nếu tổng số trang ít hơn hoặc bằng 5 thì hiển thị toàn bộ
+      for (let i = 1; i <= totalPages; i++) {
+        range.push(i);
+      }
+    } else {
+      // Luôn hiển thị trang đầu tiên
+      range.push(1);
+
+      if (currentPage > 3) {
+        range.push("...");
+      }
+
+      const start = Math.max(2, currentPage - delta);
+      const end = Math.min(totalPages - 1, currentPage + delta);
+
+      for (let i = start; i <= end; i++) {
+        range.push(i);
+      }
+
+      if (currentPage < totalPages - 2) {
+        range.push("...");
+      }
+
+      // Luôn hiển thị trang cuối
+      range.push(totalPages);
     }
-  } else {
-    // Luôn hiển thị trang đầu tiên
-    range.push(1);
-
-    if (currentPage > 3) {
-      range.push("...");
-    }
-
-    const start = Math.max(2, currentPage - delta);
-    const end = Math.min(totalPages - 1, currentPage + delta);
-
-    for (let i = start; i <= end; i++) {
-      range.push(i);
-    }
-
-    if (currentPage < totalPages - 2) {
-      range.push("...");
-    }
-
-    // Luôn hiển thị trang cuối
-    range.push(totalPages);
+    return range;
   }
 
-  return range;
-}
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setCurrentPage(0); // Reset to the first page
+    
+    const filteredEmployees = employees.filter(employee => 
+      employee.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setTotalItems(filteredEmployees.length);
+    setTotalPages(Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE));
+    setPagination(getPaginationRange(0, filteredEmployees.length / ITEMS_PER_PAGE));
+
+    setDisplayedEmployees(filteredEmployees.slice(
+      0, // Use 0 for the first page
+      ITEMS_PER_PAGE 
+    ));
+  }
 
   //LOADING
   if (isLoading) {
@@ -190,7 +216,7 @@ function NhanVien() {
                 placeholder="Tìm kiếm..."
                 className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
 
@@ -282,32 +308,31 @@ function NhanVien() {
                   </button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                 <p className="text-sm text-gray-700">
+                  <p className="text-sm text-gray-700">
                     Hiển thị{" "}
                     <span className="font-medium">{currentPage * ITEMS_PER_PAGE + 1}</span>{" "}
                     đến{" "}
-                    <span className="font-medium">{Math.min((currentPage + 1) * ITEMS_PER_PAGE, employees.length)}</span>{" "}
+                    <span className="font-medium">{Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalItems)}</span>{" "}
                     của{" "}
-                    <span className="font-medium">{employees.length}</span> kết quả
+                    <span className="font-medium">{totalItems}</span> kết quả
                   </p>
                   <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                     <button
-                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((prev) => Math.min(prev - 1, 0))}
+                      disabled={currentPage === 0}
                       className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                     >
                       Trang trước
                     </button>
-                    {getPaginationRange(currentPage + 1, totalPages).map((page, index) =>
+                    {pagination.map((page, index) =>
                       typeof page === "number" ? (
                         <button
                           key={index}
-                          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))} // vì page hiển thị bắt đầu từ 1
-                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
-                            currentPage === page - 1
+                          onClick={() => setCurrentPage(index)} // vì page hiển thị bắt đầu từ 1
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${currentPage === page - 1
                               ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
                               : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                          }`}
+                            }`}
                         >
                           {page}
                         </button>
@@ -316,8 +341,8 @@ function NhanVien() {
                       )
                     )}
                     <button
-                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
-                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage((prev) => Math.max(prev + 1, totalPages-1))}
+                      disabled={currentPage === totalPages-1}
                       className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                     >
                       Trang sau
@@ -340,12 +365,12 @@ function NhanVien() {
       </div>
 
       {/* Modal thêm mới nhân viên */}
-      <AddEmployeeModal 
-        isOpen={showAddModal} 
-        onClose={() => setShowAddModal(false)} 
+      <AddEmployeeModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
         onEmployeeAdded={(newEmployee) => {
-            setEmployees((prev) => [...prev, newEmployee]);
-          }} 
+          setEmployees((prev) => [...prev, newEmployee]);
+        }}
       />
     </div>
   );
