@@ -89,7 +89,7 @@ function Login() {
       </Helmet>
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h1 className="text-2xl text-center text-[#1E4B7F] font-bold mb-4">
-          Super Store UIT
+          JDK Store
         </h1>
         <form>
           <div className="mb-4">
