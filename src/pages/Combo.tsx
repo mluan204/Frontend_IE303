@@ -190,6 +190,7 @@ function Combo() {
             className="cursor-pointer"
             checked={selectedTime === value}
             onChange={() => setSelectedTime(value)}
+            disabled={isTableLoading}
           />
           <label htmlFor={value} className="cursor-pointer">
             {label}

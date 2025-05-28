@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import Logo from "../assets/Logo.svg";
+import Logo from "../assets/Logo_white.png";
 import { useState, useEffect, useRef } from "react";
 import ChangePassword from "./ChangePassword";
 

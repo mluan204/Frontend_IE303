@@ -54,6 +54,7 @@ function HangHoa() {
 
   //loading
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingSearch, setLoadingSearch] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // MODAL CHI TIẾT SẢN PHẨM
@@ -77,7 +78,6 @@ function HangHoa() {
 
   const getProducts = async () => {
     try {
-      setIsLoading(true);
       setError(null);
       const res = await searchProducts(
         search,
@@ -95,8 +95,7 @@ function HangHoa() {
     } catch (err) {
       console.error("Lỗi khi lấy sản phẩm:", err);
       setError("Đã xảy ra lỗi khi tải sản phẩm.");
-    } finally {
-      setIsLoading(false);
+      throw err;
     }
   };
   const getCategory = async () => {
@@ -113,6 +112,7 @@ function HangHoa() {
   useEffect(() => {
     getProducts();
     getCategory();
+    setIsLoading(false);
   }, [selectedCategoryId, currentPage, search]);
 
   const removeVietnameseTones = (str: string): string => {
@@ -263,12 +263,19 @@ function HangHoa() {
                     setCurrentPage(1); // Quay về trang đầu
                   }
                 }}
-                onKeyDown={(e) => {
+                onKeyDown={async (e) => {
                   if (e.key === "Enter") {
-                    setSearch(searchInput); // chỉ khi Enter mới cập nhật search
-                    setCurrentPage(1); // reset về trang đầu
+                    setLoadingSearch(true);
+                    try {
+                      setSearch(searchInput); // chỉ khi Enter mới cập nhật search
+                      setCurrentPage(1); // reset về trang đầu
+                      await getProducts();
+                    } finally {
+                      setLoadingSearch(false);
+                    }
                   }
                 }}
+                disabled={loadingSearch}
               />
             </div>
 
@@ -277,6 +284,7 @@ function HangHoa() {
               <button
                 className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={() => setIsAddModalOpen(true)}
+                disabled={loadingSearch}
               >
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
@@ -284,6 +292,7 @@ function HangHoa() {
               <button
                 className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
                 onClick={handleOnClickExport}
+                disabled={loadingSearch}
               >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
                 Xuất file
@@ -301,6 +310,7 @@ function HangHoa() {
             value={searchCategory}
             onChange={(e) => setSearchCategory(e.target.value)}
             className="border px-2 py-1 w-full mb-2 rounded"
+            disabled={loadingSearch}
           />
           <ul className="overflow-y-auto">
             {categories
@@ -316,10 +326,12 @@ function HangHoa() {
                     selectedCategoryId === category.id
                       ? "bg-blue-100 "
                       : "hover:bg-gray-100"
-                  }`}
+                  } ${loadingSearch ? "opacity-50 cursor-not-allowed" : ""}`}
                   onClick={() => {
-                    setSelectedCategoryId(category.id);
-                    setCurrentPage(1); // reset về trang đầu khi chọn category mới
+                    if (!loadingSearch) {
+                      setSelectedCategoryId(category.id);
+                      setCurrentPage(1); // reset về trang đầu khi chọn category mới
+                    }
                   }}
                 >
                   {category.name}
@@ -338,6 +350,7 @@ function HangHoa() {
               value={searchCategory}
               onChange={(e) => setSearchCategory(e.target.value)}
               className="border px-2 py-1 w-full mb-2 rounded focus:outline-none"
+              disabled={loadingSearch}
             />
             <ul className="overflow-y-auto">
               {categories
@@ -353,10 +366,12 @@ function HangHoa() {
                       selectedCategoryId === category.id
                         ? "bg-blue-100 "
                         : "hover:bg-gray-100"
-                    }`}
+                    } ${loadingSearch ? "opacity-50 cursor-not-allowed" : ""}`}
                     onClick={() => {
-                      setSelectedCategoryId(category.id);
-                      setCurrentPage(1); // reset về trang đầu khi chọn category mới
+                      if (!loadingSearch) {
+                        setSelectedCategoryId(category.id);
+                        setCurrentPage(1); // reset về trang đầu khi chọn category mới
+                      }
                     }}
                   >
                     {category.name}
@@ -367,164 +382,117 @@ function HangHoa() {
 
           {/* Table content */}
           <div className="w-full md:w-3/4">
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                {products.length === 0 ? (
-                  <div className="text-center py-5">
-                    <p className="text-gray-500 text-lg">
-                      Không có sản phẩm nào.
-                    </p>
-                  </div>
-                ) : (
-                  <table className="min-w-max w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3"></th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Mã sản phẩm
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Tên sản phẩm
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Giá bán
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Giá vốn
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Tồn kho
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                          Thao tác
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {products.map((product) => (
-                        <tr key={product.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4">
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="w-12 h-12"
-                            />
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            {product.id}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900 max-w-[200px] truncate">
-                            {product.name}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            {product.price}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            {product.inputPrice}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            {product.quantityAvailable}
-                          </td>
-                          <td className="px-6 py-4 space-x-4">
-                            <button
-                              onClick={() => handleOpenModal(product)}
-                              className="text-blue-600 hover:text-blue-900"
-                            >
-                              <FontAwesomeIcon icon={faEye} className="mr-1" />{" "}
-                              Chi tiết
-                            </button>
-                            <button
-                              onClick={() => onClickDeleteProduct(product)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              <FontAwesomeIcon
-                                icon={faTrash}
-                                className="mr-1"
-                              />{" "}
-                              Xóa
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+            {loadingSearch ? (
+              <div className="flex justify-center items-center h-80">
+                <div className="text-center">
+                  <FontAwesomeIcon
+                    icon={faSpinner}
+                    className="text-4xl text-blue-500 animate-spin mb-4"
+                  />
+                  <p className="text-gray-600">Đang tải dữ liệu...</p>
+                </div>
               </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  {products.length === 0 ? (
+                    <div className="text-center py-5">
+                      <p className="text-gray-500 text-lg">
+                        Không có sản phẩm nào.
+                      </p>
+                    </div>
+                  ) : (
+                    <table className="min-w-max w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3"></th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Mã sản phẩm
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Tên sản phẩm
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Giá bán
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Giá vốn
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Tồn kho
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Thao tác
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {products.map((product) => (
+                          <tr key={product.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4">
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-12 h-12"
+                              />
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              {product.id}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-900 max-w-[200px] truncate">
+                              {product.name}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              {product.price}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              {product.inputPrice}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              {product.quantityAvailable}
+                            </td>
+                            <td className="px-6 py-4 space-x-4">
+                              <button
+                                onClick={() => handleOpenModal(product)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                <FontAwesomeIcon
+                                  icon={faEye}
+                                  className="mr-1"
+                                />{" "}
+                                Chi tiết
+                              </button>
+                              <button
+                                onClick={() => onClickDeleteProduct(product)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                <FontAwesomeIcon
+                                  icon={faTrash}
+                                  className="mr-1"
+                                />{" "}
+                                Xóa
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
 
-              {/* Pagination */}
-              {products.length > 0 && (
-                <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                  <div className="flex-1 flex justify-between sm:hidden">
-                    <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(prev - 1, 1))
-                      }
-                      disabled={currentPage === 1}
-                      className="cursor-pointer relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                      Trang trước
-                    </button>
-                    <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                      }
-                      disabled={currentPage === totalPages}
-                      className="cursor-pointer ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                      Trang sau
-                    </button>
-                  </div>
-                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <p className="text-sm text-gray-700">
-                      Hiển thị{" "}
-                      <span className="font-medium">
-                        {(currentPage - 1) * ITEMS_PER_PAGE + 1}
-                      </span>{" "}
-                      đến{" "}
-                      <span className="font-medium">
-                        {Math.min(currentPage * ITEMS_PER_PAGE, totalItems)}
-                      </span>{" "}
-                      của <span className="font-medium">{totalItems}</span> kết
-                      quả
-                    </p>
-                    <nav
-                      className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                      aria-label="Pagination"
-                    >
+                {/* Pagination */}
+                {products.length > 0 && (
+                  <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                    <div className="flex-1 flex justify-between sm:hidden">
                       <button
                         onClick={() =>
                           setCurrentPage((prev) => Math.max(prev - 1, 1))
                         }
                         disabled={currentPage === 1}
-                        className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        className="cursor-pointer relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                       >
                         Trang trước
                       </button>
-
-                      {getPaginationRange(currentPage, totalPages).map(
-                        (page, index) =>
-                          typeof page === "number" ? (
-                            <button
-                              key={index}
-                              onClick={() => setCurrentPage(page)}
-                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
-                                currentPage === page
-                                  ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                                  : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                              }`}
-                            >
-                              {page}
-                            </button>
-                          ) : (
-                            <span
-                              key={`ellipsis-${index}`}
-                              className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
-                            >
-                              ...
-                            </span>
-                          )
-                      )}
-
                       <button
                         onClick={() =>
                           setCurrentPage((prev) =>
@@ -532,15 +500,79 @@ function HangHoa() {
                           )
                         }
                         disabled={currentPage === totalPages}
-                        className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        className="cursor-pointer ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                       >
                         Trang sau
                       </button>
-                    </nav>
+                    </div>
+                    <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                      <p className="text-sm text-gray-700">
+                        Hiển thị{" "}
+                        <span className="font-medium">
+                          {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                        </span>{" "}
+                        đến{" "}
+                        <span className="font-medium">
+                          {Math.min(currentPage * ITEMS_PER_PAGE, totalItems)}
+                        </span>{" "}
+                        của <span className="font-medium">{totalItems}</span>{" "}
+                        kết quả
+                      </p>
+                      <nav
+                        className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                        aria-label="Pagination"
+                      >
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) => Math.max(prev - 1, 1))
+                          }
+                          disabled={currentPage === 1}
+                          className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                          Trang trước
+                        </button>
+
+                        {getPaginationRange(currentPage, totalPages).map(
+                          (page, index) =>
+                            typeof page === "number" ? (
+                              <button
+                                key={index}
+                                onClick={() => setCurrentPage(page)}
+                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium cursor-pointer ${
+                                  currentPage === page
+                                    ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                                    : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            ) : (
+                              <span
+                                key={`ellipsis-${index}`}
+                                className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                              >
+                                ...
+                              </span>
+                            )
+                        )}
+
+                        <button
+                          onClick={() =>
+                            setCurrentPage((prev) =>
+                              Math.min(prev + 1, totalPages)
+                            )
+                          }
+                          disabled={currentPage === totalPages}
+                          className="cursor-pointer relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                          Trang sau
+                        </button>
+                      </nav>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Modal chi tiết sản phẩm */}
             {selectedProduct && (
