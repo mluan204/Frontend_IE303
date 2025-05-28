@@ -96,6 +96,8 @@ function HangHoa() {
       console.error("Lỗi khi lấy sản phẩm:", err);
       setError("Đã xảy ra lỗi khi tải sản phẩm.");
       throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
   const getCategory = async () => {
@@ -112,7 +114,6 @@ function HangHoa() {
   useEffect(() => {
     getProducts();
     getCategory();
-    setIsLoading(false);
   }, [selectedCategoryId, currentPage, search]);
 
   const removeVietnameseTones = (str: string): string => {

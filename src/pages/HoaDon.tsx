@@ -105,7 +105,6 @@ function HoaDon() {
   useEffect(() => {
     setLoading(true);
     fetchBills();
-    setLoading(false);
   }, [currentPage, startDate, endDate]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -151,6 +150,8 @@ function HoaDon() {
       console.error("API Error:", err);
       setError("Không thể tải dữ liệu hóa đơn. Vui lòng thử lại sau.");
       throw err; // Re-throw error to be caught by handleSearch
+    } finally {
+      setLoading(false);
     }
   };
 
