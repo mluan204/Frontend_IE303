@@ -7,7 +7,22 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:auth": "playwright test tests/01-authentication.spec.ts",
+    "test:products": "playwright test tests/02-product-management.spec.ts",
+    "test:sales": "playwright test tests/03-sales-workflow.spec.ts",
+    "test:navigation": "playwright test tests/04-navigation-ui.spec.ts",
+    "test:customers": "playwright test tests/05-customer-management.spec.ts",
+    "test:performance": "playwright test tests/06-performance-edge-cases.spec.ts",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "test:mobile": "playwright test --project=\"Mobile Chrome\"",
+    "test:report": "playwright show-report"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
@@ -37,6 +52,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@playwright/test": "^1.52.0",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@types/react-helmet": "^6.1.11",
