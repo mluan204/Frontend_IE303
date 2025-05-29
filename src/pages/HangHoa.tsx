@@ -52,6 +52,11 @@ function HangHoa() {
   const [searchCategory, setSearchCategory] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | 0>(0); // ID của danh mục hàng hóa được chọn, mặc định là 0 (Tất cả)
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+
   //loading
   const [isLoading, setIsLoading] = useState(true);
   const [loadingSearch, setLoadingSearch] = useState(false);
@@ -147,21 +152,31 @@ function HangHoa() {
       );
     }
   };
-  const onClickDeleteProduct = async (product: Product) => {
-    const confirmDelete = window.confirm(
-      `Bạn có chắc chắn muốn xóa sản phẩm "${product.name}"?`
-    );
-    if (confirmDelete) {
-      try {
-        const result = await deleteProductById(product.id);
-        console.log(result);
-        getProducts(); // Refresh lại danh sách
-      } catch (error) {
-        alert("Lỗi khi xóa sản phẩm!");
-        console.error(error);
-      }
+  const handleDeleteClick = (product: Product) => {
+    setProductToDelete(product);
+    setIsDeleteModalOpen(true);
+  };
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
+
+    try {
+      setDeleteLoading(true);
+      await deleteProductById(productToDelete.id);
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
+      await getProducts(); // Làm mới danh sách sau khi xóa
+    } catch (err) {
+      console.error("Delete Error:", err);
+      setError("Không thể xóa sản phẩm. Vui lòng thử lại sau.");
+    } finally {
+      setDeleteLoading(false);
     }
   };
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
+    setProductToDelete(null);
+  };
+
   ///PHÂN TRANG
   function getPaginationRange(
     currentPage: number,
@@ -270,7 +285,6 @@ function HangHoa() {
                     try {
                       setSearch(searchInput); // chỉ khi Enter mới cập nhật search
                       setCurrentPage(1); // reset về trang đầu
-                      await getProducts();
                     } finally {
                       setLoadingSearch(false);
                     }
@@ -453,8 +467,7 @@ function HangHoa() {
                                 />{" "}
                                 Chi tiết
                               </button>
-                              <button
-                                onClick={() => onClickDeleteProduct(product)}
+                              <button onClick={() => handleDeleteClick(product)}
                                 className="text-red-600 hover:text-red-900"
                               >
                                 <FontAwesomeIcon
@@ -588,6 +601,41 @@ function HangHoa() {
           }}
         />
       )}
+
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Xác nhận xóa sản phẩm
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Bạn có chắc chắn muốn xóa sản phẩm{" "}
+              <strong>{productToDelete?.name}</strong>? Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleteLoading}
+                className="px-4 py-2 cursor-pointer text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteLoading}
+                className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+              >
+                {deleteLoading ? (
+                  <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                ) : (
+                  "Xác nhận xóa"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -108,7 +108,7 @@ const Navigation = () => {
                 <li>
                   <Link
                     to="/combo"
-                    className={`block rounded-md px-4 py-2 hover:bg-blue-700 items-center gap-2 transition duration-300 ease-in-out whitespace-nowrap ${
+                    className={`block  px-4 py-2 hover:bg-blue-700 items-center gap-2 transition duration-300 ease-in-out whitespace-nowrap ${
                       location.pathname === "/combo" ? "bg-blue-700" : ""
                     }`}
                     onClick={() => setIsProductOpen(false)}

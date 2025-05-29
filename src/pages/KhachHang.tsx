@@ -17,15 +17,6 @@ interface Customer {
   created_at: string;
 }
 
-// Danh sách khách hàng mẫu
-const mockCustomers: Customer[] = Array.from({ length: 30 }, (_, i) => ({
-  id: i + 1,
-  gender: i % 2 === 0,
-  name: `Khách hàng ${i + 1}`,
-  phone_number: `09${Math.floor(100000000 + Math.random() * 900000000)}`,
-  score: Math.floor(Math.random() * 1000),
-  created_at: `2023-0${(i % 9) + 1}-15`,
-}));
 
 const ITEMS_PER_PAGE = 10;
 
@@ -33,6 +24,11 @@ function KhachHang() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -156,6 +152,33 @@ function KhachHang() {
   return range;
 }
 
+const handleOpenDeleteModal = (customer: Customer) => {
+  setCustomerToDelete(customer);
+  setIsDeleteModalOpen(true);
+};
+
+const handleDeleteCancel = () => {
+  setIsDeleteModalOpen(false);
+  setCustomerToDelete(null);
+};
+
+const handleDeleteConfirm = async () => {
+  if (!customerToDelete) return;
+  setDeleteLoading(true);
+  try {
+    await deleteCustomerById(customerToDelete.id); // API xóa
+    removeCustomer(customerToDelete.id); // Xóa khỏi UI
+    setIsDeleteModalOpen(false);
+    setCustomerToDelete(null);
+  } catch (error) {
+    console.error("Lỗi khi xóa:", error);
+    alert("Xóa thất bại. Vui lòng thử lại.");
+  } finally {
+    setDeleteLoading(false);
+  }
+};
+
+
   //LOADING
   if (isLoading) {
     return (
@@ -273,10 +296,7 @@ function KhachHang() {
                             Chi tiết
                           </button>
                           <button
-                            onClick={() => {
-                              deleteCustomerById(customer.id);
-                              removeCustomer(customer.id);
-                            }}
+                            onClick={() => handleOpenDeleteModal(customer)}
                             className="text-red-600 hover:text-red-900 cursor-pointer"
                           >
                             <FontAwesomeIcon icon={faTrash} className="mr-1" />
@@ -380,6 +400,41 @@ function KhachHang() {
           setCustomers((prev) => [...prev, newCustomer]);
         }}
       />
+
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Xác nhận xóa khách hàng
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Bạn có chắc chắn muốn xóa khách hàng{" "}
+              <strong>{customerToDelete?.name}</strong> ({customerToDelete?.id})? Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleteLoading}
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteLoading}
+                className="px-4 py-2 text-sm text-white bg-red-600 rounded-md hover:bg-red-700"
+              >
+                {deleteLoading ? (
+                  <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                ) : (
+                  "Xác nhận xóa"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

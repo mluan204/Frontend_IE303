@@ -154,7 +154,7 @@ function BillDetail({ bill, isOpen, onClose }: BillDetailProps) {
           
           <table className="mt-5 h-40 mx-auto w-190  border-collapse">
               {/* LABEL */}
-              <thead className="bg-[#E6F1FE] sticky top-0">
+              <thead className="bg-[#E6F1FE] sticky top-0 ">
                 <tr className="border-b border-[#A6A9AC]">
                   <th className="p-2 text-left">Mã sản phẩm</th>
                   <th className="p-2 text-left">Tên sản phẩm</th>
