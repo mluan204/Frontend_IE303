@@ -130,13 +130,12 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
       })),
     };
     console.log(formData);
-    const id = await addReceipt(formData);
-    if(id){      
-       toast.success("Thêm phiếu nhập kho thành công!", { autoClose: 1000 });
-    }else{
+    try{
+      const id = await addReceipt(formData);
+      toast.success("Thêm phiếu nhập kho thành công!", { autoClose: 1000 });
+    }catch{
       toast.error("Thêm phiếu nhập kho thất bại!", { autoClose: 1000 })
     }
-    console.log(id);
     window.location.reload();
   };
 

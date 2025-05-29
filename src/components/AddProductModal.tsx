@@ -94,7 +94,7 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
 
       onSave(updatedProduct);
       setNewProduct(emptyProduct);      
-       toast.success("Thêm sản phẩm thành công!", { autoClose: 1000 });
+      toast.success("Thêm sản phẩm thành công!", { autoClose: 1000 });
       onClose();
     } catch (error) {
       console.error("Error saving product:", error);
