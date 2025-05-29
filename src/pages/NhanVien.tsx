@@ -35,6 +35,11 @@ function NhanVien() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -48,6 +53,7 @@ function NhanVien() {
             (currentPage + 1) * ITEMS_PER_PAGE
           )
         );
+        setTotalItems(result.length);
       } catch (err) {
         console.error("Lỗi khi tải danh sách nhân viên:", err);
         setError("Không thể tải dữ liệu nhân viên. Vui lòng thử lại sau.");
@@ -97,6 +103,12 @@ function NhanVien() {
   const removeEmployee = (employeeId: number) => {
     setEmployees((prevEmployees) =>
       prevEmployees.filter((employee) => employee.id !== employeeId)
+    );
+    setTotalItems(totalItems - 1);
+    setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+    setPagination(getPaginationRange(0, totalItems / ITEMS_PER_PAGE));
+    setDisplayedEmployees(
+      displayedEmployees.filter((employee) => employee.id !== employeeId)
     );
   };
   // MODAL THÊM NHÂN VIÊN
@@ -220,6 +232,29 @@ function NhanVien() {
     }
   };
 
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
+    setEmployeeToDelete(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!employeeToDelete) return;
+
+    try {
+      setDeleteLoading(true);
+      await deleteEmployeeById(employeeToDelete.id);
+      removeEmployee(employeeToDelete.id);
+      setIsDeleteModalOpen(false);
+      setEmployeeToDelete(null);
+    } catch (error) {
+      console.error("Xóa nhân viên thất bại:", error);
+      alert("Đã xảy ra lỗi khi xóa nhân viên.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Helmet>
@@ -329,8 +364,8 @@ function NhanVien() {
                             </button>
                             <button
                               onClick={() => {
-                                deleteEmployeeById(employee.id);
-                                removeEmployee(employee.id);
+                                setEmployeeToDelete(employee);
+                                setIsDeleteModalOpen(true);
                               }}
                               className="text-red-600 hover:text-red-900 cursor-pointer"
                             >
@@ -454,6 +489,42 @@ function NhanVien() {
           setEmployees((prev) => [...prev, newEmployee]);
         }}
       />
+
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Xác nhận xóa nhân viên
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Bạn có chắc chắn muốn xóa nhân viên{" "}
+              <strong>{employeeToDelete?.name}</strong> (Mã:{" "}
+              <strong>{employeeToDelete?.id}</strong>)? Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleteLoading}
+                className="px-4 py-2 cursor-pointer text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteLoading}
+                className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+              >
+                {deleteLoading ? (
+                  <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                ) : (
+                  "Xác nhận xóa"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
