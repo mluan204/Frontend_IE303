@@ -886,7 +886,7 @@ function HoaDon() {
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 ">
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">
                     Thông tin khách hàng

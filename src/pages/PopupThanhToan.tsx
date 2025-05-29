@@ -130,7 +130,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
         afterDiscount: item.discount? item.discount: item.price,
         quantity: item.quantity
       })),
-      pointsToUse: discount,
+      pointsToUse: discount/100,
       notes: paymentMethods.find(method => method.label === selectedMethod)?.label,
     };
 
@@ -147,7 +147,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
         const newBill: Bill = {
           id: response,
           total_cost: total,
-          after_discount: total - discount,
+          after_discount: total - discount*100,
           customer: customers.find((c) => c.id === payload.customer.id)!,
           employee: employees.find((e) => e.id === payload.employee.id)!,
           isDeleted: false,
@@ -249,11 +249,6 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [selectedMethod, selectedCustomer, selectedEmployee]);
-
-
-    
-
-
 
   const fetchTodayShifts = async () => {
     set

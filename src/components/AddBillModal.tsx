@@ -4,7 +4,7 @@ import { faClose, faSave, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { getAllEmployees } from "../service/employeeApi";
 import { getAllCustomer } from "../service/customerApi";
 import { createBill } from "../service/billApi";
-
+import { toast } from "react-toastify";
 interface Product {
   id: number;
   name: string;
@@ -98,6 +98,8 @@ export default function AddBillModal({
   });
   const [employee, setEmployee] = useState<Employee[]>([]);
   const [customer, setCustomer] = useState<Customer[]>([]);
+
+  const isFormValid = billInfo.employeeId !==0 && selectedProducts.length >0 ;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -197,6 +199,11 @@ export default function AddBillModal({
     };
     console.log(newBill);
     onSave(newBill);
+    if(id){
+      toast.success("Thêm hóa đơn thành công!", { autoClose: 1000 });
+    }else{
+      toast.error("Thêm hóa đơn thất bại!", { autoClose: 1000 })
+    }
     onClose();
   };
 
@@ -386,7 +393,8 @@ export default function AddBillModal({
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={handleSubmit}
-                className="px-4 py-2 bg-green-500 text-white text-sm rounded"
+                className={`px-3 py-1.5 text-sm rounded text-white
+                ${isFormValid ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"}`}
               >
                 <FontAwesomeIcon icon={faSave} className="mr-2" />
                 Lưu hóa đơn

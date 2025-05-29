@@ -43,17 +43,18 @@ function ProductDetail({ product, isOpen, onClose, categories }: ProductDetailPr
     suppliers: "Nhà cung cấp",
     salePrice: "Giá khuyến mãi",        // <-- Bổ sung
     dateExpired: "Hạn sử dụng",
-    description: "Ghi chú",
+    description: "Mô tả",
   };
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedProduct, setEditedProduct] = useState(product);
+  const isFormValid = editedProduct.name.trim() !== "" && editedProduct.price > 0 && editedProduct.inputPrice > 0 && editedProduct.quantityAvailable > 0 && editedProduct.image !== "" && editedProduct !== product;
 
   const handleEdit = () => setIsEditing(true);
   const handleSave = async () => {
     try {
       const res = await updateProduct(editedProduct, product.id);
-      toast.success("Cập nhật sản phẩm thành công!", { autoClose: 2000 });
+      toast.success("Cập nhật sản phẩm thành công!", { autoClose: 1000 });
       setIsEditing(false);
     } catch (err) {
       toast.error("Cập nhật sản phẩm thất bại!", { autoClose: 2000 });
@@ -197,12 +198,13 @@ function ProductDetail({ product, isOpen, onClose, categories }: ProductDetailPr
                           }));
                         }}
                         className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                        min={new Date().toISOString().split('T')[0]}
                       />
                     ) : (
                       <input
-                        type="text"
+                        type="number"
                         name={field}
-                        value={(editedProduct as any)[field] || ""}
+                        value={(editedProduct as any)[field] == 0 ?"":(editedProduct as any)[field]}
                         onChange={handleChange}
                         className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
                       />
@@ -238,7 +240,8 @@ function ProductDetail({ product, isOpen, onClose, categories }: ProductDetailPr
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 mt-4">
             {isEditing ? (
-              <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
+              <button onClick={handleSave} className={`px-3 py-1.5 text-sm rounded text-white
+                ${isFormValid ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"}`}>
                 <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu
               </button>
             ) : (

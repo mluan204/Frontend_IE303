@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faEdit, faSave } from "@fortawesome/free-solid-svg-icons";
 import { formatDate } from "../utils/FormatDate";
 import { updateCombo } from "../service/comboApi";
+import { toast } from "react-toastify";
+
 interface ComboProduct {
   productId: number;
   price: number;
@@ -28,9 +30,10 @@ function ComboDetail({ combo, isOpen, onClose }: ComboDetailProps) {
 
   const handleEdit = () => setIsEditing(true);
   const handleSave = async () => {
-    setIsEditing(false);
     try {
       await updateCombo(editedCombo.id, editedCombo.timeEnd);
+      toast.success("Cập nhật cpmbo sản phẩm thành công!", { autoClose: 1000 });
+      setIsEditing(false);
       // Optionally, you can add a success message or notification here
     } catch (error) {
       console.error("Failed to update combo", error);
@@ -85,9 +88,10 @@ function ComboDetail({ combo, isOpen, onClose }: ComboDetailProps) {
                   <input
                     type="date"
                     name={field}
-                    value={(editedCombo as any)[field] || ""}
+                    value={(editedCombo as Combo)[field]?.slice(0, 10)}
                     onChange={handleChange}
                     className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                    min={new Date().toISOString().split('T')[0]}
                   />
                 ) : (
                   <div className="text-gray-900 text-sm">
@@ -136,11 +140,12 @@ function ComboDetail({ combo, isOpen, onClose }: ComboDetailProps) {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-4 mt-6">
+          <div className="flex justify-end mt-6">
             {isEditing ? (
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-green-500 text-white text-sm rounded"
+                className={`px-3 py-1.5 text-sm rounded text-white
+                ${combo!==editedCombo ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"}`}
               >
                 <FontAwesomeIcon icon={faSave} className="mr-2" /> Lưu
               </button>

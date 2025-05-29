@@ -86,6 +86,11 @@ function KhoHang() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
 
+const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+const [receiptToDelete, setReceiptToDelete] = useState<Receipt | null>(null);
+const [deleteLoading, setDeleteLoading] = useState(false);
+
+
   const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
@@ -191,20 +196,33 @@ function KhoHang() {
     }
   };
 
-  const onClickDeleteProduct = async (receipt: Receipt) => {
-    const confirmDelete = window.confirm(
-      `Bạn có chắc chắn muốn xóa phiếu nhập hàng này?`
-    );
-    if (confirmDelete) {
-      try {
-        await deleteReceiptById(receipt.id);
-        handleApplyFilter(); // Refresh sau khi xóa
-      } catch (error) {
-        alert("Lỗi khi xóa sản phẩm!");
-        console.error(error);
-      }
-    }
-  };
+const onClickDeleteProduct = (receipt: Receipt) => {
+  setReceiptToDelete(receipt);
+  setIsDeleteModalOpen(true);
+};
+
+const handleDeleteConfirm = async () => {
+  if (!receiptToDelete) return;
+
+  setDeleteLoading(true);
+  try {
+    await deleteReceiptById(receiptToDelete.id);
+    setIsDeleteModalOpen(false);
+    setReceiptToDelete(null);
+    handleApplyFilter(); // Refresh sau khi xóa
+  } catch (error) {
+    alert("Lỗi khi xóa phiếu nhập!");
+    console.error(error);
+  } finally {
+    setDeleteLoading(false);
+  }
+};
+
+const handleDeleteCancel = () => {
+  setIsDeleteModalOpen(false);
+  setReceiptToDelete(null);
+};
+
 
   // Pagination logic...
   function getPaginationRange(
@@ -674,6 +692,42 @@ function KhoHang() {
         onClose={() => setOpenModalAdd(false)}
         products={products}
       />
+
+
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Xác nhận xóa phiếu nhập
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Bạn có chắc chắn muốn xóa phiếu nhập{" "}
+              <strong>{receiptToDelete?.id}</strong>? Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleteLoading}
+                className="px-4 py-2 cursor-pointer text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteLoading}
+                className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+              >
+                {deleteLoading ? (
+                  <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                ) : (
+                  "Xác nhận xóa"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

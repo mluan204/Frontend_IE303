@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
 import { deleteCustomerById, updateCustomer } from "../service/customerApi";
+import { toast } from "react-toastify";
 
 interface Customer {
   id: number;
@@ -36,9 +37,15 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
 
   const handleEdit = () => setIsEditing(true);
   const handleSave = async () => {
-    setIsEditing(false);
+    
     Object.assign(customer, editedCustomer);
-    await updateCustomer(customer);
+    const res= await updateCustomer(customer);
+    setIsEditing(false);
+    if(res.id === customer.id){
+      toast.success("Cập nhật thông tin khách hàng thành công!", { autoClose: 1000 });
+    }else{
+      toast.error("Cập nhật thông tin khách hàng. Vui lòng thử lại!", { autoClose: 1000 })
+    }
   };
 
   const handleClose = () => {
@@ -63,7 +70,7 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
 
   return (
     <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-30">
-      <div className="bg-white rounded-2xl w-[95%] md:w-4/5 max-h-[90vh] shadow-lg overflow-hidden">
+      <div className="bg-white rounded-2xl w-[85%] md:w-3/5 max-h-[90vh] shadow-lg overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-start px-4 py-3 bg-white mb-4 sticky top-0 z-10">
           <h2 className="text-lg font-semibold text-gray-800">Chi tiết khách hàng</h2>
@@ -72,7 +79,7 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
 
         {/* Body */}
         <div className="overflow-y-auto max-h-[calc(90vh-56px)] px-6 pb-6 scrollbar-hide">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {(["id", "name", "gender", "phone_number"] as (keyof Customer)[]).map((field) => (
               <div key={field}>
                 <label className="text-sm font-medium text-gray-500 block mb-1">{customerFieldLabels[field]}</label>
@@ -120,15 +127,35 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-500 block mb-1">{customerFieldLabels["created_at"]}</label>
-              <div className="text-gray-900 text-sm">{editedCustomer.created_at}</div>
-            </div>
+            <label className="text-sm font-medium text-gray-500 block mb-1">
+              {customerFieldLabels["created_at"]}
+            </label>
+            {isEditing ? (
+              <input
+                type="date"
+                name="created_at"
+                value={
+                  editedCustomer.created_at
+                    ? new Date(editedCustomer.created_at).toISOString().split("T")[0]
+                    : ""
+                }
+                onChange={handleChange}
+                className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+              />
+            ) : (
+              <div className="text-gray-900 text-sm">
+                {new Date(editedCustomer.created_at).toLocaleDateString("vi-VN")}
+              </div>
+            )}
+          </div>
+
           </div>
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 mt-6">
             {isEditing ? (
-              <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
+              <button onClick={handleSave} className={`px-3 py-1.5 text-sm rounded text-white
+                ${customer!==editedCustomer ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"}`}>
                 <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu
               </button>
             ) : (
