@@ -13,6 +13,8 @@ import {
 import { Bar } from "react-chartjs-2";
 import "chart.js/auto";
 import { fetchSummary, fetchSalesChart } from "../service/mainApi";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 function TongQuan() {
   const [timeRange, setTimeRange] = useState("Tháng này");
@@ -42,6 +44,7 @@ function TongQuan() {
 
   useEffect(() => {
     loadData();
+    AOS.init({ duration: 1000, once: true });
   }, []);
 
   useEffect(() => {
@@ -233,7 +236,10 @@ function TongQuan() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8"
+          data-aos="fade-up"
+        >
           {isLoading
             ? // Loading skeleton
               Array(4)
@@ -300,7 +306,10 @@ function TongQuan() {
         </div>
 
         {/* Chart Section */}
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div
+          className="bg-white rounded-xl shadow-sm p-4 sm:p-6"
+          data-aos="fade-down"
+        >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 gap-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
               DOANH THU BÁN HÀNG

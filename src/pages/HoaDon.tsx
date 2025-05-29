@@ -10,11 +10,15 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import BillDetail from "../components/BillDetail";
-import { fetchBill, fetchBillById, deleteBillById, fetchAllProduct } from "../service/mainApi";
+import {
+  fetchBill,
+  fetchBillById,
+  deleteBillById,
+  fetchAllProduct,
+} from "../service/mainApi";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import AddBillModal from "../components/AddBillModal";
-
 
 const ITEMS_PER_PAGE = 10;
 
@@ -79,6 +83,7 @@ interface Product {
 function HoaDon() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingSearch, setLoadingSearch] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -98,6 +103,7 @@ function HoaDon() {
   const [tempEndDate, setTempEndDate] = useState("");
 
   useEffect(() => {
+    setLoading(true);
     fetchBills();
   }, [currentPage, startDate, endDate]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -112,7 +118,6 @@ function HoaDon() {
 
   const fetchBills = async () => {
     try {
-      setLoading(true);
       console.log("Request params:", {
         page: currentPage,
         size: ITEMS_PER_PAGE,
@@ -144,6 +149,7 @@ function HoaDon() {
     } catch (err) {
       console.error("API Error:", err);
       setError("Không thể tải dữ liệu hóa đơn. Vui lòng thử lại sau.");
+      throw err; // Re-throw error to be caught by handleSearch
     } finally {
       setLoading(false);
     }
@@ -222,10 +228,15 @@ function HoaDon() {
     }
   }, [selectedTime]);
 
-  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSearch = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
+      setLoadingSearch(true);
       setCurrentPage(0);
-      fetchBills();
+      try {
+        await fetchBills();
+      } finally {
+        setLoadingSearch(false);
+      }
     }
   };
 
@@ -258,40 +269,43 @@ function HoaDon() {
   };
 
   //PHÂN TRANG
-  function getPaginationRange(currentPage: number, totalPages: number): (number | string)[] {
-  const delta = 1; // số trang kề trước và sau currentPage được hiển thị
-  const range: (number | string)[] = [];
+  function getPaginationRange(
+    currentPage: number,
+    totalPages: number
+  ): (number | string)[] {
+    const delta = 1; // số trang kề trước và sau currentPage được hiển thị
+    const range: (number | string)[] = [];
 
-  if (totalPages <= 5) {
-    // Nếu tổng số trang ít hơn hoặc bằng 5 thì hiển thị toàn bộ
-    for (let i = 1; i <= totalPages; i++) {
-      range.push(i);
+    if (totalPages <= 5) {
+      // Nếu tổng số trang ít hơn hoặc bằng 5 thì hiển thị toàn bộ
+      for (let i = 1; i <= totalPages; i++) {
+        range.push(i);
+      }
+    } else {
+      // Luôn hiển thị trang đầu tiên
+      range.push(1);
+
+      if (currentPage > 3) {
+        range.push("...");
+      }
+
+      const start = Math.max(2, currentPage - delta);
+      const end = Math.min(totalPages - 1, currentPage + delta);
+
+      for (let i = start; i <= end; i++) {
+        range.push(i);
+      }
+
+      if (currentPage < totalPages - 2) {
+        range.push("...");
+      }
+
+      // Luôn hiển thị trang cuối
+      range.push(totalPages);
     }
-  } else {
-    // Luôn hiển thị trang đầu tiên
-    range.push(1);
 
-    if (currentPage > 3) {
-      range.push("...");
-    }
-
-    const start = Math.max(2, currentPage - delta);
-    const end = Math.min(totalPages - 1, currentPage + delta);
-
-    for (let i = start; i <= end; i++) {
-      range.push(i);
-    }
-
-    if (currentPage < totalPages - 2) {
-      range.push("...");
-    }
-
-    // Luôn hiển thị trang cuối
-    range.push(totalPages);
+    return range;
   }
-
-  return range;
-}
 
   ///LOADING
   if (loading) {
@@ -484,6 +498,7 @@ function HoaDon() {
                   className="cursor-pointer"
                   checked={selectedTime === "allTime"}
                   onChange={() => setSelectedTime("allTime")}
+                  disabled={loadingSearch}
                 />
                 <label htmlFor="allTime" className="cursor-pointer">
                   Tất cả
@@ -498,6 +513,7 @@ function HoaDon() {
                   className="cursor-pointer"
                   checked={selectedTime === "thisMonth"}
                   onChange={() => setSelectedTime("thisMonth")}
+                  disabled={loadingSearch}
                 />
                 <label htmlFor="thisMonth" className="cursor-pointer">
                   Tháng này
@@ -512,6 +528,7 @@ function HoaDon() {
                   className="cursor-pointer"
                   checked={selectedTime === "customTime"}
                   onChange={() => setSelectedTime("customTime")}
+                  disabled={loadingSearch}
                 />
                 <label htmlFor="customTime" className="cursor-pointer">
                   Thời gian khác
@@ -573,7 +590,7 @@ function HoaDon() {
 
           {/* Main Content */}
           <div className="w-full md:w-3/4">
-            {loading ? (
+            {loadingSearch ? (
               <div className="flex justify-center items-center h-80">
                 <div className="text-center">
                   <FontAwesomeIcon
@@ -660,10 +677,11 @@ function HoaDon() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span
-                                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${bill.isDeleted
-                                    ? "bg-red-100 text-red-800"
-                                    : "bg-green-100 text-green-800"
-                                    }`}
+                                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                    bill.isDeleted
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-green-100 text-green-800"
+                                  }`}
                                 >
                                   {bill.isDeleted ? "Đã xóa" : "Hoàn thành"}
                                 </span>
@@ -754,7 +772,10 @@ function HoaDon() {
                             >
                               Trang trước
                             </button>
-                            {getPaginationRange(currentPage + 1, totalPages).map((page, index) =>
+                            {getPaginationRange(
+                              currentPage + 1,
+                              totalPages
+                            ).map((page, index) =>
                               typeof page === "number" ? (
                                 <button
                                   key={index}
