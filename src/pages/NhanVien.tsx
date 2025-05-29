@@ -48,6 +48,7 @@ function NhanVien() {
             (currentPage + 1) * ITEMS_PER_PAGE
           )
         );
+        setTotalItems(result.length);
       } catch (err) {
         console.error("Lỗi khi tải danh sách nhân viên:", err);
         setError("Không thể tải dữ liệu nhân viên. Vui lòng thử lại sau.");
@@ -97,6 +98,12 @@ function NhanVien() {
   const removeEmployee = (employeeId: number) => {
     setEmployees((prevEmployees) =>
       prevEmployees.filter((employee) => employee.id !== employeeId)
+    );
+    setTotalItems(totalItems - 1);
+    setTotalPages(Math.ceil(totalItems / ITEMS_PER_PAGE));
+    setPagination(getPaginationRange(0, totalItems / ITEMS_PER_PAGE));
+    setDisplayedEmployees(
+      displayedEmployees.filter((employee) => employee.id !== employeeId)
     );
   };
   // MODAL THÊM NHÂN VIÊN
