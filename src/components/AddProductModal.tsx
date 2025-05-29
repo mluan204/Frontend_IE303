@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave } from "@fortawesome/free-solid-svg-icons";
 import { createProduct } from "../service/productApi";
 import { uploadImage } from "../service/uploadImg";
+import { toast } from "react-toastify";
 const CATEGORIES = [
   "Thực phẩm ăn liền",
   "Đồ uống có cồn",
@@ -56,6 +57,9 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
   const [newProduct, setNewProduct] = useState<Product>(emptyProduct);
   const [fileImg, setFileImg] = useState<File | null>(null);
 
+  const isFormValid = newProduct.name.trim() !== "" && newProduct.price > 0 && newProduct.inputPrice > 0 && newProduct.quantityAvailable !==0 && newProduct.image !== "";
+
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     console.log(name);
@@ -71,10 +75,6 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
   };
 
   const handleSave = async () => {
-    if (!newProduct.name.trim()) {
-      alert("Tên sản phẩm không được để trống!");
-      return;
-    }
 
     try {
       let productToSave = { ...newProduct };
@@ -93,11 +93,12 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
       };
 
       onSave(updatedProduct);
-      setNewProduct(emptyProduct);
+      setNewProduct(emptyProduct);      
+      toast.success("Thêm sản phẩm thành công!", { autoClose: 1000 });
       onClose();
     } catch (error) {
       console.error("Error saving product:", error);
-      alert("Có lỗi xảy ra khi lưu sản phẩm!");
+      toast.error("Thêm  sản phẩm thất bại. Vui lòng thử lại!", { autoClose: 1000 })
     }
   };
 
@@ -204,8 +205,9 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
                 <div key={field.name}>
                   <label className="text-sm font-medium text-gray-500 block mb-1">{field.label}</label>
                   <input
+                    type="number"
                     name={field.name}
-                    value={field.name === "dateExpired" ? (newProduct.dateExpired.toISOString().split("T")[0]) : (newProduct as any)[field.name]}
+                    value={field.name === "dateExpired" ? (newProduct.dateExpired.toISOString().split("T")[0]) : (newProduct as any)[field.name] === 0?"":(newProduct as any)[field.name]}
                     onChange={handleChange}
                     className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
                   />
@@ -230,12 +232,13 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
                     }
                     onChange={handleChange}
                     className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                    min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
               ))}
 
               <div className="space-y-4">
-                <label className="text-sm font-medium text-gray-500 block mb-1">Ghi chú</label>
+                <label className="text-sm font-medium text-gray-500 block mb-1">Mô tả</label>
                 <textarea
                   name="description"
                   value={newProduct.description}
@@ -249,9 +252,15 @@ function ProductAddModal({ isOpen, onClose, onSave }: ProductAddModalProps) {
 
           {/* Nút Lưu */}
           <div className="flex justify-end gap-3 mt-6">
-            <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
+            <button
+              onClick={handleSave}
+              disabled={!isFormValid}
+              className={`px-3 py-1.5 text-sm rounded text-white
+                ${isFormValid ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"}`}
+            >
               <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu
             </button>
+
           </div>
         </div>
       </div>

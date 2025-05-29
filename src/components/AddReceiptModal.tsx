@@ -4,7 +4,7 @@ import { faClose, faTrash, faSave } from "@fortawesome/free-solid-svg-icons";
 import { getAllEmployees } from "../service/employeeApi";
 import { addReceipt } from "../service/receiptApi";
 import { useNavigate } from "react-router-dom";
-
+import { toast } from "react-toastify";
 
 interface Employee {
   id: number;
@@ -58,6 +58,12 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
   const [employees, setEmployees] = useState<Employee[]>([]);
   const navigate = useNavigate();
 
+  const isValid =
+  receiptInfo.time.trim() !== "" &&
+  receiptInfo.employeeID !== 0 &&
+  selectedProducts.length > 0;
+
+
   useEffect(() => {
     const fetchEmployee = async () => {
       const response = await getAllEmployees();
@@ -74,6 +80,16 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
       ),
     [search, products, selectedProducts]
   );
+  useEffect(() => {
+    if (isOpen) {
+      const now = new Date();
+      const localISOTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16); // định dạng yyyy-MM-ddTHH:mm
+      setReceiptInfo((prev) => ({ ...prev, time: localISOTime }));
+    }
+  }, [isOpen]);
+
 
   const handleAddProduct = (product: Product) => {
     if (!selectedProducts.find((p) => p.id === product.id)) {
@@ -114,8 +130,12 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
       })),
     };
     console.log(formData);
-    const id = await addReceipt(formData);
-    console.log(id);
+    try{
+      const id = await addReceipt(formData);
+      toast.success("Thêm phiếu nhập kho thành công!", { autoClose: 1000 });
+    }catch{
+      toast.error("Thêm phiếu nhập kho thất bại!", { autoClose: 1000 })
+    }
     window.location.reload();
   };
 
@@ -166,7 +186,13 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
                       <tr key={p.id} className="hover:bg-gray-100">
                         <td className="px-4 py-2">{index + 1}</td>
                         <td className="px-4 py-2 max-w-[160px] truncate">{p.name}</td>
-                        <td className="px-4 py-2">{(p.cost).toLocaleString("vi-VN")}đ</td>
+                        <td className="px-4 py-2"><input
+                          type="number"
+                          value={p.cost===0? "": p.cost}
+                          min={0}
+                          className="w-20 border rounded text-sm"
+                          onChange={(e) => handleChange(p.id, "cost", +e.target.value)}
+                        /></td>
                         <td className="px-4 py-2">
                           <input
                             type="number"
@@ -247,7 +273,13 @@ export default function AddReceiptModal({ isOpen, onClose, products }: AddReceip
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
-              <button onClick={handleSaveReceipt} className="px-4 py-2 bg-green-500 text-white text-sm rounded">
+              <button
+                onClick={handleSaveReceipt}
+                disabled={!isValid}
+                className={`px-4 py-2 text-white text-sm rounded ${
+                  isValid ? "bg-green-500 hover:bg-green-600" : "bg-gray-300 cursor-not-allowed"
+                }`}
+              >
                 <FontAwesomeIcon icon={faSave} className="mr-2" />
                 Lưu phiếu
               </button>

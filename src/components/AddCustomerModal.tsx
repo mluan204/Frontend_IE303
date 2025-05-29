@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faSave } from "@fortawesome/free-solid-svg-icons";
 import { createCustomer } from "../service/customerApi";
+import { toast } from "react-toastify";
 
 interface Customer {
   id: number;
@@ -53,8 +54,9 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
 
     const resId = await createCustomer(newCustomer);
     if (typeof resId === 'string' && resId.startsWith('Loi')) {
-      alert(resId);
-      return;
+      toast.error("Thêm khách hàng thất bại. Vui lòng thử lại!", { autoClose: 1000 })
+    }else{
+      toast.success("Thêm khách hàng thành công!", { autoClose: 1000 });
     }
 
     const updatedCustomer = {
@@ -75,6 +77,11 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
     onClose();
   };
 
+  const isCustomerValid =
+  newCustomer.name.trim() !== "" &&
+  newCustomer.phone_number.trim() !== "" &&
+  newCustomer.created_at.trim() !== "";
+
   if (!isOpen) return null;
 
   return (
@@ -87,11 +94,10 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
         </div>
 
         {/* Form */}
-        <div className="overflow-y-auto max-h-[calc(90vh-60px)] px-6 pb-6 scrollbar-hide">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="overflow-y-auto max-h-[calc(90vh-60px)] px-6 py-6 scrollbar-hide">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { name: "name", label: "Họ tên" },
-              { name: "gender", label: "Giới tính" },
               { name: "phone_number", label: "Số điện thoại" },
               { name: "score", label: "Điểm tích lũy" },
             ].map((field) => (
@@ -100,24 +106,52 @@ function AddCustomerModal({ isOpen, onClose, onCustomerAdded }: AddCustomerModal
                 <input
                   type={field.name === "score" ? "number" : "text"}
                   name={field.name}
-                  value={(newCustomer as any)[field.name === "gender" ? "" : field.name]}
+                  value={(newCustomer as any)[field.name]}
                   onChange={handleChange}
                   className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
                 />
               </div>
             ))}
 
+            {/* Tách cột giới tính riêng */}
+            <div>
+              <label className="text-sm font-medium text-gray-500 block mb-1 truncate">Giới tính</label>
+              <select
+                name="gender"
+                value={newCustomer.gender ? "true" : "false"}
+                onChange={(e) =>
+                  setNewCustomer((prev) => ({
+                    ...prev,
+                    gender: e.target.value === "true",
+                  }))
+                }
+                className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+              >
+                <option value="true">Nam</option>
+                <option value="false">Nữ</option>
+              </select>
+            </div>
+
+
             <div>
               <label className="text-sm font-medium text-gray-500 block mb-1 truncate">Ngày tạo</label>
-              <div className="text-gray-900 text-sm">
-                {new Date(newCustomer.created_at).toLocaleDateString("vi-VN")}
-              </div>
+              <input
+                type="date"
+                value={
+                  newCustomer.created_at
+                    ? new Date(newCustomer.created_at).toISOString().split("T")[0]
+                    : ""
+                }
+                disabled
+                className="border rounded px-2 py-1 w-full text-gray-700 text-sm bg-gray-100 cursor-not-allowed"
+              />
             </div>
           </div>
 
           {/* Action */}
           <div className="flex justify-end gap-3 mt-6">
-            <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
+            <button onClick={handleSave} className={`px-3 py-1.5 text-sm rounded text-white
+                ${isCustomerValid ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"}`}>
               <FontAwesomeIcon icon={faSave} className="mr-1" /> Thêm mới
             </button>
           </div>

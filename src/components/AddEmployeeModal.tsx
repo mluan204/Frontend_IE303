@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClose, faSave } from "@fortawesome/free-solid-svg-icons";
 import { createEmployee } from "../service/employeeApi";
 import { uploadImage } from "../service/uploadImg";
-
+import { toast } from "react-toastify";
 interface Employee {
   id: number;
   name: string;
@@ -35,7 +35,7 @@ const defaultEmployee: Employee = {
   phone_number: "",
   position: "",
   salary: 0,
-  created_at: new Date().toISOString(),
+  created_at: new Date().toISOString().split("T")[0],
 };
 
 const labelMapping: Record<keyof Employee, string> = {
@@ -58,17 +58,23 @@ function AddEmployeeModal({
   onEmployeeAdded,
 }: AddEmployeeModalProps) {
   const [newEmployee, setNewEmployee] = useState<Employee>(defaultEmployee);
-  const [fileImg, setFileImg] = useState<string>("");
+  const [fileImg, setFileImg] = useState<File | null>(null);
+
+    const isFormValid =
+    newEmployee.name.trim() !== "" &&
+    newEmployee.position.trim() !== "" &&
+    newEmployee.address.trim() !== "" &&
+    newEmployee.phone_number.trim() !== "" &&
+    newEmployee.email.trim() !== "" &&
+    newEmployee.salary > 0 &&
+    newEmployee.birthday !== "" &&
+    newEmployee.created_at !== "" ;
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    if (name === "gender") {
-      setNewEmployee((prev) => ({ ...prev, gender: value === "Nam" }));
-    } else {
-      setNewEmployee((prev) => ({ ...prev, [name]: value }));
-    }
+    setNewEmployee((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleUpload = (e) => {
@@ -82,24 +88,32 @@ function AddEmployeeModal({
   };
 
   const handleSave = async () => {
-    // TODO: Save logic here
-    console.log(newEmployee);
-    const url = await uploadImage(fileImg);
-    if (url) {
-      console.log("Image URL:", url);
-      setNewEmployee((prev) => ({ ...prev, image: url }));
-      // Bạn có thể setState để hiển thị ảnh luôn
-    }
-    const resId = await createEmployee(newEmployee);
+  if (!isFormValid) return;
 
-    const updatedEmployee = {
-      ...newEmployee,
-      id: Number(resId),
-    };
+  const imageUrl = fileImg ? await uploadImage(fileImg) : newEmployee.image;
 
-    onEmployeeAdded(updatedEmployee);
-    onClose();
+  const employeeToSave = {
+    ...newEmployee,
+    image: imageUrl,
+    salary: Number(newEmployee.salary),
+    created_at: newEmployee.created_at || new Date().toISOString().split("T")[0],
   };
+
+  const resId = await createEmployee(employeeToSave);
+
+  const updatedEmployee = {
+    ...employeeToSave,
+    id: Number(resId),
+  };
+
+  if (resId) {
+    onEmployeeAdded(updatedEmployee);
+    toast.success("Thêm nhân viên thành công!", { autoClose: 1000 });
+    onClose();
+  } else {
+    toast.error("Thêm nhân viên thất bại. Vui lòng thử lại!", { autoClose: 1000 });
+  }
+};
 
   const fileInputRef = useRef(null);
   const handleButtonClick = () => {
@@ -181,7 +195,6 @@ function AddEmployeeModal({
                   "phone_number",
                   "email",
                   "salary",
-                  "birthday",
                 ] as (keyof Employee)[]
               ).map((field) => (
                 <div key={field}>
@@ -192,8 +205,6 @@ function AddEmployeeModal({
                     type={
                       field === "salary"
                         ? "number"
-                        : field === "birthday"
-                        ? "date"
                         : "text"
                     }
                     name={field}
@@ -207,17 +218,43 @@ function AddEmployeeModal({
 
             {/* Column 4 */}
             <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500 block mb-1 truncate">
-                  Giới tính
-                </label>
-                <input
-                  name="gender"
-                  value={newEmployee.gender ? "Nam" : "Nữ"}
-                  onChange={handleChange}
-                  className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
-                />
-              </div>
+              {(
+                ["created_at", "gender", "birthday"] as (keyof Employee)[]
+              ).map((field) => (
+                <div key={field}>
+                  <label className="text-sm font-medium text-gray-500 block mb-1 truncate">
+                    {labelMapping[field]}
+                  </label>
+
+                  {field === "gender" ? (
+                    <select
+                      name={field}
+                      value={newEmployee[field] === true ? "true" : "false"}
+                      onChange={(e) =>
+                        setNewEmployee((prev) => ({
+                          ...prev,
+                          [field]: e.target.value === "true",
+                        }))
+                      }
+                      className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                    >
+                      <option value="true">Nam</option>
+                      <option value="false">Nữ</option>
+                    </select>
+                  ) : (
+                    <input
+                        type="date"
+                        name={field}
+                        value={(newEmployee[field] as string).split("T")[0]}
+                        onChange={handleChange}
+                        className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                      />
+
+                  )}
+                </div>
+              ))}
+
+              
             </div>
           </div>
 
@@ -225,7 +262,8 @@ function AddEmployeeModal({
           <div className="flex justify-end gap-3 mt-6">
             <button
               onClick={handleSave}
-              className="px-3 py-1.5 bg-green-500 text-white text-sm rounded"
+              className={`px-3 py-1.5 text-sm rounded text-white
+                ${isFormValid ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"}`}
             >
               <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu
             </button>

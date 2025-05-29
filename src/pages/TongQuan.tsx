@@ -13,6 +13,8 @@ import {
 import { Bar } from "react-chartjs-2";
 import "chart.js/auto";
 import { fetchSummary, fetchSalesChart } from "../service/mainApi";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 function TongQuan() {
   const [timeRange, setTimeRange] = useState("Tháng này");
@@ -20,6 +22,7 @@ function TongQuan() {
   const [sumary, setSummary] = useState<any>(null);
   const [chartData, setChartData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isChartLoading, setIsChartLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   let calPercent = (
@@ -42,6 +45,7 @@ function TongQuan() {
 
   useEffect(() => {
     loadData();
+    AOS.init({ duration: 1000, once: true });
   }, []);
 
   useEffect(() => {
@@ -64,6 +68,7 @@ function TongQuan() {
 
   const loadChartData = async () => {
     try {
+      setIsChartLoading(true);
       const now = new Date();
       let startDate = new Date();
       let endDate = new Date();
@@ -132,6 +137,8 @@ function TongQuan() {
       }
     } catch (error) {
       console.error("Error loading chart data:", error);
+    } finally {
+      setIsChartLoading(false);
     }
   };
 
@@ -233,7 +240,10 @@ function TongQuan() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8"
+          data-aos="fade-up"
+        >
           {isLoading
             ? // Loading skeleton
               Array(4)
@@ -300,7 +310,10 @@ function TongQuan() {
         </div>
 
         {/* Chart Section */}
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+        <div
+          className="bg-white rounded-xl shadow-sm p-4 sm:p-6"
+          data-aos="fade-down"
+        >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 gap-4">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800">
               DOANH THU BÁN HÀNG
@@ -342,9 +355,14 @@ function TongQuan() {
           </div>
 
           <div className="h-[300px] sm:h-[400px]">
-            {isLoading ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            {isChartLoading ? (
+              <div className="flex justify-center items-center h-80">
+                <div className="text-center">
+                  <FontAwesomeIcon
+                    icon={faSpinner}
+                    className="text-3xl text-blue-500 animate-spin mb-4"
+                  />
+                </div>
               </div>
             ) : (
               chartData && (

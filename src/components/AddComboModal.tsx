@@ -10,6 +10,7 @@ import {
 import { createCombo } from "../service/comboApi";
 import { generateComboSuggestion } from "./GeminiService";
 import { getProductQuantity } from "../service/billApi";
+import { toast } from "react-toastify";
 
 interface Product {
   id: number;
@@ -73,6 +74,10 @@ export default function AddComboModal({
     comboProducts: [],
   });
 
+  const isFormValid =
+  comboInfo.timeEnd !== "" && selectedItems.length > 0;
+
+  console.log(comboInfo);
   useEffect(() => {
     const loadSalesData = async () => {
       try {
@@ -137,11 +142,12 @@ export default function AddComboModal({
 
     console.log(comboRequest);
     try {
-      await createCombo(comboRequest);
+      await createCombo(comboRequest);      
+       toast.success("Thêm combo sản phẩm thành công!", { autoClose: 1000 });
       onClose();
     } catch (error) {
       console.error("Error creating combo:", error);
-      alert("Có lỗi xảy ra khi tạo combo");
+      toast.error("Thêm combo sản phẩm thất bại. Vui lòng thử lại!!", { autoClose: 1000 })
     }
   };
 
@@ -315,7 +321,8 @@ export default function AddComboModal({
               <button
                 onClick={handleSave}
                 disabled={isLoading}
-                className="px-4 py-2 bg-green-500 text-white text-sm rounded cursor-pointer hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`px-3 py-1.5 text-sm rounded text-white
+                ${isFormValid ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"}`}
               >
                 <FontAwesomeIcon icon={faSave} className="mr-2" />
                 Lưu

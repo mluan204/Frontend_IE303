@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClose, faSave, faEdit } from "@fortawesome/free-solid-svg-icons";
 import { updateEmployeeById } from "../service/employeeApi";
-
+import { toast } from "react-toastify";
 interface Employee {
   id: number;
   name: string;
@@ -45,9 +45,14 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
 
   const handleEdit = () => setIsEditing(true);
   const handleSave = async () => {
-    setIsEditing(false);
     Object.assign(employee, editedEmployee);
-    await updateEmployeeById(editedEmployee);
+    const res = await updateEmployeeById(editedEmployee);
+    setIsEditing(false);
+    if(res){
+      toast.success("Cập nhật thông tin nhân viên thành công!", { autoClose: 1000 });
+    }else{
+      toast.error("Cập nhật thông tin nhân viên thất bại!", { autoClose: 1000 })
+    }
   };
 
   const handleClose = () => {
@@ -101,22 +106,46 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
 
             {/* Column 3 */}
             <div className="space-y-4">
-              {(["phone_number", "email", "salary", "birthday"] as (keyof Employee)[]).map((field) => (
-                <div key={field}>
-                  <label className="text-sm font-medium text-gray-500 block mb-1">{employeeFieldLabels[field]}</label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      name={field}
-                      value={editedEmployee[field]?.toString() ?? ""}
-                      onChange={handleChange}
-                      className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
-                    />
-                  ) : (
-                    <div className="text-gray-900 text-sm">{editedEmployee[field]}</div>
-                  )}
-                </div>
-              ))}
+              <div className="space-y-4">
+                {(["phone_number", "email", "salary", "birthday"] as (keyof Employee)[]).map((field) => (
+                  <div key={field}>
+                    <label className="text-sm font-medium text-gray-500 block mb-1">
+                      {employeeFieldLabels[field]}
+                    </label>
+                    {isEditing ? (
+                      field === "birthday" ? (
+                        <input
+                          type="date"
+                          name={field}
+                          value={editedEmployee[field]?.slice(0, 10) ?? ""}
+                          onChange={(e) =>
+                            setEditedEmployee((prev) => ({
+                              ...prev,
+                              [field]: e.target.value,
+                            }))
+                          }
+                          className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          name={field}
+                          value={editedEmployee[field]?.toString() ?? ""}
+                          onChange={handleChange}
+                          className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                        />
+                      )
+                    ) : (
+                      <div className="text-gray-900 text-sm">
+                        {field === "birthday"
+                          ? new Date(editedEmployee[field] ?? "").toLocaleDateString("vi-VN")
+                          : editedEmployee[field]}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
             </div>
 
             {/* Column 4 */}
@@ -125,16 +154,56 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
                 <div key={field}>
                   <label className="text-sm font-medium text-gray-500 block mb-1">{employeeFieldLabels[field]}</label>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      name={field}
-                      value={editedEmployee[field]?.toString() ?? ""}
-                      onChange={handleChange}
-                      className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
-                    />
-                  ) : (
-                    <div className="text-gray-900 text-sm">{field === "gender" ? employee[field] === true ? "Nam" : "Nữ" : employee[field]}</div>
-                  )}
+                      field === "gender" ? (
+                        <select
+                          name={field}
+                          value={editedEmployee[field] === true ? "true" : "false"}
+                          onChange={(e) =>
+                            setEditedEmployee((prev) => ({
+                              ...prev,
+                              [field]: e.target.value === "true",
+                            }))
+                          }
+                          className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                        >
+                          <option value="true">Nam</option>
+                          <option value="false">Nữ</option>
+                        </select>
+                      ) : field === "created_at" ? (
+                        <input
+                          type="date"
+                          name={field}
+                          value={editedEmployee[field]?.slice(0, 10) ?? ""}
+                          onChange={(e) =>
+                            setEditedEmployee((prev) => ({
+                              ...prev,
+                              [field]: e.target.value,
+                            }))
+                          }
+                          className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          name={field}
+                          value={editedEmployee[field]?.toString() ?? ""}
+                          onChange={handleChange}
+                          className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                        />
+                      )
+                    ) : (
+                      <div className="text-gray-900 text-sm">
+                        {field === "gender"
+                          ? employee[field] === true
+                            ? "Nam"
+                            : "Nữ"
+                          : field === "created_at"
+                          ? new Date(employee[field]).toLocaleDateString("vi-VN")
+                          : employee[field]}
+                      </div>
+                    )}
+
+
                 </div>
               ))}
             </div>
@@ -143,7 +212,8 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 mt-6">
             {isEditing ? (
-              <button onClick={handleSave} className="px-3 py-1.5 bg-green-500 text-white text-sm rounded">
+              <button onClick={handleSave} className={`px-3 py-1.5 text-sm rounded text-white
+                ${employee !== editedEmployee ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"}`}>
                 <FontAwesomeIcon icon={faSave} className="mr-1" /> Lưu
               </button>
             ) : (

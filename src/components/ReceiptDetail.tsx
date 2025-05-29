@@ -70,10 +70,9 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
         {/* Body */}
         <div className="overflow-y-auto max-h-[calc(90vh-56px)] px-6 pb-6 scrollbar-hide">
           {/* Thông tin cơ bản */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            {/* Cột 1 */}
-            <div className="space-y-4">
-              {["id", "created_at"].map((field) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
+        
+              {["id", "created_at", "total_cost", "employee_name", "note"].map((field) => (
                 <div key={field}>
                   <label className="text-sm font-medium text-gray-500 block mb-1">
                     {receipFieldLabels[field as keyof Receipt]}
@@ -84,26 +83,7 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
                     : (editedBill as any)[field]}
                 </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Cột 2 */}
-            <div className="space-y-4">
-              {["total_cost", "employee_name"].map((field) => (
-                <div key={field}>
-                  <label className="text-sm font-medium text-gray-500 block mb-1">
-                    {receipFieldLabels[field as keyof Receipt]}
-                  </label>
-                  <div className="text-sm text-gray-900">{(editedBill as any)[field]}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Cột 3–4: Ghi chú */}
-            <div className="space-y-4 lg:col-span-2">
-              <label className="text-sm font-medium text-gray-500 block mb-1">{receipFieldLabels.note}</label>
-              <div className="text-sm text-gray-900 whitespace-pre-wrap">{editedBill.note}</div>
-            </div>
+              ))}              
           </div>
 
           {/* Bảng sản phẩm */}
