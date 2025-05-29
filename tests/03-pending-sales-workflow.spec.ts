@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginManager, TEST_USERS, navigateToPage, waitForToast, waitForPageLoad } from './test-utils';
+import { loginManager, TEST_USERS, navigateToPage, waitForPageLoad } from './test-utils';
 
 test.describe('Sales Workflow Tests', () => {
   
@@ -11,13 +11,12 @@ test.describe('Sales Workflow Tests', () => {
 
   test('should display sales page correctly', async ({ page }) => {
     // Verify page elements
-    await expect(page.locator('text=Bán hàng').or(page.locator('text=Sales'))).toBeVisible();
+    await expect(page.locator('text=Hoá đơn').or(page.locator('text=JDK Store'))).toBeVisible();
     
     // Check for sales page elements
     const salesElements = [
-      page.locator('input[placeholder*="tìm"], input[placeholder*="search"], input[type="search"]'),
-      page.locator('.product-grid, .product-list, table'),
-      page.locator('.cart, .order-summary, .bill')
+      page.locator('text=Bánh*'),
+      page.locator('text=Thanh toán'),
     ];
     
     let elementFound = false;
@@ -35,16 +34,22 @@ test.describe('Sales Workflow Tests', () => {
   });
 
   test('should search for products in sales page', async ({ page }) => {
-    const searchInput = page.locator('input[placeholder*="tìm"]').or(page.locator('input[placeholder*="search"]')).or(page.locator('input[type="search"]')).first();
+    const searchInput = page.locator('input[placeholder*="Tìm"]');
     
-    if (await searchInput.isVisible()) {
+    if (searchInput) {
       await searchInput.fill('test');
       await page.waitForTimeout(1000);
       
       // Check if search results are displayed
-      const searchResults = page.locator('.product-item, tr, .search-result');
-      const resultCount = await searchResults.count();
-      expect(resultCount >= 0).toBeTruthy();
+      const result = await page.locator('li').count();
+      // 3 vì có ở trong hamberger navigation
+      expect(result).toBe(3);
+  
+      await searchInput.fill('oreo');
+      await page.waitForTimeout(1000);
+      const searchResults_2 = page.locator('li');
+      const resultCount_2 = await searchResults_2.count();
+      expect(resultCount_2 >= 4).toBeTruthy();
       
       // Clear search
       await searchInput.fill('');

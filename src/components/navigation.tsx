@@ -77,7 +77,7 @@ const Navigation = () => {
 
           {/* Hamburger icon - mobile only */}
           <div className="xl:hidden">
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+            <button data-testid="hamburger-icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
               <i className="fas fa-bars text-xl text-gray-700"></i>
             </button>
           </div>

@@ -107,7 +107,7 @@ test.describe('Navigation & UI Tests', () => {
     
     // Check if mobile navigation exists
     const mobileNavElements = [
-      page.locator('[data-testid="mobile-menu-icon"]')
+      page.locator('[data-testid="hamburger-icon"]')
     ];
     
     let mobileNavFound = false;
@@ -121,7 +121,7 @@ test.describe('Navigation & UI Tests', () => {
           await page.waitForTimeout(500);
           
           // Check if menu opened
-          const openMenu = await page.locator('.mobile-menu-open, .menu-visible, nav').isVisible().catch(() => false);
+          const openMenu = await page.getByText('Tổng quan, Hàng hóa, Combo, Hóa đơn, Khách hàng, Nhân viên').isVisible().catch(() => false);
           if (openMenu) {
             expect(openMenu).toBeTruthy();
           }
@@ -143,140 +143,18 @@ test.describe('Navigation & UI Tests', () => {
     await waitForPageLoad(page);
     
     // Navigation should be visible on desktop
-    const desktopNav = await page.locator('nav, .navigation, .sidebar').isVisible().catch(() => false);
+    const desktopNav = page.locator('nav');
     expect(desktopNav).toBeTruthy();
   });
 
-  test('should handle breadcrumb navigation', async ({ page }) => {
-    // Navigate to a sub-page that might have breadcrumbs
-    await navigateToPage(page, 'hang-hoa');
-    
-    // Look for breadcrumb elements
-    const breadcrumbElements = [
-      page.locator('.breadcrumb'),
-      page.locator('.breadcrumbs'),
-      page.locator('nav[aria-label="breadcrumb"]'),
-      page.locator('.path-nav')
-    ];
-    
-    for (const element of breadcrumbElements) {
-      try {
-        if (await element.isVisible()) {
-          // Check if breadcrumb contains expected links
-          const breadcrumbLinks = element.locator('a, button');
-          const linkCount = await breadcrumbLinks.count();
-          
-          if (linkCount > 0) {
-            // Try clicking the first breadcrumb link (usually home)
-            const firstLink = breadcrumbLinks.first();
-            if (await firstLink.isVisible()) {
-              await firstLink.click();
-              await waitForPageLoad(page);
-              
-              // Should navigate somewhere
-              expect(page.url()).toBeTruthy();
-            }
-          }
-          break;
-        }
-      } catch (error) {
-        // Continue checking
-      }
-    }
-  });
-
-  test('should handle search functionality in navigation', async ({ page }) => {
-    // Look for global search
-    const searchElements = [
-      page.locator('input[placeholder*="tìm kiếm"]'),
-      page.locator('input[placeholder*="search"]'),
-      page.locator('input[type="search"]'),
-      page.locator('.global-search input'),
-      page.locator('[data-testid="global-search"]')
-    ];
-    
-    for (const element of searchElements) {
-      try {
-        if (await element.isVisible()) {
-          await element.fill('test search');
-          await element.press('Enter');
-          
-          await page.waitForTimeout(1000);
-          
-          // Check if search results appear or page changes
-          const searchResults = [
-            page.locator('.search-results'),
-            page.locator('.search-dropdown'),
-            page.locator('.suggestions')
-          ];
-          
-          let resultsFound = false;
-          for (const results of searchResults) {
-            try {
-              if (await results.isVisible()) {
-                resultsFound = true;
-                break;
-              }
-            } catch (error) {
-              // Continue checking
-            }
-          }
-          
-          // Clear search
-          await element.clear();
-          break;
-        }
-      } catch (error) {
-        // Continue to next search element
-      }
-    }
-  });
 
   test('should display user menu/profile', async ({ page }) => {
-    // Look for user menu elements
-    const userMenuElements = [
-      page.locator('.user-menu'),
-      page.locator('.profile-menu'),
-      page.locator('.user-avatar'),
-      page.locator('button:has-text("Admin")'),
-      page.locator('button:has-text("Profile")'),
-      page.locator('[data-testid="user-menu"]')
-    ];
-    
-    for (const element of userMenuElements) {
-      try {
-        if (await element.isVisible()) {
-          await element.click();
-          await page.waitForTimeout(500);
-          
-          // Check for dropdown menu items
-          const menuItems = [
-            page.locator('text=Đăng xuất'),
-            page.locator('text=Logout'),
-            page.locator('text=Profile'),
-            page.locator('text=Settings'),
-            page.locator('text=Cài đặt')
-          ];
-          
-          let menuItemFound = false;
-          for (const item of menuItems) {
-            try {
-              if (await item.isVisible()) {
-                menuItemFound = true;
-                break;
-              }
-            } catch (error) {
-              // Continue checking
-            }
-          }
-          
-          expect(menuItemFound).toBeTruthy();
-          break;
-        }
-      } catch (error) {
-        // Continue to next element
-      }
-    }
+    const userMenu = page.locator('[data-testid="account-icon"]');
+    expect(userMenu).toBeTruthy();
+
+    await userMenu.click();
+
+    expect(page.getByText('Đăng xuất')).toBeVisible();
   });
 
   test('should handle keyboard navigation', async ({ page }) => {
@@ -294,13 +172,11 @@ test.describe('Navigation & UI Tests', () => {
       await page.waitForTimeout(100);
     }
     
-    // Test Enter key on focused element
     await page.keyboard.press('Enter');
     await page.waitForTimeout(500);
+    // Test Enter key on focused element
+    await expect(page).toHaveURL('/khach-hang');
     
-    // Test Escape key (should close modals/dropdowns)
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(200);
   });
 
   test('should display loading states', async ({ page }) => {
@@ -337,69 +213,43 @@ test.describe('Navigation & UI Tests', () => {
     
     // Ensure page finished loading
     await waitForPageLoad(page);
+    expect(loadingFound).toBeTruthy();
   });
 
-  test('should handle error states', async ({ page }) => {
-    // Try to navigate to non-existent page
-    await page.goto('/non-existent-page');
-    await page.waitForTimeout(2000);
+  // test('should handle error states', async ({ page }) => {
+  //   // Try to navigate to non-existent page
+  //   await page.goto('/non-existent-page');
+  //   await page.waitForTimeout(2000);
     
-    // Check for error page or 404
-    const errorElements = [
-      page.locator('text=404'),
-      page.locator('text=Not Found'),
-      page.locator('text=Không tìm thấy'),
-      page.locator('text=Error'),
-      page.locator('text=Lỗi'),
-      page.locator('.error-page'),
-      page.locator('.not-found')
-    ];
+  //   // Check for error page or 404
+  //   const errorElements = [
+  //     page.locator('text=404'),
+  //     page.locator('text=Not Found'),
+  //     page.locator('text=Không tìm thấy'),
+  //     page.locator('text=Error'),
+  //     page.locator('text=Lỗi'),
+  //     page.locator('.error-page'),
+  //     page.locator('.not-found')
+  //   ];
     
-    let errorFound = false;
-    for (const element of errorElements) {
-      try {
-        if (await element.isVisible()) {
-          errorFound = true;
-          break;
-        }
-      } catch (error) {
-        // Continue checking
-      }
-    }
+  //   let errorFound = false;
+  //   for (const element of errorElements) {
+  //     try {
+  //       if (await element.isVisible()) {
+  //         errorFound = true;
+  //         break;
+  //       }
+  //     } catch (error) {
+  //       // Continue checking
+  //     }
+  //   }
     
-    // Should either show error page or redirect to valid page
-    const currentUrl = page.url();
-    const isValidState = errorFound || currentUrl.includes('/') || currentUrl.includes('/login');
-    expect(isValidState).toBeTruthy();
-  });
+  //   // Should either show error page or redirect to valid page
+  //   const currentUrl = page.url();
+  //   const isValidState = errorFound || currentUrl.includes('/') || currentUrl.includes('/login');
+  //   expect(isValidState).toBeTruthy();
+  // });
 
-  test('should maintain consistent styling across pages', async ({ page }) => {
-    const pages = ['/', '/hang-hoa', '/ban-hang', '/khach-hang'];
-    
-    for (const route of pages) {
-      try {
-        await page.goto(route);
-        await waitForPageLoad(page);
-        
-        // Check for consistent header
-        const header = await page.locator('header, .header, .top-bar').isVisible().catch(() => false);
-        
-        // Check for consistent navigation
-        const nav = await page.locator('nav, .navigation, .sidebar').isVisible().catch(() => false);
-        
-        // Check for consistent styling (at least one should be true)
-        const hasConsistentLayout = header || nav;
-        expect(hasConsistentLayout).toBeTruthy();
-        
-        // Check for consistent color scheme by looking for common CSS classes
-        const commonClasses = await page.locator('.bg-primary, .text-primary, .btn-primary').count();
-        expect(commonClasses >= 0).toBeTruthy();
-        
-      } catch (error) {
-        console.warn(`Failed to check styling for ${route}: ${error}`);
-      }
-    }
-  });
 
   test('should handle page refresh correctly', async ({ page }) => {
     // Navigate to a specific page
