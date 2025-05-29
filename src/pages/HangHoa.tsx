@@ -399,7 +399,7 @@ function HangHoa() {
                   {products.length === 0 ? (
                     <div className="text-center py-5">
                       <p className="text-gray-500 text-lg">
-                        Không có sản phẩm nào.
+                        Không tìm thấy sản phẩm.
                       </p>
                     </div>
                   ) : (

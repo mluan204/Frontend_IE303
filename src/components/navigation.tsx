@@ -21,7 +21,6 @@ const Navigation = () => {
     { path: "/kho-hang", icon: "fas fa-warehouse", label: "Kho hàng" },
     { path: "/nhan-vien", icon: "fas fa-users", label: "Nhân viên" },
     { path: "/ca-lam", icon: "fas fa-clock", label: "Ca làm" },
-    { path: "/bao-cao", icon: "fas fa-chart-bar", label: "Báo cáo" },
     { path: "/khach-hang", icon: "fas fa-user", label: "Khách hàng" },
   ];
 
@@ -194,17 +193,6 @@ const Navigation = () => {
               }`}
             >
               <i className="fas fa-user mr-2"></i> Khách hàng
-            </Link>
-          </li>
-
-          <li>
-            <Link
-              to="/bao-cao"
-              className={`flex rounded-md items-center py-3 px-2 text-white hover:text-blue-100 hover:bg-blue-700 hover:scale-[1.02] transition duration-300 ease-in-out ${
-                location.pathname === "/bao-cao" ? "bg-blue-700" : ""
-              }`}
-            >
-              <i className="fas fa-chart-bar mr-2"></i> Báo cáo
             </Link>
           </li>
         </ul>

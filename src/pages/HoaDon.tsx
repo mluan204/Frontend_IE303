@@ -103,7 +103,7 @@ function HoaDon() {
   const [tempEndDate, setTempEndDate] = useState("");
 
   useEffect(() => {
-    setLoading(true);
+    setLoadingSearch(true);
     fetchBills();
   }, [currentPage, startDate, endDate]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -152,6 +152,7 @@ function HoaDon() {
       throw err; // Re-throw error to be caught by handleSearch
     } finally {
       setLoading(false);
+      setLoadingSearch(false);
     }
   };
 
@@ -616,7 +617,7 @@ function HoaDon() {
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                 {bills.length === 0 ? (
                   <div className="p-8 text-center text-gray-500">
-                    Không có hóa đơn nào
+                    Không tìm thấy hóa đơn.
                   </div>
                 ) : (
                   <>

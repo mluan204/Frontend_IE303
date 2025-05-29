@@ -22,6 +22,7 @@ function TongQuan() {
   const [sumary, setSummary] = useState<any>(null);
   const [chartData, setChartData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isChartLoading, setIsChartLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   let calPercent = (
@@ -67,6 +68,7 @@ function TongQuan() {
 
   const loadChartData = async () => {
     try {
+      setIsChartLoading(true);
       const now = new Date();
       let startDate = new Date();
       let endDate = new Date();
@@ -135,6 +137,8 @@ function TongQuan() {
       }
     } catch (error) {
       console.error("Error loading chart data:", error);
+    } finally {
+      setIsChartLoading(false);
     }
   };
 
@@ -351,9 +355,14 @@ function TongQuan() {
           </div>
 
           <div className="h-[300px] sm:h-[400px]">
-            {isLoading ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            {isChartLoading ? (
+              <div className="flex justify-center items-center h-80">
+                <div className="text-center">
+                  <FontAwesomeIcon
+                    icon={faSpinner}
+                    className="text-3xl text-blue-500 animate-spin mb-4"
+                  />
+                </div>
               </div>
             ) : (
               chartData && (
