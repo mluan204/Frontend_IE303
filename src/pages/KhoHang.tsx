@@ -190,24 +190,28 @@ const onClickDeleteProduct = async (receipt: Receipt) => {
 };
 
 // Pagination logic...
-function getPaginationRange(currentPage: number, totalPages: number): (number | string)[] {
-  const delta = 1;
-  const range: (number | string)[] = [];
+  const getPaginationRange = (
+    current: number,
+    total: number
+  ): (number | string)[] => {
+    const delta = 1;
+    const range: (number | string)[] = [];
+    const left = Math.max(1, current - delta);
+    const right = Math.min(total, current + delta + 1);
 
-  if (totalPages <= 5) {
-    for (let i = 1; i <= totalPages; i++) range.push(i);
-  } else {
-    range.push(1);
-    if (currentPage > 3) range.push("...");
-    const start = Math.max(2, currentPage - delta);
-    const end = Math.min(totalPages - 1, currentPage + delta);
-    for (let i = start; i <= end; i++) range.push(i);
-    if (currentPage < totalPages - 2) range.push("...");
-    range.push(totalPages);
-  }
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || (i >= left && i < right)) {
+        range.push(i);
+      } else if (
+        (i === left - 1 && i !== 2) ||
+        (i === right && i !== total - 1)
+      ) {
+        range.push("...");
+      }
+    }
 
-  return range;
-}
+    return [...new Set(range)];
+  };
 
 
   //LOADING

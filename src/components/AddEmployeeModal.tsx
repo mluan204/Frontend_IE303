@@ -207,6 +207,31 @@ function AddEmployeeModal({
 
             {/* Column 4 */}
             <div className="space-y-4">
+              {(
+                [
+                  "created_at",
+                  "gender",
+                ] as (keyof Employee)[]
+              ).map((field) => (
+                <div key={field}>
+                  <label className="text-sm font-medium text-gray-500 block mb-1 truncate">
+                    {labelMapping[field]}
+                  </label>
+                  <input
+                    type={
+                      field === "salary"
+                        ? "number"
+                        : field === "birthday"
+                        ? "date"
+                        : "text"
+                    }
+                    name={field}
+                    value={(newEmployee as any)[field] || ""}
+                    onChange={handleChange}
+                    className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                  />
+                </div>
+              ))}
               <div>
                 <label className="text-sm font-medium text-gray-500 block mb-1 truncate">
                   Giới tính

@@ -234,7 +234,7 @@ function HangHoa() {
           <h1 className="text-xl font-bold whitespace-nowrap">Hàng hóa</h1>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full ">
           {/* Tìm kiếm */}
           <div className="relative w-full sm:w-1/2">
             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
@@ -283,16 +283,20 @@ function HangHoa() {
         </div>
       </div>
 
-      {/* Sidebar  */}
+      {/* Sidebar mobile  */}
       <div className="mb-4 md:hidden bg-white shadow rounded-lg p-4">
         <h2 className="font-bold mb-2">Nhóm hàng</h2>
-        <input
-          type="text"
-          placeholder="Tìm nhóm hàng"
-          value={searchCategory}
-          onChange={(e) => setSearchCategory(e.target.value)}
-          className="border px-2 py-1 w-full mb-2 rounded"
-        />
+        <div className="flex items-center gap-2 border-b px-2 py-1 border-gray-400 mb-2">          
+          <input
+            type="text"
+            placeholder="Tìm nhóm hàng"
+            value={searchCategory}
+            onChange={(e) => setSearchCategory(e.target.value)}
+            className="flex-1 outline-none "
+          />
+          <FontAwesomeIcon icon={faSearch} className="text-gray-500" />
+        </div>
+
         <ul className="overflow-y-auto">
           {categories
             .filter((c) => removeVietnameseTones(c.name.toLowerCase()).includes(removeVietnameseTones(searchCategory.toLowerCase())))
@@ -317,13 +321,17 @@ function HangHoa() {
         {/* Sidebar desktop */}
         <div className="hidden md:block w-full md:w-1/4 bg-white shadow rounded-lg p-4">
           <h2 className="font-bold mb-2">Nhóm hàng</h2>
-          <input
-            type="text"
-            placeholder="Tìm nhóm hàng"
-            value={searchCategory}
-            onChange={(e) => setSearchCategory(e.target.value)}
-            className="border px-2 py-1 w-full mb-2 rounded focus:outline-none"
-          />
+          <div className="flex items-center gap-2 border-b px-2 py-1 border-gray-400 mb-2">
+            <input
+              type="text"
+              placeholder="Tìm nhóm hàng"
+              value={searchCategory}
+              onChange={(e) => setSearchCategory(e.target.value)}
+              className="flex-1 outline-none  "
+            />
+            <FontAwesomeIcon icon={faSearch} className="text-gray-500" />
+          </div>
+          
           <ul className="overflow-y-auto">
             {categories
               .filter((c) => removeVietnameseTones(c.name.toLowerCase()).includes(removeVietnameseTones(searchCategory.toLowerCase())))

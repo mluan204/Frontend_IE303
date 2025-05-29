@@ -92,12 +92,12 @@ export async function printBillToPDF(bill: Bill) {
     </div>
     <div style="display: flex; justify-content: space-between; font-size: 14px;">
       <span>Giảm giá</span>
-      <span>${bill.pointsToUse?.toLocaleString() ?? 0}</span>
+      <span>${(bill.pointsToUse?? 0)*100}</span>
     </div>
     <div style="display: flex; justify-content: space-between; font-size: 14px; margin-top: 20px; border-top: 1px solid black;">
 
       <span><strong>Tổng thanh toán</strong></span>
-      <span><strong>${(bill.after_discount-bill.pointsToUse).toLocaleString()}</strong></span>
+      <span><strong>${(bill.after_discount).toLocaleString()}</strong></span>
 
     </div>
     <p style ="font-size: 13px;">+ ${bill.notes}</p>
