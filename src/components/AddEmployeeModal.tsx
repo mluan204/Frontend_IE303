@@ -170,12 +170,29 @@ function AddEmployeeModal({
 
             {/* Column 2 */}
             <div className="space-y-4">
-              {(["name", "position", "address"] as (keyof Employee)[]).map(
-                (field) => (
-                  <div key={field}>
-                    <label className="text-sm font-medium text-gray-500 block mb-1 truncate">
-                      {labelMapping[field]}
-                    </label>
+              {(["name", "position", "address"] as (keyof Employee)[]).map((field) => (
+                <div key={field}>
+                  <label className="text-sm font-medium text-gray-500 block mb-1 truncate">
+                    {labelMapping[field]}
+                  </label>
+                  {field === "position" ? (
+                    <select
+                      name={field}
+                      value={newEmployee[field]}
+                      onChange={(e) =>
+                        setNewEmployee((prev) => ({
+                          ...prev,
+                          [field]: e.target.value,
+                        }))
+                      }
+                      className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
+                    >
+                      <option value="">Chọn chức vụ</option>
+                      <option value="Parttime">Parttime</option>
+                      <option value="Fulltime">Fulltime</option>
+                      <option value="Quản lí">Quản lí</option>
+                    </select>
+                  ) : (
                     <input
                       type="text"
                       name={field}
@@ -183,9 +200,10 @@ function AddEmployeeModal({
                       onChange={handleChange}
                       className="border rounded px-2 py-1 w-full text-gray-700 text-sm"
                     />
-                  </div>
-                )
-              )}
+                  )}
+                </div>
+              ))}
+
             </div>
 
             {/* Column 3 */}

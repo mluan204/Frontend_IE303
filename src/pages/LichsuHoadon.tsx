@@ -13,6 +13,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { Helmet } from "react-helmet";
 import { set } from "date-fns";
+import { printBillToPDF } from "../components/PrintBill";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -35,6 +36,26 @@ interface Invoice {
   }[];
 }
 
+type Bill = {
+  id: number;
+  total_cost: number;
+  after_discount: number;
+  customer: { id: number; name: string, phone_number: string };
+  employee: { id: number; name: string };
+  billDetails: {
+    productId: number;
+    productName: string;
+    price: number;
+    afterDiscount: number;
+    quantity: number;
+  }[];
+  createdAt: string;
+  totalQuantity: number;
+  notes: string;
+  pointsToUse: number | null;
+};
+
+
 function LishsuHoadon() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,9 +66,41 @@ function LishsuHoadon() {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handlePrint = (id: string) => {
-    alert(`Đang in hóa đơn ${id}...`);
+
+  const mapInvoiceToBill = (invoice: Invoice): Bill => {
+  const totalQuantity = invoice.items.reduce((sum, item) => sum + item.quantity, 0);
+
+  return {
+    id: Number(invoice.id),
+    total_cost: invoice.total,
+    after_discount: invoice.total - invoice.discount,
+    customer: {
+      id: 0, // Nếu không có ID thực, gán mặc định
+      name: invoice.customerName,
+      phone_number: "",
+    },
+    employee: {
+      id: 0,
+      name: invoice.staffName,
+    },
+    billDetails: invoice.items.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      price: item.price,
+      afterDiscount: item.after_discount,
+      quantity: item.quantity,
+    })),
+    createdAt: invoice.date,
+    totalQuantity,
+    notes: "",
+    pointsToUse: null,
   };
+};
+
+ const handlePrint = (invoice: Invoice) => {
+  const billData = mapInvoiceToBill(invoice);
+  printBillToPDF(billData);
+};
 
   const fetchData = async () => {
   try {
@@ -167,7 +220,7 @@ function LishsuHoadon() {
         <h2 className="text-lg font-bold text-center py-2 shadow-md bg-white sticky top-0 ">
           Danh sách hóa đơn
         </h2>
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-4">
     </div>
 
 
@@ -228,7 +281,7 @@ function LishsuHoadon() {
                           <div className=" menu-popup absolute right-0 top-full mt-2 min-w-[150px] bg-white shadow-lg rounded-lg border p-2 z-10">
                             <button
                               className="flex items-center px-4 py-2 text-sm hover:bg-gray-200 w-full"
-                              onClick={() => handlePrint(invoice.id)}
+                              onClick={() => handlePrint(invoice)}
                             >
                               <FontAwesomeIcon
                                 icon={faPrint}

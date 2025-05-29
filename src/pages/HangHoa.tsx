@@ -412,7 +412,7 @@ function HangHoa() {
                         <tr>
                           <th className="px-6 py-3"></th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                            Mã sản phẩm
+                            Mã SP
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                             Tên sản phẩm

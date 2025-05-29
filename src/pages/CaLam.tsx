@@ -21,37 +21,37 @@ const SHIFT_CONFIG = {
     label: "Ca sáng (6h-14h)",
     color: "bg-green-100",
     hoverColor: "hover:bg-green-200",
-    allowedPositions: ["fulltime"],
+    allowedPositions: ["Fulltime"],
   },
   DAI2: {
     label: "Ca chiều (14h-22h)",
     color: "bg-blue-100",
     hoverColor: "hover:bg-blue-200",
-    allowedPositions: ["fulltime"],
+    allowedPositions: ["Fulltime"],
   },
   NGAN1: {
     label: "Ca ngắn 1 (6h-10h)",
     color: "bg-yellow-100",
     hoverColor: "hover:bg-yellow-200",
-    allowedPositions: ["parttime"],
+    allowedPositions: ["Parttime"],
   },
   NGAN2: {
     label: "Ca ngắn 2 (10h-14h)",
     color: "bg-orange-100",
     hoverColor: "hover:bg-orange-200",
-    allowedPositions: ["parttime"],
+    allowedPositions: ["Parttime"],
   },
   NGAN3: {
     label: "Ca ngắn 3 (14h-18h)",
     color: "bg-purple-100",
     hoverColor: "hover:bg-purple-200",
-    allowedPositions: ["parttime"],
+    allowedPositions: ["Parttime"],
   },
   NGAN4: {
     label: "Ca ngắn 4 (18h-22h)",
     color: "bg-pink-100",
     hoverColor: "hover:bg-pink-200",
-    allowedPositions: ["parttime"],
+    allowedPositions: ["Parttime"],
   },
 };
 
@@ -190,7 +190,7 @@ const CaLam: React.FC = () => {
                   `Nhân viên #${shift.employeeId}`}
               </div>
               <div className="text-sm text-gray-600">
-                {employeeDetails[shift.employeeId]?.position === "fulltime"
+                {employeeDetails[shift.employeeId]?.position === "Fulltime"
                   ? "Toàn thời gian"
                   : "Bán thời gian"}
               </div>
@@ -316,7 +316,7 @@ const CaLam: React.FC = () => {
                         </h3>
                         <p className="text-gray-600 text-base md:text-lg">
                           {employeeDetails[selectedShift.employeeId]
-                            .position === "fulltime"
+                            .position === "Fulltime"
                             ? "Toàn thời gian"
                             : "Bán thời gian"}
                         </p>
@@ -402,7 +402,7 @@ const CaLam: React.FC = () => {
                 </h2>
                 {selectedEmployee && (
                   <p className="mb-4 text-sm md:text-base text-gray-500">
-                    {selectedEmployee.position === "fulltime"
+                    {selectedEmployee.position === "Fulltime"
                       ? "Nhân viên toàn thời gian chỉ có thể đăng ký ca 8 tiếng"
                       : "Nhân viên bán thời gian chỉ có thể đăng ký ca 4 tiếng"}
                   </p>
@@ -436,7 +436,7 @@ const CaLam: React.FC = () => {
                               {employee.name}
                             </p>
                             <p className="text-xs md:text-sm text-gray-500">
-                              {employee.position === "fulltime"
+                              {employee.position === "Fulltime"
                                 ? "Toàn thời gian"
                                 : "Bán thời gian"}
                             </p>
