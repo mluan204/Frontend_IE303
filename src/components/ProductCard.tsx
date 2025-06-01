@@ -12,7 +12,7 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, addToCart }) => {
   return (
     <button
-      className="w-52 bg-white rounded-lg shadow-md p-2 flex flex-col items-center outline-1 outline-gray-200"
+      className="w-52 cursor-pointer bg-white rounded-lg shadow-md p-2 flex flex-col items-center outline-1 outline-gray-200"
       onClick={() => addToCart({ id, name, price, image })}
     >
       {/* Hình ảnh sản phẩm */}

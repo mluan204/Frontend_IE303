@@ -48,7 +48,7 @@ const BillItem: React.FC<CartItemProps> = ({
       {/* Số thứ tự & Xóa */}
       <div className="flex w-1/12 items-center justify-end mr-1">
         <span className="text-gray-600 mr-2">{index}</span>
-        <FontAwesomeIcon icon={faTrash} onClick={() => onRemove(id)} />
+        <FontAwesomeIcon icon={faTrash} onClick={() => onRemove(id)} className=" cursor-pointer"/>
       </div>
 
       {/* Tên sản phẩm */}
@@ -67,7 +67,7 @@ const BillItem: React.FC<CartItemProps> = ({
 
       {/* Giá sau giảm (nếu có) */}
       {discount !== price && (
-        <div className="text-red-600 text-sm font-semibold w-[60px] text-right">
+        <div className="text-red-600 text-sm font-semibold w-[60px] cu-po text-right">
           {discount.toLocaleString("vi-VN")}đ
         </div>
       )}
@@ -75,7 +75,7 @@ const BillItem: React.FC<CartItemProps> = ({
       {/* Điều chỉnh số lượng */}
       <div className="flex items-center justify-between w-16 mx-4">
         <button
-          className="text-gray-500 rounded-full border border-gray-300 bg-gray-300 w-4 h-4 flex items-center justify-center my-1"
+          className="text-gray-500 rounded-full border cursor-pointer border-gray-300 bg-gray-300 w-4 h-4 flex items-center justify-center my-1"
           onClick={handleDecrease}
         >
           -
@@ -84,7 +84,7 @@ const BillItem: React.FC<CartItemProps> = ({
           {quantity}
         </span>
         <button
-          className="text-gray-500 rounded-full border border-gray-300 bg-gray-300 w-4 h-4 flex items-center justify-center"
+          className="text-gray-500 rounded-full border cursor-pointer border-gray-300 bg-gray-300 w-4 h-4 flex items-center justify-center"
           onClick={handleIncrease}
         >
           +
