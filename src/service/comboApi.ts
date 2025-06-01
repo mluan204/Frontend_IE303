@@ -70,3 +70,14 @@ export const deleteCombo = async (id: number) => {
         throw error;
     }
 }
+
+
+export const getAllComboListProduct = async () => {
+    try {
+        const response = await api.get("/combo/all");
+        return response.data;
+    } catch (error) {
+        console.error("Error getting all combo list:", error);
+        throw error;
+    }
+}

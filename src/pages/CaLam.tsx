@@ -74,6 +74,14 @@ const CaLam: React.FC = () => {
   const weekStart = startOfWeek(viewDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [shiftToDelete, setShiftToDelete] = useState<Shift | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+
+
+
+
   useEffect(() => {
     fetchShifts();
   }, [viewDate]);
@@ -158,17 +166,30 @@ const CaLam: React.FC = () => {
     }
   };
 
-  const handleDeleteShift = async (shift: Shift, event: React.MouseEvent) => {
-    event.stopPropagation();
-    if (
-      window.confirm("Bạn có chắc chắn muốn xóa nhân viên này khỏi ca làm?")
-    ) {
-      try {
-        await deleteShift(shift.id);
-        fetchShifts();
-      } catch (error) {
-        console.error("Error deleting shift:", error);
-      }
+    const handleDeleteShift = (shift: Shift, e: React.MouseEvent) => {
+    e.stopPropagation(); // ngăn sự kiện click lan tới onClick cell
+    setShiftToDelete(shift);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
+    setShiftToDelete(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!shiftToDelete) return;
+
+    setDeleteLoading(true);
+    try {
+      await deleteShift(shiftToDelete.id); // gọi API xóa
+      setIsDeleteModalOpen(false);
+      setShiftToDelete(null);
+       fetchShifts();// reload lại dữ liệu nếu cần
+    } catch (error) {
+      console.error("Lỗi xóa ca làm:", error);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -182,17 +203,28 @@ const CaLam: React.FC = () => {
           {dayShifts.map((shift) => (
             <div
               key={shift.id}
-              className={`${config.color} ${config.hoverColor} p-2 rounded cursor-pointer transition-colors relative group`}
+              className={`${config.color} ${config.hoverColor} p-2 items-center rounded-xl cursor-pointer flex flex-row transition-colors relative group`}
               onClick={() => handleShiftClick(shift)}
             >
-              <div className="font-medium">
-                {employeeDetails[shift.employeeId]?.name ||
-                  `Nhân viên #${shift.employeeId}`}
-              </div>
-              <div className="text-sm text-gray-600">
-                {employeeDetails[shift.employeeId]?.position === "Fulltime"
-                  ? "Toàn thời gian"
-                  : "Bán thời gian"}
+               <img
+                src={
+                     employeeDetails[shift.employeeId]?.image
+                        ? employeeDetails[shift.employeeId]?.image
+                        : `https://ui-avatars.com/api/?background=random&name=${employeeDetails[shift.employeeId].name}
+                          `
+                    }
+                alt={employeeDetails[shift.employeeId].name}
+                className="  lg:flex hidden lg:w-7 lg:h-7 rounded-full  object-cover"
+              />
+              <div className="flex flex-col mx-1">
+                <div className="font-medium text-sm">
+                  {employeeDetails[shift.employeeId]?.name ||
+                    `Nhân viên #${shift.employeeId}`}
+                </div>
+              
+                <div className="text-xs text-gray-600 ">
+                  {employeeDetails[shift.employeeId]?.phone_number}
+                </div>
               </div>
               <button
                 onClick={(e) => handleDeleteShift(shift, e)}
@@ -205,24 +237,64 @@ const CaLam: React.FC = () => {
           ))}
           <button
             onClick={() => handleAddShift(format(day, "yyyy-MM-dd"), shiftType)}
-            className="cursor-pointer w-full p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+            className="cursor-pointer w-full p-2 text-gray-500 text-sm hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
           >
             <FontAwesomeIcon icon={faPlus} />
           </button>
         </div>
+        {isDeleteModalOpen && shiftToDelete && (
+          <div className="fixed inset-0  flex items-center justify-center p-4">
+           <div
+                className="fixed inset-0 bg-black/30 opacity-5 h-screen z-60 flex items-center justify-center"
+                onClick={() => setSelectedShift(null)}
+              />
+            <div className="bg-white rounded-lg max-w-md w-full p-6 z-60">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Xác nhận xóa ca làm
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Bạn có chắc chắn muốn xóa ca làm của{" "}
+                <strong>{employeeDetails[shiftToDelete.employeeId]?.name}</strong> vào ngày{" "}
+                <strong>{format(parseISO(shiftToDelete.date), "dd/MM/yyyy")}</strong>?
+                Hành động này không thể hoàn tác.
+              </p>
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={handleDeleteCancel}
+                  disabled={deleteLoading}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleteLoading}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                >
+                  {deleteLoading ? (
+                    <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                  ) : (
+                    "Xác nhận xóa"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </td>
     );
   };
 
   return (
     <div className="p-4 md:p-6">
-      <div className="mb-6">
+      <div className="mb-6 flex flex-row justify-between">
         <h1 className="text-xl md:text-2xl font-bold mb-4">Quản lý ca làm</h1>
         <input
           type="date"
           value={format(viewDate, "yyyy-MM-dd")}
           onChange={(e) => setViewDate(new Date(e.target.value))}
-          className="border rounded p-2 w-full md:w-auto"
+          className=" h-8 border rounded px-2 w-full md:w-auto"
         />
       </div>
 
@@ -243,7 +315,7 @@ const CaLam: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50">
-                    <th className="border p-2 w-48">Ca</th>
+                    <th className="border p-2">Ca</th>
                     {weekDays.map((day) => (
                       <th key={day.toString()} className="border p-2">
                         <div className="text-sm md:text-base">
@@ -280,11 +352,11 @@ const CaLam: React.FC = () => {
           {selectedShift && employeeDetails[selectedShift.employeeId] && (
             <>
               <div
-                className="fixed inset-0 bg-black/50 z-50"
+                className="fixed inset-0 bg-black/50 h-screen z-50 flex items-center justify-center"
                 onClick={() => setSelectedShift(null)}
               />
               <div
-                className="fixed z-50 top-0 right-0 h-full w-full md:w-96 bg-white shadow-lg transform transition-transform duration-300 ease-in-out"
+                className="fixed top-1/2 overflow-y-hidden overscroll-y-none left-1/2 z-50 w-full max-w-md bg-white shadow-lg rounded-lg transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
                 style={{
                   transform: selectedShift
                     ? "translateX(0)"
@@ -306,9 +378,14 @@ const CaLam: React.FC = () => {
                   <div className="space-y-6">
                     <div className="flex items-center space-x-4">
                       <img
-                        src={employeeDetails[selectedShift.employeeId].image}
+                        src={
+                              employeeDetails[selectedShift.employeeId].image
+                                ? employeeDetails[selectedShift.employeeId].image
+                                : `https://ui-avatars.com/api/?background=random&name=${employeeDetails[selectedShift.employeeId].name}
+                                  `
+                            }
                         alt={employeeDetails[selectedShift.employeeId].name}
-                        className="w-16 h-16 md:w-24 md:h-24 rounded-full object-cover"
+                        className="w-16 h-16 md:w-24 md:h-24 rounded-full  object-cover"
                       />
                       <div>
                         <h3 className="font-semibold text-lg md:text-xl">
@@ -322,7 +399,7 @@ const CaLam: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-4 text-sm md:text-base">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm md:text-base">
                       <div>
                         <span className="text-gray-600">Email:</span>
                         <p className="font-medium">
@@ -356,8 +433,8 @@ const CaLam: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="pt-4 border-t">
-                      <div className="space-y-2">
+                    <div className="pt-4 border-t border-gray-400">
+                      <div className="grid grid-cols-1 md:grid-cols-2 space-y-2">
                         <div>
                           <span className="text-gray-600">Ca làm:</span>
                           <p className="font-medium text-base md:text-lg">

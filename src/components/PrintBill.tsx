@@ -72,7 +72,7 @@ export async function printBillToPDF(bill: Bill) {
           <td style="text-align: left; padding: 4px;">${item.productName}</td>
           <td style="text-align: left; padding: 4px;">${item.quantity}</td>
           <td style="text-align: left; padding: 4px;">${item.price.toLocaleString()}</td>
-          <td style="text-align: left; padding: 4px;">${item.afterDiscount.toLocaleString()}</td>
+          <td style="text-align: left; padding: 4px;">${(item.price - item.afterDiscount).toLocaleString()}</td>
           <td style="text-align: left; padding: 4px;">${((item.afterDiscount ? item.afterDiscount : item.price) * item.quantity).toLocaleString()}</td>
         </tr>`
       )
@@ -92,7 +92,7 @@ export async function printBillToPDF(bill: Bill) {
     </div>
     <div style="display: flex; justify-content: space-between; font-size: 14px;">
       <span>Giảm giá</span>
-      <span>${(bill.pointsToUse?? 0)*100}</span>
+      <span>${bill.pointsToUse.toLocaleString()}</span>
     </div>
     <div style="display: flex; justify-content: space-between; font-size: 14px; margin-top: 20px; border-top: 1px solid black;">
 

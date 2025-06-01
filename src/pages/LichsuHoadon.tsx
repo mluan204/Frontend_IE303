@@ -72,8 +72,8 @@ function LishsuHoadon() {
 
   return {
     id: Number(invoice.id),
-    total_cost: invoice.total,
-    after_discount: invoice.total - invoice.discount,
+    total_cost: invoice.total + invoice.discount,
+    after_discount: invoice.total,
     customer: {
       id: 0, // Nếu không có ID thực, gán mặc định
       name: invoice.customerName,
@@ -93,7 +93,7 @@ function LishsuHoadon() {
     createdAt: invoice.date,
     totalQuantity,
     notes: "",
-    pointsToUse: null,
+    pointsToUse: invoice.discount,
   };
 };
 
@@ -278,10 +278,12 @@ function LishsuHoadon() {
 
                         {/* Popup menu */}
                         {menuOpen === invoice.id && (
-                          <div className=" menu-popup absolute right-0 top-full mt-2 min-w-[150px] bg-white shadow-lg rounded-lg border p-2 z-10">
+                          <div className=" menu-popup absolute -right-1 top-full min-w-[150px] bg-white shadow-lg rounded-lg border border-gray-300 z-10">
                             <button
-                              className="flex items-center px-4 py-2 text-sm hover:bg-gray-200 w-full"
-                              onClick={() => handlePrint(invoice)}
+                              className="flex items-center px-4 py-2 text-sm hover:bg-gray-200 rounded-t-lg w-full"
+                              onClick={() => {handlePrint(invoice)
+                                setMenuOpen(null); 
+                              }}
                             >
                               <FontAwesomeIcon
                                 icon={faPrint}
@@ -290,7 +292,7 @@ function LishsuHoadon() {
                               In hóa đơn
                             </button>
                             <button
-                              className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-200 w-full"
+                              className="flex items-center px-4 py-2 text-sm rounded-b-lg text-red-600 hover:bg-gray-200 w-full"
                               onClick={() => {
                                 setConfirmDeleteId(invoice.id);
                                 setMenuOpen(null); // Đóng menu sau khi chọn xóa
@@ -425,8 +427,11 @@ function LishsuHoadon() {
               </div>
 
               {/* Tổng tiền */}
+              <div className="mt-4 text-right mx-10">
+                Tổng thành tiền: {(selectedInvoice.total + selectedInvoice.discount).toLocaleString()}đ
+              </div>
               <div className="mt-4 text-right font-bold mx-10">
-                Tổng tiền: {selectedInvoice.total.toLocaleString()}đ
+                Tiền thanh toán: {selectedInvoice.total.toLocaleString()}đ
               </div>
 
               {/* Nút xóa */}
