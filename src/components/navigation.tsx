@@ -16,8 +16,8 @@ const Navigation = () => {
   const navItems = [
     { path: "/", icon: "fas fa-eye", label: "Tổng quan" },
     { path: "/hang-hoa", icon: "fas fa-box", label: "Hàng hóa" },
-    { path: "/hoa-don", icon: "fas fa-receipt", label: "Hóa đơn" },
     { path: "/combo", icon: "fas fa-layer-group", label: "Combo" },
+    { path: "/hoa-don", icon: "fas fa-receipt", label: "Hóa đơn" },
     { path: "/kho-hang", icon: "fas fa-warehouse", label: "Kho hàng" },
     { path: "/nhan-vien", icon: "fas fa-users", label: "Nhân viên" },
     { path: "/ca-lam", icon: "fas fa-clock", label: "Ca làm" },
@@ -53,7 +53,8 @@ const Navigation = () => {
   return (
     <div className="bg-white shadow-md overflow-visible relative">
       {/* Desktop menu */}
-      <nav className="bg-[#0070F4] flex flex-col md:flex-row items-center justify-between py-2 px-4 md:px-6 xl:flex-row w-full overflow-visible">
+      <nav className="bg-[#0070F4] flex flex-row items-center justify-between py-2 px-4 md:px-6 w-full overflow-visible">
+      {/* <nav className="bg-[#0070F4] flex flex-col md:flex-row items-center justify-between py-2 px-4 md:px-6 xl:flex-row w-full overflow-visible"> */}
         <div className="flex items-center space-x-3">
           <img
             src={Logo}
@@ -63,7 +64,7 @@ const Navigation = () => {
           <span className="font-bold text-xl text-white">JDK Store</span>
         </div>
 
-        <ul className="flex items-center justify-center min-w-max space-x-3 md:space-x-4 lg:space-x-6">
+        <ul className="hidden xl:flex flex items-center justify-center min-w-max space-x-3 md:space-x-4 lg:space-x-6">
           <li>
             <Link
               to="/"
@@ -88,7 +89,7 @@ const Navigation = () => {
               onClick={() => navigate("/hang-hoa")}
             >
               <i className="fas fa-box mr-2"></i> Hàng hóa
-              <i className="fas fa-caret-down ml-1"></i>
+              <i className={`fas ${isProductOpen ? "fa-caret-up" : "fa-caret-down"} ml-1`}></i>
             </div>
             {isProductOpen && (
               <ul className="absolute left-0 top-full bg-[#0070F4] text-white shadow-md z-30 rounded-md overflow-hidden">
@@ -154,7 +155,7 @@ const Navigation = () => {
               onClick={() => navigate("/nhan-vien")}
             >
               <i className="fas fa-users mr-2"></i> Nhân viên
-              <i className="fas fa-caret-down ml-1"></i>
+              <i className={`fas ${isEmployeeOpen ? "fa-caret-up" : "fa-caret-down"} ml-1`}></i>
             </div>
             {isEmployeeOpen && (
               <ul className="absolute left-0 top-full bg-[#0070F4] text-white shadow-md z-50 rounded-md overflow-hidden">
@@ -214,7 +215,7 @@ const Navigation = () => {
               data-testid="hamburger-icon"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              <i className="fas cursor-pointer fa-bars text-xl text-gray-700"></i>
+              <i className="fas cursor-pointer fa-bars text-xl text-white"></i>
             </button>
           </div>
         </div>
