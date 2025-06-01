@@ -202,7 +202,7 @@ const Navigation = () => {
           {/* Account Icon */}
           <button
             data-testid="account-icon"
-            className="border border-gray-200 px-2 py-1 bg-gray-100 hover:bg-gray-300 rounded-full transition-colors"
+            className="border border-gray-200 cursor-pointer px-2 py-1 bg-gray-100 hover:bg-gray-300 rounded-full transition-colors"
             onClick={() => setIsAccountPopupOpen(!isAccountPopupOpen)}
           >
             <i className="fas fa-user text-gray-600"></i>
@@ -210,8 +210,11 @@ const Navigation = () => {
 
           {/* Hamburger icon - mobile only */}
           <div className="xl:hidden">
-            <button data-testid="hamburger-icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-              <i className="fas fa-bars text-xl text-gray-700"></i>
+            <button
+              data-testid="hamburger-icon"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <i className="fas cursor-pointer fa-bars text-xl text-gray-700"></i>
             </button>
           </div>
         </div>
@@ -225,7 +228,7 @@ const Navigation = () => {
             <ul>
               <li>
                 <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 hover:rounded-t-lg"
+                  className="w-full text-left cursor-pointer px-4 py-2 hover:bg-gray-100 hover:rounded-t-lg"
                   onClick={() => {
                     setIsChangePasswordOpen(true);
                     setIsAccountPopupOpen(false);
@@ -237,7 +240,7 @@ const Navigation = () => {
               </li>
               <li>
                 <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 hover:rounded-b-lg"
+                  className="w-full text-left cursor-pointer px-4 py-2 hover:bg-gray-100 hover:rounded-b-lg"
                   onClick={handleLogout}
                 >
                   <i className="fas fa-sign-out-alt text-gray-600 mr-1"></i>{" "}
