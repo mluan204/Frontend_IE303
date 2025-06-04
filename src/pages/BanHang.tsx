@@ -71,7 +71,7 @@ interface Employee {
 
 function BanHang() {
   // State để quản lý giỏ hàng và tìm kiếm
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rawProductList, setRawProductList] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -368,7 +368,6 @@ function BanHang() {
     return total;
   };
 
-  
 
 
 
@@ -414,8 +413,10 @@ function BanHang() {
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <button
+
             onClick={fetchData}
             className="px-4 py-2 cursor-pointer bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+
           >
             Thử lại
           </button>
