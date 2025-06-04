@@ -10,6 +10,7 @@ import { getProductQuantity } from "../service/billApi";
 import { generateProductSuggestions } from "../components/GeminiService";
 import { getAllCustomer } from "../service/customerApi";
 import { getAllEmployees, getWeeklyShifts } from "../service/employeeApi";
+import { getAllComboListProduct } from "../service/comboApi";
 
 // Định nghĩa kiểu dữ liệu cho product
 interface Product {
@@ -21,20 +22,23 @@ interface Product {
   discount?: number; // Giá đã giảm, ví dụ: 5000
 }
 
-type Combo = {
-  products: {
-    id: number;
-    quantity: number;   // số lượng cần để combo hợp lệ
-    discount: number;   // giảm giá áp dụng cho sản phẩm trong combo
-  }[];
-};
+export interface ComboProduct {
+  id: string; // luôn string để thống nhất với product.id trong cart
+  price: number;
+  quantity: number;
+}
+
+export interface Combo {
+  products: ComboProduct[];
+}
+
 
 // Combo: mỗi combo là một nhóm sản phẩm có liên quan
 const comboList = [
   {
     products: [
-      { id: "1", price: 8000, quantity: 1 },
-      { id: "2", price: 12000, quantity: 1 },
+      { id: "7", price: 8000, quantity: 1 },
+      { id: "14", price: 12000, quantity: 1 },
       { id: "4", price: 15000, quantity: 1 },
     ],
   },
@@ -82,6 +86,130 @@ function BanHang() {
   
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [employees, setEmployees] = useState<Employee[]>([]);
+    const [comboList, setComboList] = useState<Combo[]>([]);
+
+    const fetchDataCombo = async () => {
+    try{
+      setLoading(true)
+      const res = await getAllComboListProduct();
+      console.log("Raw combo data structure:", JSON.stringify(res, null, 2));
+      
+      // Map the response data to match the Combo interface with safe checks
+      const mappedComboList = res.map((combo: any) => {
+        if (!combo.products || !Array.isArray(combo.products)) {
+          console.warn("Invalid combo structure:", combo);
+          return { products: [] };
+        }
+        
+        return {
+          products: combo.products.map((product: any) => {
+            // Log the product structure if id is missing
+            if (!product.id && !product.productId) {
+              console.warn("Product missing ID:", product);
+            }
+            
+            return {
+              id: (product.id || product.productId || '').toString(), // Try both id and productId with fallback
+              price: product.price || 0,
+              quantity: product.quantity || 1
+            };
+          }).filter(p => p.id) // Remove any products without valid IDs
+        };
+      });
+      
+      console.log("Mapped combo list structure:", JSON.stringify(mappedComboList, null, 2));
+      setComboList(mappedComboList);
+
+      // Save combo data to localStorage with current date
+      const today = new Date().toISOString().split("T")[0];
+      localStorage.setItem("lastComboFetchDate", today);
+      localStorage.setItem("combos", JSON.stringify(mappedComboList));
+    }catch(err){
+       console.error("Error fetching data:", err);
+       console.error("Error details:", {
+         name: err.name,
+         message: err.message,
+         stack: err.stack
+       });
+      setError("Không thể tải danh sách combo. Vui lòng thử lại sau.");
+    }finally {
+      setLoading(false);
+    }
+  }
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await fetchAllProduct();
+      setRawProductList(result);
+
+      const mapped: Product[] = result.map((item: any) => ({
+        id: item.id.toString(),
+        name: item.name,
+        price: item.price ?? 100000,
+        image: item.image,
+        quantity: 0,
+      }));
+      setProducts(mapped);
+
+      const resultCustomer = await getAllCustomer();
+      const resultEmployee = await getAllEmployees();
+
+      if (resultCustomer) setCustomers(resultCustomer);
+      if (resultEmployee) setEmployees(resultEmployee);
+
+      // Lưu dữ liệu và ngày gọi vào localStorage
+      const today = new Date().toISOString().split("T")[0];
+      localStorage.setItem("lastFetchDate", today);
+      localStorage.setItem("products", JSON.stringify(mapped));
+      localStorage.setItem("customers", JSON.stringify(resultCustomer));
+      localStorage.setItem("employees", JSON.stringify(resultEmployee));
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const loadData = () => {
+      const today = new Date().toISOString().split("T")[0];
+      const lastFetchDate = localStorage.getItem("lastFetchDate");
+      const lastComboFetchDate = localStorage.getItem("lastComboFetchDate");
+
+      // Lấy dữ liệu từ localStorage
+      const localProducts = localStorage.getItem("products");
+      const localCustomers = localStorage.getItem("customers");
+      const localEmployees = localStorage.getItem("employees");
+      const localCombos = localStorage.getItem("combos");
+
+      // Nếu có dữ liệu trong localStorage thì load vào state
+      if (localProducts && localCustomers && localEmployees) {
+        setProducts(JSON.parse(localProducts));
+        setCustomers(JSON.parse(localCustomers));
+        setEmployees(JSON.parse(localEmployees));
+      }
+
+      // Load combo data from localStorage if available
+      if (localCombos) {
+        setComboList(JSON.parse(localCombos));
+      }
+
+      // Nếu chưa fetch hôm nay thì gọi API
+      if (lastFetchDate !== today) {
+        fetchData();
+      }
+
+      // Fetch combo data if not fetched today
+      if (lastComboFetchDate !== today) {
+        fetchDataCombo();
+      }
+    };
+
+    loadData();
+  }, []);
 
   const addToCart = async (product: Product) => {
     setCart((prevCart) => {
@@ -102,14 +230,15 @@ function BanHang() {
     // Bước 2: Kiểm tra và áp dụng combo
     for (const combo of comboList) {
       const isComboSatisfied = combo.products.every((comboItem) => {
-        const itemInCart = updatedCart.find((ci) => ci.id === comboItem.id);
+        const itemInCart = updatedCart.find((ci) => ci.id == comboItem.id);
         return itemInCart && itemInCart.quantity >= comboItem.quantity;
       });
 
       if (isComboSatisfied) {
         // Áp dụng discount cho các sản phẩm thuộc combo
         updatedCart = updatedCart.map((item) => {
-          const comboItem = combo.products.find((p) => p.id === item.id);
+          const comboItem = combo.products.find((p) => p.id == item.id);
+          console.log("comboitem", comboItem)
           if (comboItem) {
             return {
               ...item,
@@ -239,69 +368,6 @@ function BanHang() {
     return total;
   };
 
-  const fetchData = async () => {
-    try {
-      setError(null);
-
-      const result = await fetchAllProduct();
-      setRawProductList(result);
-
-      const mapped: Product[] = result.map((item: any) => ({
-        id: item.id.toString(),
-        name: item.name,
-        price: item.price ?? 100000,
-        image: item.image,
-        quantity: 0,
-      }));
-      setProducts(mapped);
-
-      const resultCustomer = await getAllCustomer();
-      const resultEmployee = await getAllEmployees();
-
-      if (resultCustomer) setCustomers(resultCustomer);
-      if (resultEmployee) setEmployees(resultEmployee);
-
-      // Lưu dữ liệu và ngày gọi vào localStorage
-      const today = new Date().toISOString().split("T")[0];
-      localStorage.setItem("lastFetchDate", today);
-      localStorage.setItem("products", JSON.stringify(mapped));
-      localStorage.setItem("customers", JSON.stringify(resultCustomer));
-      localStorage.setItem("employees", JSON.stringify(resultEmployee));
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setError("Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    setLoading(true);
-    const loadData = () => {
-      const today = new Date().toISOString().split("T")[0];
-      const lastFetchDate = localStorage.getItem("lastFetchDate");
-
-      // Lấy dữ liệu từ localStorage
-      const localProducts = localStorage.getItem("products");
-      const localCustomers = localStorage.getItem("customers");
-      const localEmployees = localStorage.getItem("employees");
-
-      // Nếu có dữ liệu trong localStorage thì load vào state
-      if (localProducts && localCustomers && localEmployees) {
-        setProducts(JSON.parse(localProducts));
-        setCustomers(JSON.parse(localCustomers));
-        setEmployees(JSON.parse(localEmployees));
-      }
-
-      // Nếu chưa fetch hôm nay thì gọi API
-      if (lastFetchDate !== today) {
-        fetchData();
-      }
-      setLoading(false);
-    };
-
-    loadData();
-  }, []);
 
 
 
@@ -347,11 +413,10 @@ function BanHang() {
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <button
-            onClick={() => {
-              setLoading(true);
-              fetchData();
-            }}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+
+            onClick={fetchData}
+            className="px-4 py-2 cursor-pointer bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+
           >
             Thử lại
           </button>
@@ -368,7 +433,7 @@ function BanHang() {
       {/* Nút xem hóa đơn trên mobile */}
       {!showMobileBill && !showPopup && (
         <button
-          className="lg:hidden fixed top-10 right-0 z-50 bg-[#007bff] text-white px-4 py-2 rounded shadow"
+          className="lg:hidden cursor-pointer fixed top-10 right-0 z-50 bg-[#007bff] text-white px-4 py-2 rounded shadow"
           onClick={() => setShowMobileBill(true)}
         >
           Xem hóa đơn ({cart.length})
@@ -417,10 +482,14 @@ function BanHang() {
               )
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((product) => (
-                <li key={product.id}>
+                <li key={product.id} className=" cursor-pointer">
                   <ProductCard
+                    id={product.id}
                     {...product}
-                    addToCart={() => addToCart(product)}
+                    addToCart={() => {
+                      addToCart(product);
+                      console.log("onclik",comboList);
+                    }}
                   />
                 </li>
               ))}
@@ -534,7 +603,7 @@ function BanHang() {
                                 addToCart(foundProduct);
                               }
                             }}
-                            className="text-blue-700 w-1/6 hover:underline text-sm"
+                            className="text-blue-700 cursor-pointer w-1/6 hover:underline text-sm"
                           >
                             Thêm
                           </button>
@@ -549,7 +618,7 @@ function BanHang() {
         </ul>
 
         {/* Suggested Products Section */}
-        {suggestedProducts.length > 0 && (
+        {suggestedProducts.length > 0 && cart.length > 0 && (
           <div className="p-4 border-t border-gray-200">
             <h3 className="text-lg font-semibold mb-2">Gợi ý cho bạn</h3>
             <div className="space-y-2">
@@ -573,7 +642,7 @@ function BanHang() {
                   </div>
                   <button
                     onClick={() => addToCart(product)}
-                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="px-3 py-1 bg-blue-500 cursor-pointer text-white rounded hover:bg-blue-600"
                   >
                     Thêm
                   </button>
@@ -589,7 +658,7 @@ function BanHang() {
           </div>
           <div className="flex flex-col gap-2 mt-2">
             <button
-              className={`w-full ${cart.length === 0 ? 'bg-gray-400' : 'bg-blue-500'} text-white py-2 px-4 rounded`}
+              className={`w-full cursor-pointer ${cart.length === 0 ? 'bg-gray-400' : 'bg-blue-500'} text-white py-2 px-4 rounded`}
               disabled={cart.length === 0}
               onClick={() => {
                 setShowPopup(true);
@@ -600,7 +669,7 @@ function BanHang() {
             </button>
 
             <button
-              className="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded lg:hidden"
+              className="w-full cursor-pointer bg-gray-200 text-gray-700 py-2 px-4 rounded lg:hidden"
               onClick={() => setShowMobileBill(false)}
             >
               Đóng hóa đơn
@@ -612,7 +681,7 @@ function BanHang() {
       {/* Overlay và popup */}
       {showPopup && (
         <div
-          className="fixed inset-0 bg-black opacity-60 backdrop-blur-sm z-10"
+          className="fixed cursor-pointer inset-0 bg-black opacity-60 backdrop-blur-sm z-10"
           onClick={() => setShowPopup(false)}
         ></div>
       )}

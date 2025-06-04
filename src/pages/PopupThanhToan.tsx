@@ -19,6 +19,7 @@ import type { Shift } from "../service/employeeApi";
 import { createCustomer } from "../service/customerApi";
 import {printBillToPDF} from "../components/PrintBill";
 
+
 const paymentMethods = [
   { label: "Tiền mặt", icon: faMoneyBillWave },
   { label: "Chuyển khoản", icon: faQrcode },
@@ -92,6 +93,46 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [open, setOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const inputRef = useRef(null);
+
+  // 👉 Bắt sự kiện click ra ngoài input
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (inputRef.current && !inputRef.current.contains(event.target)) {
+        setIsSearching(false);
+      }
+    }
+
+    if (isSearching) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSearching]);
+  const inputWrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        inputWrapperRef.current &&
+        !inputWrapperRef.current.contains(event.target)
+      ) {
+        setIsSearching(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+
   const filteredCustomers = customers.filter((customer) =>
     customer.phone_number.toLowerCase().includes(search.toLowerCase())
   );
@@ -147,7 +188,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
         const newBill: Bill = {
           id: response,
           total_cost: total,
-          after_discount: total - discount*100,
+          after_discount: total - discount,
           customer: customers.find((c) => c.id === payload.customer.id)!,
           employee: employees.find((e) => e.id === payload.employee.id)!,
           isDeleted: false,
@@ -346,10 +387,6 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
         </div>
       );
     }
-    
-
-
-
   return (
     <div className="fixed inset-0 flex items-center justify-center z-30 bg-black/50 p-4">
       
@@ -362,7 +399,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Thanh toán - {total.toLocaleString()}đ</h2>
-          <button onClick={onClose} className="text-gray-600 hover:text-black text-xl">×</button>
+          <button onClick={onClose} className="text-gray-600 hover:text-black text-3xl cursor-pointer">×</button>
         </div>
 
         <div className="flex flex-col md:flex-row  gap-4">
@@ -373,7 +410,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
               <button
                 key={method.label}
                 onClick={() => setSelectedMethod(method.label)}
-                className={`flex items-center px-3 py-2 w-full border rounded text-sm ${
+                className={`flex items-center px-3 py-2 w-full border rounded text-sm cursor-pointer ${
                   selectedMethod === method.label ? "bg-blue-500 text-white" : "hover:bg-gray-100"
                 }`}
               >
@@ -392,7 +429,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
               <div className="flex items-center gap-2 w-1/2 max-h-44 overflow-auto relative">
                 <FontAwesomeIcon icon={faUserTie} className=" absolute ml-2 mr-1 text-gray-500" />
                 <select
-                  className="border rounded-lg pl-6 pr-3 py-2 w-full text-sm focus:outline-none max-h-44 overflow-y-auto"
+                  className="border cursor-pointer rounded-lg pl-6 pr-3 py-2 w-full text-sm focus:outline-none max-h-44 overflow-y-auto"
                   value={selectedEmployee?.id ?? ''}
                   onChange={(e) => {
                     const id = Number(e.target.value);
@@ -402,7 +439,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
                 >
                   <option value="">Chọn nhân viên</option>
                     {employeesToday.map((emp) => (  
-                      <option key={emp.id} value={emp.id}>
+                      <option key={emp.id} value={emp.id} className=" cursor-pointer">
                         {emp.name}
                       </option>
                     ))}
@@ -411,27 +448,42 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
               </div>
 
               {/* Tìm và chọn khách hàng */}
-              <div className="flex items-center gap-2 w-1/2 relative">
+              <div className="flex items-center gap-2 w-1/2 relative" ref={inputWrapperRef} >
                 <FontAwesomeIcon icon={faUserTag} className="  absolute ml-2 mr-1 text-gray-500" />
-                <input
-                  type="text"
-                  placeholder="Tìm khách hàng..."
-                  value={selectedCustomer ? selectedCustomer.name : search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setSelectedCustomer(null); // Clear khi đang tìm mới
-                  }}
-                  className="border rounded-lg pl-8 pr-3 py-2 w-full text-sm focus:outline-none"
-                  readOnly={!!selectedCustomer}
-                  onClick={() => selectedCustomer && setSelectedCustomer(null)} // Bỏ chọn khi click vào ô đã chọn
-                />
+                 {!isSearching && selectedCustomer ? (
+                  // Khi có khách hàng và không ở chế độ tìm kiếm → hiện tên
+                  <div
+                    onClick={() =>{
+                       setIsSearching(true);
+                        setOpen(true)
+                    }}
+                    className="cursor-pointer border rounded-lg pl-8 pr-3 py-2 w-full text-sm"
+                  >                   
+                    {selectedCustomer.name}
+                  </div>
+                ) : (
+                  // Khi đang tìm kiếm hoặc chưa chọn ai → hiện input
+                  <input
+                    type="text"
+                    value={search}                  
+                    onChange={(e) => {
+                      setOpen(false);
+                      setSearch(e.target.value);
+                      setSelectedCustomer(null); // bỏ chọn nếu đang tìm mới
+                    }}
+                    placeholder={selectedCustomer ? selectedCustomer.name : "Tìm khách hàng..."}
+                    autoFocus
+                    className="border cursor-pointer rounded-lg pl-8 pr-3 py-2 w-full text-sm focus:outline-none"
+                  />
+                )}
                 <button
                   onClick={() => setIsAddingCustomer(true)}
                   className=" absolute end-2 top-1.5 hover:text-blue-600 text-xl"
                   title="Thêm khách hàng"
                 >
-                  <FontAwesomeIcon icon={faPlus} />
+                  <FontAwesomeIcon icon={faPlus} className="cursor-pointer"/>
                 </button>
+               
 
                 {/* Gợi ý danh sách khách hàng khi chưa chọn */}
                 {!selectedCustomer && search && (
@@ -444,6 +496,8 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
                           onClick={() => {
                             setSelectedCustomer(c);
                             setSearch('');
+                            setIsSearching(false);
+                            setOpen(true);
                           }}
                         >
                           {c.name}
@@ -456,11 +510,40 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
                 )}
               </div>
             </div>
+            {/* Modal thông tin khách hàng */}
+            {
+              open && selectedCustomer && selectedCustomer?.id!==0  &&(
+                <div className="border p-4 mb-4 rounded bg-gray-50">
+                <div className="flex justify-between">
+                  <h3 className="font-bold mb-2">Thông tin khách hàng </h3>
+                  <button onClick={() => setOpen(false)} className="text-gray-600 hover:text-black text-2xl cursor-pointer">×</button>
+                </div>
+                <div className="flex flex-col md:flex-row md:justify-between gap-4 text-sm">
+                  <div className="w-full md:w-1/4">
+                    <label className="block  text-sm font-light text-gray-600 mb-1">Tên khách hàng</label>
+                    <div className="font-semibold">{selectedCustomer.name}</div>
+                  </div>
+                  <div className="w-full md:w-1/4">
+                    <label className="block text-sm font-light text-gray-600 mb-1">Số điện thoại</label>
+                    <div className="font-semibold">{selectedCustomer.phone_number}</div>                    
+                  </div>
+                  <div className="w-full md:w-1/4">
+                    <label className="block  text-sm font-light text-gray-600 mb-1">Giới tính</label>
+                    <div className="font-semibold">{customer.gender? "Nam": "Nữ"}</div>
+                  </div>
+                  <div className="w-full md:w-1/4">
+                    <label className="block  text-sm font-light text-gray-600 mb-1">Điểm số</label>
+                    <div className="font-semibold">{selectedCustomer.score}</div>    
+                  </div>
+                </div>
+              </div>
+              )
+            }
             {isAddingCustomer && (
               <div className="border p-4 mb-4 rounded bg-gray-50">
                 <div className="flex justify-between">
                   <h3 className="font-bold mb-2">Thêm khách hàng mới</h3>
-                  <button onClick={() => setIsAddingCustomer(false)} className="text-gray-600 hover:text-black text-xl">×</button>
+                  <button onClick={() => setIsAddingCustomer(false)} className="text-gray-600 hover:text-black text-2xl cursor-pointer">×</button>
                 </div>
                 <div className="flex flex-col md:flex-row md:justify-between gap-4 text-sm">
                   <div className="w-full md:w-1/3">
@@ -493,6 +576,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
                           value="male"
                           checked={customer.gender === "male"}
                           onChange={handleCustomerInput}
+                          className=" cursor-pointer"
                         />
                         Nam
                       </label>
@@ -503,6 +587,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
                           value="female"
                           checked={customer.gender === "female"}
                           onChange={handleCustomerInput}
+                          className=" cursor-pointer"
                         />
                         Nữ
                       </label>
@@ -514,7 +599,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
                         handleSaveCustomer();
 
                       }}
-                      className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
+                      className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded  cursor-pointer"
                     >
                       Lưu
                     </button>
@@ -571,14 +656,14 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
                   <button
                     key={amount}
                     onClick={() => setReceived(amount)}
-                    className="border px-4 py-2 rounded-4xl focus:bg-blue-500 focus:text-white hover:bg-blue-400 hover:text-white font-medium"
+                    className="border cursor-pointer px-4 py-2 rounded-4xl focus:bg-blue-500 focus:text-white hover:bg-blue-400 hover:text-white font-medium"
                   >
                     {amount.toLocaleString("vi-VN")}đ
                   </button>
                 ))}
               </div>
             )}
-            { QRCode && (
+            { QRCode  &&  selectedMethod === "Chuyển khoản" && (
               <div className="flex flex-wrap items-center justify-center gap-4 py-3 mr-2 md:mr-7 ml-2 md:ml-5">
               <img src={QRCode} alt="QR Code" className="w-44 h-44" />
               </div>
@@ -588,7 +673,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
             {/* Xác nhận thanh toán */}
             { selectedMethod !== "Chuyển khoản" && (
               <div className="mt-6">
-                <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded"
+                <button className="w-full cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded"
                   onClick={() => {
                     if (!selectedEmployee || !selectedCustomer) {
                       alert("Vui lòng chọn nhân viên và khách hàng.");
@@ -603,7 +688,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
               )}
             { selectedMethod === "Chuyển khoản" && QRCode === "" && selectedCustomer && selectedEmployee && (
               <div className="mt-6">
-                <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded"
+                <button className="w-full cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded"
                   onClick={() => {
                     if (!selectedEmployee || !selectedCustomer) {
                       alert("Vui lòng chọn nhân viên và khách hàng.");

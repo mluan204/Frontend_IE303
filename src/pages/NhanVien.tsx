@@ -308,6 +308,37 @@ function NhanVien() {
     }
   }, [employees]);
 
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+
+  const handleDeleteClick = useCallback((employee: Employee) => {
+    setEmployeeToDelete(employee);
+    setIsDeleteModalOpen(true);
+  }, []);
+
+  const handleDeleteCancel = useCallback(() => {
+    setIsDeleteModalOpen(false);
+    setEmployeeToDelete(null);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!employeeToDelete) return;
+    try {
+      setDeleteLoading(true);
+      await deleteEmployeeById(employeeToDelete.id);
+      removeEmployee(employeeToDelete.id);
+      setIsDeleteModalOpen(false);
+      setEmployeeToDelete(null);
+    } catch (error) {
+      console.error("Error deleting employee:", error);
+      alert("Có lỗi xảy ra khi xóa nhân viên!");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [employeeToDelete, removeEmployee]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -482,7 +513,7 @@ function NhanVien() {
                               Chi tiết
                             </button>
                             <button
-                              onClick={() => handleDeleteEmployee(employee.id)}
+                              onClick={() => handleDeleteClick(employee)}
                               className="text-red-600 hover:text-red-900 cursor-pointer"
                             >
                               <FontAwesomeIcon icon={faTrash} className="mr-1" />
@@ -583,6 +614,42 @@ function NhanVien() {
         onClose={closeAddEmployee}
         onEmployeeAdded={addEmployee}
       />
+
+      {isDeleteModalOpen && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div className="bg-white rounded-lg max-w-md w-full p-6">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">
+        Xác nhận xóa nhân viên
+      </h3>
+      <p className="text-sm text-gray-500 mb-4">
+        Bạn có chắc chắn muốn xóa nhân viên{" "}
+        <strong>{employeeToDelete?.name}</strong> (Mã:{" "}
+        <strong>{employeeToDelete?.id}</strong>)? Hành động này không thể hoàn tác.
+      </p>
+      <div className="flex justify-end space-x-4">
+        <button
+          onClick={handleDeleteCancel}
+          disabled={deleteLoading}
+          className="px-4 py-2 cursor-pointer text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+        >
+          Hủy
+        </button>
+        <button
+          onClick={handleDeleteConfirm}
+          disabled={deleteLoading}
+          className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+        >
+          {deleteLoading ? (
+            <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+          ) : (
+            "Xác nhận"
+          )}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

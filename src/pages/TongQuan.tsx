@@ -324,7 +324,7 @@ function TongQuan() {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors
+                    className={`px-3 py-1.5 rounded-md text-sm cursor-pointer font-medium transition-colors
                       ${
                         activeTab === tab
                           ? "bg-white text-blue-600 shadow-sm"
@@ -340,7 +340,7 @@ function TongQuan() {
                   <button
                     key={range}
                     onClick={() => setTimeRange(range)}
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors
+                    className={`px-3 py-1.5 rounded-md text-sm cursor-pointer font-medium transition-colors
                       ${
                         timeRange === range
                           ? "bg-white text-blue-600 shadow-sm"

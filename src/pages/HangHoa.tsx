@@ -56,7 +56,6 @@ function HangHoa() {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-
   //loading
   const [isLoading, setIsLoading] = useState(true);
   const [loadingSearch, setLoadingSearch] = useState(false);
@@ -259,20 +258,20 @@ function HangHoa() {
             <h1 className="text-xl font-bold whitespace-nowrap">Hàng hóa</h1>
           </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full ">
-          {/* Tìm kiếm */}
-          <div className="relative w-full sm:w-1/2">
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              <FontAwesomeIcon icon={faSearch} />
-            </span>
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
-              value={searchInput}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSearchInput(value);
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full ">
+            {/* Tìm kiếm */}
+            <div className="relative w-full sm:w-1/2">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <FontAwesomeIcon icon={faSearch} />
+              </span>
+              <input
+                type="text"
+                placeholder="Tìm kiếm sản phẩm..."
+                className="border p-2 pl-10 rounded w-full bg-white focus:outline-none"
+                value={searchInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSearchInput(value);
 
                   if (value.trim() === "") {
                     setSearch(""); // Reset tìm kiếm
@@ -316,43 +315,8 @@ function HangHoa() {
           </div>
         </div>
 
-      {/* Sidebar mobile  */}
-      <div className="mb-4 md:hidden bg-white shadow rounded-lg p-4">
-        <h2 className="font-bold mb-2">Nhóm hàng</h2>
-        <div className="flex items-center gap-2 border-b px-2 py-1 border-gray-400 mb-2">          
-          <input
-            type="text"
-            placeholder="Tìm nhóm hàng"
-            value={searchCategory}
-            onChange={(e) => setSearchCategory(e.target.value)}
-            className="flex-1 outline-none "
-          />
-          <FontAwesomeIcon icon={faSearch} className="text-gray-500" />
-        </div>
-
-        <ul className="overflow-y-auto">
-          {categories
-            .filter((c) => removeVietnameseTones(c.name.toLowerCase()).includes(removeVietnameseTones(searchCategory.toLowerCase())))
-            .map((category) => (
-              <li
-                key={category.id}
-                className={`p-2 my-1 cursor-pointer rounded ${
-                  selectedCategoryId === category.id ? "bg-blue-100 " : "hover:bg-gray-100"
-                }`}
-                onClick={() => {
-                  setSelectedCategoryId(category.id);
-                  setCurrentPage(1); // reset về trang đầu khi chọn category mới
-                }}
-              >
-                {category.name}
-              </li>
-            ))}
-        </ul>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-4">
-        {/* Sidebar desktop */}
-        <div className="hidden md:block w-full md:w-1/4 bg-white shadow rounded-lg p-4">
+        {/* Sidebar mobile  */}
+        <div className="mb-4 md:hidden bg-white shadow rounded-lg p-4">
           <h2 className="font-bold mb-2">Nhóm hàng</h2>
           <div className="flex items-center gap-2 border-b px-2 py-1 border-gray-400 mb-2">
             <input
@@ -360,30 +324,77 @@ function HangHoa() {
               placeholder="Tìm nhóm hàng"
               value={searchCategory}
               onChange={(e) => setSearchCategory(e.target.value)}
-              className="flex-1 outline-none  "
+              className="flex-1 outline-none "
             />
             <FontAwesomeIcon icon={faSearch} className="text-gray-500" />
           </div>
-          
+
           <ul className="overflow-y-auto">
             {categories
-              .filter((c) => removeVietnameseTones(c.name.toLowerCase()).includes(removeVietnameseTones(searchCategory.toLowerCase())))
+              .filter((c) =>
+                removeVietnameseTones(c.name.toLowerCase()).includes(
+                  removeVietnameseTones(searchCategory.toLowerCase())
+                )
+              )
               .map((category) => (
                 <li
                   key={category.id}
                   className={`p-2 my-1 cursor-pointer rounded ${
-                  selectedCategoryId === category.id ? "bg-blue-100 " : "hover:bg-gray-100"
-                }`}
-                onClick={() => {
-                  setSelectedCategoryId(category.id);
-                  setCurrentPage(1); // reset về trang đầu khi chọn category mới
-                }}
+                    selectedCategoryId === category.id
+                      ? "bg-blue-100 "
+                      : "hover:bg-gray-100"
+                  }`}
+                  onClick={() => {
+                    setSelectedCategoryId(category.id);
+                    setCurrentPage(1); // reset về trang đầu khi chọn category mới
+                  }}
                 >
                   {category.name}
                 </li>
               ))}
           </ul>
         </div>
+
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Sidebar desktop */}
+          <div className="hidden md:block w-full md:w-1/4 bg-white shadow rounded-lg p-4">
+            <h2 className="font-bold mb-2">Nhóm hàng</h2>
+            <div className="flex items-center gap-2 border-b px-2 py-1 border-gray-400 mb-2">
+              <input
+                type="text"
+                placeholder="Tìm nhóm hàng"
+                value={searchCategory}
+                onChange={(e) => setSearchCategory(e.target.value)}
+                className="flex-1 outline-none  "
+              />
+              <FontAwesomeIcon icon={faSearch} className="text-gray-500" />
+            </div>
+
+            <ul className="overflow-y-auto">
+              {categories
+                .filter((c) =>
+                  removeVietnameseTones(c.name.toLowerCase()).includes(
+                    removeVietnameseTones(searchCategory.toLowerCase())
+                  )
+                )
+                .map((category) => (
+                  <li
+                    key={category.id}
+                    className={`p-2 my-1 cursor-pointer rounded ${
+                      selectedCategoryId === category.id
+                        ? "bg-blue-100 "
+                        : "hover:bg-gray-100"
+                    }`}
+                    onClick={() => {
+                      setSelectedCategoryId(category.id);
+                      setCurrentPage(1); // reset về trang đầu khi chọn category mới
+                    }}
+                  >
+                    {category.name}
+                  </li>
+                ))}
+            </ul>
+          </div>
 
           {/* Table content */}
           <div className="w-full md:w-3/4">
@@ -412,7 +423,7 @@ function HangHoa() {
                         <tr>
                           <th className="px-6 py-3"></th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                            Mã sản phẩm
+                            Mã SP
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                             Tên sản phẩm
@@ -459,7 +470,7 @@ function HangHoa() {
                             <td className="px-6 py-4 space-x-4">
                               <button
                                 onClick={() => handleOpenModal(product)}
-                                className="text-blue-600 hover:text-blue-900"
+                                className="text-blue-600 hover:text-blue-900 cursor-pointer"
                               >
                                 <FontAwesomeIcon
                                   icon={faEye}
@@ -467,8 +478,9 @@ function HangHoa() {
                                 />{" "}
                                 Chi tiết
                               </button>
-                              <button onClick={() => handleDeleteClick(product)}
-                                className="text-red-600 hover:text-red-900"
+                              <button
+                                onClick={() => handleDeleteClick(product)}
+                                className="text-red-600 hover:text-red-900 cursor-pointer"
                               >
                                 <FontAwesomeIcon
                                   icon={faTrash}
@@ -610,7 +622,8 @@ function HangHoa() {
             </h3>
             <p className="text-sm text-gray-500 mb-4">
               Bạn có chắc chắn muốn xóa sản phẩm{" "}
-              <strong>{productToDelete?.name}</strong>? Hành động này không thể hoàn tác.
+              <strong>{productToDelete?.name}</strong>? Hành động này không thể
+              hoàn tác.
             </p>
             <div className="flex justify-end space-x-4">
               <button
@@ -635,7 +648,6 @@ function HangHoa() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

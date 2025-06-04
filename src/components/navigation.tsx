@@ -16,8 +16,8 @@ const Navigation = () => {
   const navItems = [
     { path: "/", icon: "fas fa-eye", label: "Tổng quan" },
     { path: "/hang-hoa", icon: "fas fa-box", label: "Hàng hóa" },
-    { path: "/hoa-don", icon: "fas fa-receipt", label: "Hóa đơn" },
     { path: "/combo", icon: "fas fa-layer-group", label: "Combo" },
+    { path: "/hoa-don", icon: "fas fa-receipt", label: "Hóa đơn" },
     { path: "/kho-hang", icon: "fas fa-warehouse", label: "Kho hàng" },
     { path: "/nhan-vien", icon: "fas fa-users", label: "Nhân viên" },
     { path: "/ca-lam", icon: "fas fa-clock", label: "Ca làm" },
@@ -53,7 +53,8 @@ const Navigation = () => {
   return (
     <div className="bg-white shadow-md overflow-visible relative">
       {/* Desktop menu */}
-      <nav className="bg-[#0070F4] flex flex-col md:flex-row items-center justify-between py-2 px-4 md:px-6 xl:flex-row w-full overflow-visible">
+      <nav className="bg-[#0070F4] flex flex-row items-center justify-between py-2 px-4 md:px-6 w-full overflow-visible">
+      {/* <nav className="bg-[#0070F4] flex flex-col md:flex-row items-center justify-between py-2 px-4 md:px-6 xl:flex-row w-full overflow-visible"> */}
         <div className="flex items-center space-x-3">
           <img
             src={Logo}
@@ -63,7 +64,7 @@ const Navigation = () => {
           <span className="font-bold text-xl text-white">JDK Store</span>
         </div>
 
-        <ul className="flex items-center justify-center min-w-max space-x-3 md:space-x-4 lg:space-x-6">
+        <ul className="hidden xl:flex flex items-center justify-center min-w-max space-x-3 md:space-x-4 lg:space-x-6">
           <li>
             <Link
               to="/"
@@ -88,7 +89,7 @@ const Navigation = () => {
               onClick={() => navigate("/hang-hoa")}
             >
               <i className="fas fa-box mr-2"></i> Hàng hóa
-              <i className="fas fa-caret-down ml-1"></i>
+              <i className={`fas ${isProductOpen ? "fa-caret-up" : "fa-caret-down"} ml-1`}></i>
             </div>
             {isProductOpen && (
               <ul className="absolute left-0 top-full bg-[#0070F4] text-white shadow-md z-30 rounded-md overflow-hidden">
@@ -154,7 +155,7 @@ const Navigation = () => {
               onClick={() => navigate("/nhan-vien")}
             >
               <i className="fas fa-users mr-2"></i> Nhân viên
-              <i className="fas fa-caret-down ml-1"></i>
+              <i className={`fas ${isEmployeeOpen ? "fa-caret-up" : "fa-caret-down"} ml-1`}></i>
             </div>
             {isEmployeeOpen && (
               <ul className="absolute left-0 top-full bg-[#0070F4] text-white shadow-md z-50 rounded-md overflow-hidden">
@@ -202,7 +203,7 @@ const Navigation = () => {
           {/* Account Icon */}
           <button
             data-testid="account-icon"
-            className="border border-gray-200 px-2 py-1 bg-gray-100 hover:bg-gray-300 rounded-full transition-colors"
+            className="border border-gray-200 cursor-pointer px-2 py-1 bg-gray-100 hover:bg-gray-300 rounded-full transition-colors"
             onClick={() => setIsAccountPopupOpen(!isAccountPopupOpen)}
           >
             <i className="fas fa-user text-gray-600"></i>
@@ -210,8 +211,11 @@ const Navigation = () => {
 
           {/* Hamburger icon - mobile only */}
           <div className="xl:hidden">
-            <button data-testid="hamburger-icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-              <i className="fas fa-bars text-xl text-gray-700"></i>
+            <button
+              data-testid="hamburger-icon"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <i className="fas cursor-pointer fa-bars text-xl text-white"></i>
             </button>
           </div>
         </div>
@@ -225,7 +229,7 @@ const Navigation = () => {
             <ul>
               <li>
                 <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 hover:rounded-t-lg"
+                  className="w-full text-left cursor-pointer px-4 py-2 hover:bg-gray-100 hover:rounded-t-lg"
                   onClick={() => {
                     setIsChangePasswordOpen(true);
                     setIsAccountPopupOpen(false);
@@ -237,7 +241,7 @@ const Navigation = () => {
               </li>
               <li>
                 <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 hover:rounded-b-lg"
+                  className="w-full text-left cursor-pointer px-4 py-2 hover:bg-gray-100 hover:rounded-b-lg"
                   onClick={handleLogout}
                 >
                   <i className="fas fa-sign-out-alt text-gray-600 mr-1"></i>{" "}

@@ -13,6 +13,7 @@ import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { Helmet } from "react-helmet";
 import { set } from "date-fns";
+import { printBillToPDF } from "../components/PrintBill";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -35,6 +36,26 @@ interface Invoice {
   }[];
 }
 
+type Bill = {
+  id: number;
+  total_cost: number;
+  after_discount: number;
+  customer: { id: number; name: string, phone_number: string };
+  employee: { id: number; name: string };
+  billDetails: {
+    productId: number;
+    productName: string;
+    price: number;
+    afterDiscount: number;
+    quantity: number;
+  }[];
+  createdAt: string;
+  totalQuantity: number;
+  notes: string;
+  pointsToUse: number | null;
+};
+
+
 function LishsuHoadon() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,9 +66,41 @@ function LishsuHoadon() {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handlePrint = (id: string) => {
-    alert(`Đang in hóa đơn ${id}...`);
+
+  const mapInvoiceToBill = (invoice: Invoice): Bill => {
+  const totalQuantity = invoice.items.reduce((sum, item) => sum + item.quantity, 0);
+
+  return {
+    id: Number(invoice.id),
+    total_cost: invoice.total + invoice.discount,
+    after_discount: invoice.total,
+    customer: {
+      id: 0, // Nếu không có ID thực, gán mặc định
+      name: invoice.customerName,
+      phone_number: "",
+    },
+    employee: {
+      id: 0,
+      name: invoice.staffName,
+    },
+    billDetails: invoice.items.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      price: item.price,
+      afterDiscount: item.after_discount,
+      quantity: item.quantity,
+    })),
+    createdAt: invoice.date,
+    totalQuantity,
+    notes: "",
+    pointsToUse: invoice.discount,
   };
+};
+
+ const handlePrint = (invoice: Invoice) => {
+  const billData = mapInvoiceToBill(invoice);
+  printBillToPDF(billData);
+};
 
   const fetchData = async () => {
   try {
@@ -167,7 +220,7 @@ function LishsuHoadon() {
         <h2 className="text-lg font-bold text-center py-2 shadow-md bg-white sticky top-0 ">
           Danh sách hóa đơn
         </h2>
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-4">
     </div>
 
 
@@ -225,10 +278,12 @@ function LishsuHoadon() {
 
                         {/* Popup menu */}
                         {menuOpen === invoice.id && (
-                          <div className=" menu-popup absolute right-0 top-full mt-2 min-w-[150px] bg-white shadow-lg rounded-lg border p-2 z-10">
+                          <div className=" menu-popup absolute -right-1 top-full min-w-[150px] bg-white shadow-lg rounded-lg border border-gray-300 z-10">
                             <button
-                              className="flex items-center px-4 py-2 text-sm hover:bg-gray-200 w-full"
-                              onClick={() => handlePrint(invoice.id)}
+                              className="flex items-center px-4 py-2 text-sm hover:bg-gray-200 rounded-t-lg w-full"
+                              onClick={() => {handlePrint(invoice)
+                                setMenuOpen(null); 
+                              }}
                             >
                               <FontAwesomeIcon
                                 icon={faPrint}
@@ -237,7 +292,7 @@ function LishsuHoadon() {
                               In hóa đơn
                             </button>
                             <button
-                              className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-200 w-full"
+                              className="flex items-center px-4 py-2 text-sm rounded-b-lg text-red-600 hover:bg-gray-200 w-full"
                               onClick={() => {
                                 setConfirmDeleteId(invoice.id);
                                 setMenuOpen(null); // Đóng menu sau khi chọn xóa
@@ -372,8 +427,11 @@ function LishsuHoadon() {
               </div>
 
               {/* Tổng tiền */}
+              <div className="mt-4 text-right mx-10">
+                Tổng thành tiền: {(selectedInvoice.total + selectedInvoice.discount).toLocaleString()}đ
+              </div>
               <div className="mt-4 text-right font-bold mx-10">
-                Tổng tiền: {selectedInvoice.total.toLocaleString()}đ
+                Tiền thanh toán: {selectedInvoice.total.toLocaleString()}đ
               </div>
 
               {/* Nút xóa */}

@@ -117,11 +117,11 @@ function ReceiptDetail({ receipt: bill, isOpen, onClose }: ReceiptDetailProps) {
             <div className="space-y-2 text-sm text-gray-900">
               <div className="flex justify-between">
                 <span className="text-gray-500">Tổng số lượng:</span>
-                <span>4</span>
+                <span>{bill.receipt_details.length}</span>
               </div>
               <div className="flex justify-between font-semibold">
                 <span className="text-gray-800">Tổng cộng:</span>
-                <span>310,000đ</span>
+                <span>{bill.total_cost}</span>
               </div>
             </div>
           </div>
