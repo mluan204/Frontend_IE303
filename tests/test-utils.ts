@@ -135,7 +135,9 @@ export async function navigateToPage(page: Page, pageName: string) {
     'ca-lam': '/ca-lam',
     'shifts': '/ca-lam',
     'bao-cao': '/bao-cao',
-    'reports': '/bao-cao'
+    'reports': '/bao-cao',
+    'lich-su-hoa-don': '/lich-su-hoa-don',
+    'invoice-history': '/lich-su-hoa-don'
   };
 
   const route = routes[pageName.toLowerCase()];
@@ -144,7 +146,6 @@ export async function navigateToPage(page: Page, pageName: string) {
   }
 
   await page.goto(route);
-  await page.waitForLoadState('networkidle');
 }
 
 /**
@@ -207,7 +208,6 @@ export async function fillForm(page: Page, data: Record<string, any>) {
  */
 export async function waitForPageLoad(page: Page) {
   await page.waitForLoadState('networkidle');
-  await page.waitForLoadState('domcontentloaded');
 }
 
 /**

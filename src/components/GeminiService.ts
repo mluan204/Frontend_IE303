@@ -43,6 +43,8 @@ interface ComboList {
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY }`;   
 
 export const generateComboSuggestion = async (products: Product[], salesData: ProductSales[], comboList: ComboList[]): Promise<CreateComboRequest> => {
+  const sliceProducts = products.slice(0, 10);
+  
   try {
     // Get current date and calculate dates
     const now = new Date();
@@ -82,7 +84,7 @@ export const generateComboSuggestion = async (products: Product[], salesData: Pr
     - Consider pairing low-selling products with popular products to increase their appeal
     - CRITICAL: The combination of product IDs in your suggestion must not match any existing combo in the comboList
     
-    Products: ${JSON.stringify(products)}
+    Products: ${JSON.stringify(sliceProducts)}
     
     Sales Data: ${JSON.stringify(salesData)}
 

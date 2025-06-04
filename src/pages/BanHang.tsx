@@ -67,7 +67,7 @@ interface Employee {
 
 function BanHang() {
   // State để quản lý giỏ hàng và tìm kiếm
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rawProductList, setRawProductList] = useState<any[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -241,7 +241,6 @@ function BanHang() {
 
   const fetchData = async () => {
     try {
-      setLoading(true);
       setError(null);
 
       const result = await fetchAllProduct();
@@ -277,6 +276,7 @@ function BanHang() {
   };
 
   useEffect(() => {
+    setLoading(true);
     const loadData = () => {
       const today = new Date().toISOString().split("T")[0];
       const lastFetchDate = localStorage.getItem("lastFetchDate");
@@ -297,6 +297,7 @@ function BanHang() {
       if (lastFetchDate !== today) {
         fetchData();
       }
+      setLoading(false);
     };
 
     loadData();
@@ -346,7 +347,10 @@ function BanHang() {
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
           <button
-            onClick={fetchData}
+            onClick={() => {
+              setLoading(true);
+              fetchData();
+            }}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           >
             Thử lại
