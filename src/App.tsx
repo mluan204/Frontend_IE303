@@ -1,3 +1,4 @@
+import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Router from "./router/router";
 import NavigationSale from "./components/NavigationSale";
@@ -22,12 +23,14 @@ function App() {
     location.pathname.startsWith("/lich-su-hoa-don") ||
     location.pathname.startsWith("/doanh-thu");
 
+  console.log("App rendered, isAuthenticated:", isAuthenticated);
+
   return (
-    <>
+    <div className="App">
       <ToastContainer />
       {!isLoginPage && (isSalesPage ? <NavigationSale /> : <Navigation />)}
       <Router />
-    </>
+    </div>
   );
 }
 

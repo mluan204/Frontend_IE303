@@ -101,7 +101,7 @@ export const fetchAllProduct = async () => {
 
 export const fetchAllBill = async () => {
   try {
-    const response = await api.get("/bills/get-all-bills");
+    const response = await api.get("/bills");
     return response.data;
   } catch (error) {
     return error + "Loi khi lay tat ca hoa don";
