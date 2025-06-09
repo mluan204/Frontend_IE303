@@ -82,9 +82,8 @@ export const generateComboSuggestion = async (products: Product[], salesData: Pr
     - Consider pairing low-selling products with popular products to increase their appeal
     - CRITICAL: The combination of product IDs in your suggestion must not match any existing combo in the comboList
     
-    Products: ${JSON.stringify(products)}
+    Products: ${JSON.stringify(products.slice(0,10))}
     
-    Sales Data: ${JSON.stringify(salesData)}
 
     Existing Combos (DO NOT recreate these combinations): ${JSON.stringify(comboList)}`;
     console.log(comboList);

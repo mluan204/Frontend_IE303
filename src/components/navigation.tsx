@@ -53,7 +53,7 @@ const Navigation = () => {
   return (
     <div className="bg-white shadow-md overflow-visible relative">
       {/* Desktop menu */}
-      <nav className="bg-[#0070F4] flex flex-col md:flex-row items-center justify-between py-2 px-4 md:px-6 xl:flex-row w-full overflow-visible">
+      <nav className="bg-[#0070F4] flex flex-row items-center justify-between py-2 px-4 md:px-6 xl:flex-row w-full overflow-visible">
         <div className="flex items-center space-x-3">
           <img
             src={Logo}
@@ -63,7 +63,7 @@ const Navigation = () => {
           <span className="font-bold text-xl text-white">JDK Store</span>
         </div>
 
-        <ul className="flex items-center justify-center min-w-max space-x-3 md:space-x-4 lg:space-x-6">
+        <ul className="md:flex hidden items-center justify-center min-w-max space-x-3 md:space-x-4 lg:space-x-6">
           <li>
             <Link
               to="/"

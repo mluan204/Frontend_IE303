@@ -80,8 +80,9 @@ function EmployeeDetail({ employee, isOpen, onClose }: EmployeeDetailProps) {
         <div className="overflow-y-auto max-h-[calc(90vh-56px)] px-6 pb-6 scrollbar-hide">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Column 1: Avatar */}
-            <div className="flex justify-center items-center flex-col">
-              <img src={editedEmployee.image} alt={editedEmployee.name} className="w-32 h-32 object-cover rounded" />
+            <div className="flex justify-center items-center flex-col rounded-full">
+              <img src={editedEmployee.image?editedEmployee.image:`https://ui-avatars.com/api/?background=random&name=${editedEmployee.name}
+                                  `} alt={editedEmployee.name} className="w-32 h-32 object-cover rounded-full" />
             </div>
 
             {/* Column 2 */}
