@@ -129,15 +129,7 @@ function Login() {
             )}
           </div>
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <input type="checkbox" id="remember" className="mr-2" />
-              <label htmlFor="remember" className="text-gray-700">
-                Duy trì đăng nhập
-              </label>
-            </div>
-            <a href="#" className="text-blue-500 hover:underline">
-              Quên mật khẩu?
-            </a>
+            
           </div>
           <div className="flex space-x-4">
             <button

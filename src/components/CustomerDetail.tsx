@@ -41,11 +41,9 @@ function CustomerDetail({ customer, isOpen, onClose, removeCustomer }: CustomerD
     Object.assign(customer, editedCustomer);
     const res= await updateCustomer(customer);
     setIsEditing(false);
-    if(res.id === customer.id){
+    
       toast.success("Cập nhật thông tin khách hàng thành công!", { autoClose: 1000 });
-    }else{
-      toast.error("Cập nhật thông tin khách hàng. Vui lòng thử lại!", { autoClose: 1000 })
-    }
+
   };
 
   const handleClose = () => {

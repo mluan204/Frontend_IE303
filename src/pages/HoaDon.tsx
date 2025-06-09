@@ -19,7 +19,8 @@ import {
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import AddBillModal from "../components/AddBillModal";
-
+import { CommonUtils } from "../utils/CommonUtils";
+import dayjs from "dayjs";
 const ITEMS_PER_PAGE = 10;
 
 interface BillDetail {
@@ -323,6 +324,31 @@ function HoaDon() {
     );
   }
 
+const handleOnClickExport = async () => {
+ 
+  if (bills ) {
+    const mappedData = bills.map((item: Bill) => ({
+      "Mã hóa đơn": item.id,
+      "Tên khách hàng": item.customer?.name || "N/A",
+      "Tên nhân viên": item.employee?.name || "N/A",
+      "Tổng số lượng": item.totalQuantity,
+      "Tổng tiền": item.total_cost,
+      "Sau giảm giá": item.after_discount,
+      "Điểm sử dụng": item.pointsToUse || 0,
+      "Ghi chú": item.notes || "",
+      "Ngày tạo": formatDate(item.createdAt),
+      "Đã xóa": item.isDeleted ? "Đã xóa" : "Còn hiệu lực",
+    }));
+
+    await CommonUtils.exportExcel(
+      mappedData,
+      "Danh sách hóa đơn",
+      "Danh sách hóa đơn"
+    );
+  }
+};
+
+
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -377,7 +403,9 @@ function HoaDon() {
                 <FontAwesomeIcon icon={faAdd} className="mr-2" />
                 Thêm mới
               </button>
-              <button className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer">
+              <button className="bg-green-500 text-white px-4 py-2 rounded shadow-sm hover:bg-green-600 active:scale-[0.98] transition-all duration-150 focus:outline-none cursor-pointer"
+                  onClick={handleOnClickExport}
+              >
                 <FontAwesomeIcon icon={faFileExport} className="mr-2" />
                 Xuất file
               </button>
