@@ -234,7 +234,7 @@ export default function PopupThanhToan({ total, cart, onClose, setCart, customer
 
       // Kiểm tra nếu có giao dịch đúng số tiền
       const matched = data.some(
-        (item) => item["Giá trị"] === total - discount
+        (item) => item["Giá trị"] === (total - discount)
       );
 
       if (matched) {

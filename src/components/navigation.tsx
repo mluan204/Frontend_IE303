@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Logo from "../assets/Logo_white.png";
 import { useState, useEffect, useRef } from "react";
 import ChangePassword from "./ChangePassword";
+import Chatbot from "./Chatbot";
 
 const Navigation = () => {
   const location = useLocation();
@@ -51,6 +52,7 @@ const Navigation = () => {
   const [isProductOpen, setIsProductOpen] = useState(false);
   const [isEmployeeOpen, setIsEmployeeOpen] = useState(false);
   return (
+    <div>
     <div className="bg-white shadow-md overflow-visible relative">
       {/* Desktop menu */}
       <nav className="bg-[#0070F4] flex flex-row items-center justify-between py-2 px-4 md:px-6 w-full overflow-visible">
@@ -278,7 +280,10 @@ const Navigation = () => {
       {isChangePasswordOpen && (
         <ChangePassword onClose={() => setIsChangePasswordOpen(false)} />
       )}
+
     </div>
+    <Chatbot />
+  </div>
   );
 };
 

@@ -228,7 +228,7 @@ const CaLam: React.FC = () => {
               </div>
               <button
                 onClick={(e) => handleDeleteShift(shift, e)}
-                className="absolute top-1 right-1 text-red-500 opacity-0 group-hover:opacity-100 hover:text-red-700 transition-opacity"
+                className="absolute top-1 right-1 cursor-pointer text-red-500 opacity-0 group-hover:opacity-100 hover:text-red-700 transition-opacity"
                 title="Xóa nhân viên khỏi ca làm"
               >
                 <FontAwesomeIcon icon={faTimes} />
@@ -243,12 +243,12 @@ const CaLam: React.FC = () => {
           </button>
         </div>
         {isDeleteModalOpen && shiftToDelete && (
-          <div className="fixed inset-0  flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
            <div
-                className="fixed inset-0 bg-black/30 opacity-5 h-screen z-60 flex items-center justify-center"
+                className="fixed inset-0 bg-black/30 opacity-5 h-screen z-50 flex items-center justify-center"
                 onClick={() => setSelectedShift(null)}
               />
-            <div className="bg-white rounded-lg max-w-md w-full p-6 z-60">
+            <div className="bg-white rounded-lg max-w-md w-full p-6 z-50">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Xác nhận xóa ca làm
               </h3>
@@ -262,14 +262,14 @@ const CaLam: React.FC = () => {
                 <button
                   onClick={handleDeleteCancel}
                   disabled={deleteLoading}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                  className="px-4 cursor-pointer py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
                 >
                   Hủy
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
                   disabled={deleteLoading}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                  className="px-4 cursor-pointer py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
                 >
                   {deleteLoading ? (
                     <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
@@ -504,7 +504,8 @@ const CaLam: React.FC = () => {
                       >
                         <div className="flex items-center space-x-3">
                           <img
-                            src={employee.image}
+                            src={employee.image?employee.image:`https://ui-avatars.com/api/?background=random&name=${employee.name}
+                                  `}
                             alt={employee.name}
                             className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
                           />

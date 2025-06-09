@@ -178,7 +178,6 @@ export const generateComboSuggestion = async (products: Product[], salesData: Pr
     
     Products: ${JSON.stringify(sliceProducts)}
     
-    Sales Data: ${JSON.stringify(salesData)}
 
     Existing Combos (DO NOT recreate these combinations): ${JSON.stringify(comboList)}`;
     console.log(comboList);
