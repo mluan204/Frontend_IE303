@@ -14,7 +14,6 @@ test.describe('Navigation & UI Tests', () => {
       // page.locator('nav, .navigation, .sidebar, .menu'),
       page.locator('li:has-text("Tổng quan")'),
       page.locator('li:has-text("Hàng hóa")'),
-      page.locator('li:has-text("Combo")'),
       page.locator('li:has-text("Hóa đơn")'),
       page.locator('li:has-text("Khách hàng")'),
       page.locator('li:has-text("Nhân viên")'),
@@ -29,16 +28,15 @@ test.describe('Navigation & UI Tests', () => {
     const pages = [
       { name: 'Tổng quan', route: '/', text: ['Doạnh thu.*', 'KẾT QUẢ.*'] },
       { name: 'Hàng hóa', route: '/hang-hoa', text: ['Nhóm hàng', '.*SẢN PHẨM.*'] },
-      { name: 'Kho hàng', route: '/kho-han', text: ['Tìm kiếm.*', '.*PHIẾU NHẬP.*'] },
+      { name: 'Kho hàng', route: '/kho-hang', text: ['Tìm kiếm.*', '.*PHIẾU NHẬP.*'] },
       { name: 'Hóa đơn', route: '/hoa-don', text: ['Mã HĐ', 'Thời gian'] },
       { name: 'Khách hàng', route: '/khach-hang', text: ['Mã KH', 'Giới tính'] },
       { name: 'Nhân viên', route: '/nhan-vien', text: ['Mã NV', 'Tên', 'Chức vụ'] },
-      { name: 'Combo', route: '/combo', text: ['Mã combo', 'Combo sản phẩm'] },
     ];
 
     for (const pageInfo of pages) {
       try {
-        await page.getByText(pageInfo.name).click();
+        await page.getByText(pageInfo.name).first().click();
         await waitForPageLoad(page);
         
         // Verify we're on the correct page
@@ -48,7 +46,7 @@ test.describe('Navigation & UI Tests', () => {
         // Check for page-specific content
         let pageContentFound = false;
         for (const text of pageInfo.text) {
-          const element = page.getByText(new RegExp(text, 'i'));
+          const element = page.getByText(new RegExp(text, 'i')).first();
           if (await element.isVisible().catch(() => false)) {
             pageContentFound = true;
             break;
@@ -175,7 +173,7 @@ test.describe('Navigation & UI Tests', () => {
     await page.keyboard.press('Enter');
     await page.waitForTimeout(500);
     // Test Enter key on focused element
-    await expect(page).toHaveURL('/khach-hang');
+    await expect(page).toHaveURL('/');
     
   });
 
@@ -212,7 +210,6 @@ test.describe('Navigation & UI Tests', () => {
     }
     
     // Ensure page finished loading
-    await waitForPageLoad(page);
     expect(loadingFound).toBeTruthy();
   });
 

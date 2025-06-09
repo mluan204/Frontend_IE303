@@ -51,7 +51,7 @@ export const deleteBillById = async (id: number) => {
 
 export const login = async (username: string, password: string) => {
   try {
-    const response = await axios.post("http://localhost:8080/api/v1/login", {
+    const response = await api.post("/v1/login", {
       username: username,
       password: password,
     },
