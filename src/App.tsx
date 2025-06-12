@@ -21,7 +21,8 @@ function App() {
   const isSalesPage =
     location.pathname.startsWith("/ban-hang") ||
     location.pathname.startsWith("/lich-su-hoa-don") ||
-    location.pathname.startsWith("/doanh-thu");
+    location.pathname.startsWith("/doanh-thu") ||
+    location.pathname.startsWith("/cham-cong");
 
   console.log("App rendered, isAuthenticated:", isAuthenticated);
 

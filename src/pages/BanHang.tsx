@@ -174,41 +174,49 @@ function BanHang() {
   };
 
   useEffect(() => {
-    const loadData = () => {
-      const today = new Date().toISOString().split("T")[0];
-      const lastFetchDate = localStorage.getItem("lastFetchDate");
-      const lastComboFetchDate = localStorage.getItem("lastComboFetchDate");
+    const initializeData = async () => {
+      try {
+        setLoading(true);
+        const today = new Date().toISOString().split("T")[0];
+        const lastFetchDate = localStorage.getItem("lastFetchDate");
+        const lastComboFetchDate = localStorage.getItem("lastComboFetchDate");
 
-      // Lấy dữ liệu từ localStorage
-      const localProducts = localStorage.getItem("products");
-      const localCustomers = localStorage.getItem("customers");
-      const localEmployees = localStorage.getItem("employees");
-      const localCombos = localStorage.getItem("combos");
+        // Lấy dữ liệu từ localStorage
+        const localProducts = localStorage.getItem("products");
+        const localCustomers = localStorage.getItem("customers");
+        const localEmployees = localStorage.getItem("employees");
+        const localCombos = localStorage.getItem("combos");
 
-      // Nếu có dữ liệu trong localStorage thì load vào state
-      if (localProducts && localCustomers && localEmployees) {
-        setProducts(JSON.parse(localProducts));
-        setCustomers(JSON.parse(localCustomers));
-        setEmployees(JSON.parse(localEmployees));
-      }
+        // Nếu có dữ liệu trong localStorage thì load vào state
+        if (localProducts && localCustomers && localEmployees) {
+          setProducts(JSON.parse(localProducts));
+          setCustomers(JSON.parse(localCustomers));
+          setEmployees(JSON.parse(localEmployees));
+        }
 
-      // Load combo data from localStorage if available
-      if (localCombos) {
-        setComboList(JSON.parse(localCombos));
-      }
+        // Load combo data from localStorage if available
+        if (localCombos) {
+          setComboList(JSON.parse(localCombos));
+        }
 
-      // Nếu chưa fetch hôm nay thì gọi API
-      if (lastFetchDate !== today) {
-        fetchData();
-      }
+        // Nếu chưa fetch hôm nay thì gọi API
+        if (lastFetchDate !== today) {
+          await fetchData();
+        }
 
-      // Fetch combo data if not fetched today
-      if (lastComboFetchDate !== today) {
-        fetchDataCombo();
+        // Fetch combo data if not fetched today
+        if (lastComboFetchDate !== today) {
+          await fetchDataCombo();
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+        setError("Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.");
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadData();
+    initializeData();
   }, []);
 
   const addToCart = async (product: Product) => {

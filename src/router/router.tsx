@@ -12,6 +12,7 @@ import LichsuHoadon from "../pages/LichsuHoadon";
 import DoanhThu from "../pages/DoanhThu";
 import Combo from "../pages/Combo";
 import CaLam from "../pages/CaLam";
+import ChamCong from "../pages/ChamCong";
 // import { ReactNode } from "react";
 
 // interface ProtectedRouteProps {
@@ -39,6 +40,7 @@ const Router = () => {
       <Route path="/ban-hang" element={<BanHang />} />
       <Route path="/lich-su-hoa-don" element={<LichsuHoadon />} />
       <Route path="/doanh-thu" element={<DoanhThu />} />
+      <Route path="/cham-cong" element={<ChamCong />} />
     </Routes>
   );
 };

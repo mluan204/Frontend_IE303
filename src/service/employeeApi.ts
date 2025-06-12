@@ -22,6 +22,8 @@ export interface Shift {
   employeeId: number;
   date: string;
   shiftType: 'DAI1' | 'DAI2' | 'NGAN1' | 'NGAN2' | 'NGAN3' | 'NGAN4';
+  time_in: string;
+  time_out: string;
 }
 
 export interface EmployeeShiftDTO {
@@ -29,6 +31,8 @@ export interface EmployeeShiftDTO {
   employeeId: number;
   date: string;
   shiftType: 'DAI1' | 'DAI2' | 'NGAN1' | 'NGAN2' | 'NGAN3' | 'NGAN4';
+  time_in: string;
+  time_out: string;
 }
 
 export const getAllEmployees = async () => {
@@ -136,5 +140,87 @@ export const updateShift = async (id: number, shiftData: EmployeeShiftDTO): Prom
   } catch (error) {
     console.error("Error updating shift:", error);
     throw error;
+  }
+};
+
+export const getEmployeesByDate = async (date?: string): Promise<Employee[]> => {
+  try {
+    const targetDate = date || new Date().toISOString().split('T')[0] + 'T00:00:00';
+    const response = await api.get(`/shifts/employees/day`, {
+      params: { date: targetDate },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch employees by date:', error);
+    throw error;
+  }
+};
+
+export const registerFace = async (
+  imageUrl: string,
+  outerId: string
+): Promise<{ face_token: string }> => {
+  try {
+    const response = await api.post(
+      '/faceplusplus/register-face',
+      {
+        image_url: imageUrl,
+        outer_id: outerId
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error('Lỗi khi gọi API /register-face:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const searchFace = async (
+  imageFile: File
+): Promise<{ face_token: string; confidence: number; user_id?: string }> => {
+  try {
+    const formData = new FormData();
+    formData.append("image", imageFile);
+
+    const response = await api.post('/faceplusplus/search-face', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+    const result = response.data?.results?.[0];
+
+    if (!result) {
+      throw new Error("Không tìm thấy kết quả nhận diện.");
+    }
+
+    return {
+      face_token: result.face_token,
+      confidence: result.confidence,
+      user_id: result.user_id || ""
+    };
+  } catch (error: any) {
+    console.error('Lỗi khi gọi API /search-face:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const updateShiftTime = async (
+  shiftId: number,
+  payload: { time_in?: string; time_out?: string }
+) => {
+  try {
+    const res = await api.post(`/shifts/${shiftId}`, null, {
+      params: payload,
+    });
+    return res.data;
+  } catch (err) {
+    console.error('Lỗi khi cập nhật thời gian ca làm:', err);
+    throw err;
   }
 };

@@ -66,7 +66,7 @@ const Navigation = () => {
           <span className="font-bold text-xl text-white">JDK Store</span>
         </div>
 
-        <ul className="hidden xl:flex flex items-center justify-center min-w-max space-x-3 md:space-x-4 lg:space-x-6">
+        <ul className="hidden xl:flex items-center justify-center min-w-max space-x-3 md:space-x-4 lg:space-x-6">
           <li>
             <Link
               to="/"

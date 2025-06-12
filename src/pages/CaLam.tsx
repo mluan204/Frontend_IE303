@@ -79,9 +79,6 @@ const CaLam: React.FC = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
 
-
-
-
   useEffect(() => {
     fetchShifts();
   }, [viewDate]);
@@ -155,6 +152,8 @@ const CaLam: React.FC = () => {
         employeeId: selectedEmployee.id,
         date: format(new Date(createShiftDate), "yyyy-MM-dd'T'00:00:00"),
         shiftType: selectedShiftType,
+        time_in: selectedShift?.time_in || "",
+        time_out: selectedShift?.time_out || "",
       });
 
       setShowEmployeeList(false);
@@ -434,34 +433,41 @@ const CaLam: React.FC = () => {
                       </div>
                     </div>
                     <div className="pt-4 border-t border-gray-400">
-                      <div className="grid grid-cols-1 md:grid-cols-2 space-y-2">
+                      <div className="space-y-4">
+                        {/* Thông tin ca làm */}
                         <div>
-                          <span className="text-gray-600">Ca làm:</span>
-                          <p className="font-medium text-base md:text-lg">
-                            {
-                              SHIFT_CONFIG[selectedShift.shiftType as ShiftType]
-                                .label
-                            }
-                          </p>
-                          <p className="text-gray-600 text-sm md:text-base">
-                            {format(
-                              parseISO(selectedShift.date),
-                              "EEEE, dd/MM/yyyy",
-                              {
-                                locale: vi,
-                              }
-                            )}
+                          <span className="text-gray-600 font-medium">Ca làm:</span>
+                          <p className="font-medium text-base md:text-lg mt-1">
+                            {SHIFT_CONFIG[selectedShift.shiftType as ShiftType].label} - {format(parseISO(selectedShift.date), "EEEE, dd/MM/yyyy", {
+                              locale: vi,
+                            })}
                           </p>
                         </div>
-                        <div>
-                          <span className="text-gray-600">Lương:</span>
-                          <p className="font-medium text-base md:text-lg">
-                            {employeeDetails[
-                              selectedShift.employeeId
-                            ].salary.toLocaleString("vi-VN")}{" "}
-                            VNĐ
-                          </p>
-                        </div>
+
+                        {/* Thời gian vào/ra */}
+                        {selectedShift.time_in && selectedShift.time_out &&
+                        (
+                            <div className="grid grid-cols-3 justify-between">
+                              <div>
+                                <span className="text-gray-600 text-sm">Thời gian vào:</span>
+                                <p className="font-medium text-base md:text-lg mt-1">
+                                  {format(parseISO(selectedShift.time_in), "HH:mm")}
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600 text-sm">Thời gian ra:</span>
+                                <p className="font-medium text-base md:text-lg mt-1">
+                                  {format(parseISO(selectedShift.time_out), "HH:mm")}
+                                </p>
+                              </div>
+                              <div className="bg-gray-50 rounded-lg">
+                                <span className="text-gray-600 text-sm">Lương ca:</span>
+                                <p className="font-medium text-base md:text-lg mt-1">
+                                  {employeeDetails[selectedShift.employeeId].salary.toLocaleString("vi-VN")} VNĐ
+                                </p>
+                              </div>
+                          </div>  
+                         )}
                       </div>
                     </div>
                   </div>
