@@ -59,6 +59,11 @@ const NavigationSale = () => {
               <i className="fas fa-chart-bar mr-2"></i> Báo cáo doanh thu
             </li>
           </Link>
+          <Link to="/cham-cong" onClick={() => setIsOpen(false)}>
+            <li className="p-3 border-b border-gray-400 hover:bg-blue-100">
+              <i className="fas fa-clock t-bar mr-2"></i> Chấm công
+            </li>
+          </Link>
         </ul>
       </div>
     </div>
