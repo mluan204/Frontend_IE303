@@ -55,6 +55,19 @@ const SHIFT_CONFIG = {
   },
 };
 
+function formatToVietnamTime(input: string): string {
+  const date = new Date(input);
+
+  const vietnamOffset = 7 * 60; // phút
+
+  const localTime = new Date(date.getTime() + vietnamOffset * 60 * 1000);
+
+  const hh = String(localTime.getHours()).padStart(2, "0");
+  const pp = String(localTime.getMinutes()).padStart(2, "0");
+
+  return `${hh}:${pp}`;
+}
+
 const CaLam: React.FC = () => {
   const [viewDate, setViewDate] = useState(new Date());
   const [createShiftDate, setCreateShiftDate] = useState<string>("");
@@ -473,10 +486,7 @@ const CaLam: React.FC = () => {
                                 Thời gian vào:
                               </span>
                               <p className="font-medium text-base md:text-lg mt-1">
-                                {format(
-                                  parseISO(selectedShift.time_in),
-                                  "HH:mm"
-                                )}
+                                {formatToVietnamTime(selectedShift.time_in)}
                               </p>
                             </div>
                             <div>
@@ -484,10 +494,7 @@ const CaLam: React.FC = () => {
                                 Thời gian ra:
                               </span>
                               <p className="font-medium text-base md:text-lg mt-1">
-                                {format(
-                                  parseISO(selectedShift.time_out),
-                                  "HH:mm"
-                                )}
+                                {formatToVietnamTime(selectedShift.time_out)}
                               </p>
                             </div>
                             <div className="bg-gray-50 rounded-lg">
