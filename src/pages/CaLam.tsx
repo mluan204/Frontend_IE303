@@ -78,7 +78,6 @@ const CaLam: React.FC = () => {
   const [shiftToDelete, setShiftToDelete] = useState<Shift | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-
   useEffect(() => {
     fetchShifts();
   }, [viewDate]);
@@ -89,7 +88,7 @@ const CaLam: React.FC = () => {
       const formattedDate = format(viewDate, "yyyy-MM-dd'T'00:00:00");
       const data = await getWeeklyShifts(formattedDate);
       setShifts(data);
-
+      console.log(data);
       const employeeIds = [...new Set(data.map((shift) => shift.employeeId))];
       const employeeDetailsPromises = employeeIds.map((id) =>
         getEmployeeById(id)
@@ -165,7 +164,7 @@ const CaLam: React.FC = () => {
     }
   };
 
-    const handleDeleteShift = (shift: Shift, e: React.MouseEvent) => {
+  const handleDeleteShift = (shift: Shift, e: React.MouseEvent) => {
     e.stopPropagation(); // ngăn sự kiện click lan tới onClick cell
     setShiftToDelete(shift);
     setIsDeleteModalOpen(true);
@@ -184,7 +183,7 @@ const CaLam: React.FC = () => {
       await deleteShift(shiftToDelete.id); // gọi API xóa
       setIsDeleteModalOpen(false);
       setShiftToDelete(null);
-       fetchShifts();// reload lại dữ liệu nếu cần
+      fetchShifts(); // reload lại dữ liệu nếu cần
     } catch (error) {
       console.error("Lỗi xóa ca làm:", error);
     } finally {
@@ -205,13 +204,15 @@ const CaLam: React.FC = () => {
               className={`${config.color} ${config.hoverColor} p-2 items-center rounded-xl cursor-pointer flex flex-row transition-colors relative group`}
               onClick={() => handleShiftClick(shift)}
             >
-               <img
+              <img
                 src={
-                     employeeDetails[shift.employeeId]?.image
-                        ? employeeDetails[shift.employeeId]?.image
-                        : `https://ui-avatars.com/api/?background=random&name=${employeeDetails[shift.employeeId].name}
+                  employeeDetails[shift.employeeId]?.image
+                    ? employeeDetails[shift.employeeId]?.image
+                    : `https://ui-avatars.com/api/?background=random&name=${
+                        employeeDetails[shift.employeeId].name
+                      }
                           `
-                    }
+                }
                 alt={employeeDetails[shift.employeeId].name}
                 className="  lg:flex hidden lg:w-7 lg:h-7 rounded-full  object-cover"
               />
@@ -220,7 +221,7 @@ const CaLam: React.FC = () => {
                   {employeeDetails[shift.employeeId]?.name ||
                     `Nhân viên #${shift.employeeId}`}
                 </div>
-              
+
                 <div className="text-xs text-gray-600 ">
                   {employeeDetails[shift.employeeId]?.phone_number}
                 </div>
@@ -243,19 +244,24 @@ const CaLam: React.FC = () => {
         </div>
         {isDeleteModalOpen && shiftToDelete && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-           <div
-                className="fixed inset-0 bg-black/30 opacity-5 h-screen z-50 flex items-center justify-center"
-                onClick={() => setSelectedShift(null)}
-              />
+            <div
+              className="fixed inset-0 bg-black/30 opacity-5 h-screen z-50 flex items-center justify-center"
+              onClick={() => setSelectedShift(null)}
+            />
             <div className="bg-white rounded-lg max-w-md w-full p-6 z-50">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Xác nhận xóa ca làm
               </h3>
               <p className="text-sm text-gray-500 mb-4">
                 Bạn có chắc chắn muốn xóa ca làm của{" "}
-                <strong>{employeeDetails[shiftToDelete.employeeId]?.name}</strong> vào ngày{" "}
-                <strong>{format(parseISO(shiftToDelete.date), "dd/MM/yyyy")}</strong>?
-                Hành động này không thể hoàn tác.
+                <strong>
+                  {employeeDetails[shiftToDelete.employeeId]?.name}
+                </strong>{" "}
+                vào ngày{" "}
+                <strong>
+                  {format(parseISO(shiftToDelete.date), "dd/MM/yyyy")}
+                </strong>
+                ? Hành động này không thể hoàn tác.
               </p>
               <div className="flex justify-end space-x-4">
                 <button
@@ -271,7 +277,10 @@ const CaLam: React.FC = () => {
                   className="px-4 cursor-pointer py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
                 >
                   {deleteLoading ? (
-                    <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+                    <FontAwesomeIcon
+                      icon={faSpinner}
+                      className="animate-spin"
+                    />
                   ) : (
                     "Xác nhận xóa"
                   )}
@@ -280,7 +289,6 @@ const CaLam: React.FC = () => {
             </div>
           </div>
         )}
-
       </td>
     );
   };
@@ -378,11 +386,13 @@ const CaLam: React.FC = () => {
                     <div className="flex items-center space-x-4">
                       <img
                         src={
-                              employeeDetails[selectedShift.employeeId].image
-                                ? employeeDetails[selectedShift.employeeId].image
-                                : `https://ui-avatars.com/api/?background=random&name=${employeeDetails[selectedShift.employeeId].name}
+                          employeeDetails[selectedShift.employeeId].image
+                            ? employeeDetails[selectedShift.employeeId].image
+                            : `https://ui-avatars.com/api/?background=random&name=${
+                                employeeDetails[selectedShift.employeeId].name
+                              }
                                   `
-                            }
+                        }
                         alt={employeeDetails[selectedShift.employeeId].name}
                         className="w-16 h-16 md:w-24 md:h-24 rounded-full  object-cover"
                       />
@@ -436,38 +446,63 @@ const CaLam: React.FC = () => {
                       <div className="space-y-4">
                         {/* Thông tin ca làm */}
                         <div>
-                          <span className="text-gray-600 font-medium">Ca làm:</span>
+                          <span className="text-gray-600 font-medium">
+                            Ca làm:
+                          </span>
                           <p className="font-medium text-base md:text-lg mt-1">
-                            {SHIFT_CONFIG[selectedShift.shiftType as ShiftType].label} - {format(parseISO(selectedShift.date), "EEEE, dd/MM/yyyy", {
-                              locale: vi,
-                            })}
+                            {
+                              SHIFT_CONFIG[selectedShift.shiftType as ShiftType]
+                                .label
+                            }{" "}
+                            -{" "}
+                            {format(
+                              parseISO(selectedShift.date),
+                              "EEEE, dd/MM/yyyy",
+                              {
+                                locale: vi,
+                              }
+                            )}
                           </p>
                         </div>
 
                         {/* Thời gian vào/ra */}
-                        {selectedShift.time_in && selectedShift.time_out &&
-                        (
-                            <div className="grid grid-cols-3 justify-between">
-                              <div>
-                                <span className="text-gray-600 text-sm">Thời gian vào:</span>
-                                <p className="font-medium text-base md:text-lg mt-1">
-                                  {format(parseISO(selectedShift.time_in), "HH:mm")}
-                                </p>
-                              </div>
-                              <div>
-                                <span className="text-gray-600 text-sm">Thời gian ra:</span>
-                                <p className="font-medium text-base md:text-lg mt-1">
-                                  {format(parseISO(selectedShift.time_out), "HH:mm")}
-                                </p>
-                              </div>
-                              <div className="bg-gray-50 rounded-lg">
-                                <span className="text-gray-600 text-sm">Lương ca:</span>
-                                <p className="font-medium text-base md:text-lg mt-1">
-                                  {employeeDetails[selectedShift.employeeId].salary.toLocaleString("vi-VN")} VNĐ
-                                </p>
-                              </div>
-                          </div>  
-                         )}
+                        {selectedShift.time_in && selectedShift.time_out && (
+                          <div className="grid grid-cols-3 justify-between">
+                            <div>
+                              <span className="text-gray-600 text-sm">
+                                Thời gian vào:
+                              </span>
+                              <p className="font-medium text-base md:text-lg mt-1">
+                                {format(
+                                  parseISO(selectedShift.time_in),
+                                  "HH:mm"
+                                )}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-gray-600 text-sm">
+                                Thời gian ra:
+                              </span>
+                              <p className="font-medium text-base md:text-lg mt-1">
+                                {format(
+                                  parseISO(selectedShift.time_out),
+                                  "HH:mm"
+                                )}
+                              </p>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg">
+                              <span className="text-gray-600 text-sm">
+                                Lương ca:
+                              </span>
+                              <p className="font-medium text-base md:text-lg mt-1">
+                                {employeeDetails[
+                                  selectedShift.employeeId
+                                ].salary.toLocaleString("vi-VN")}{" "}
+                                VNĐ
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -510,8 +545,12 @@ const CaLam: React.FC = () => {
                       >
                         <div className="flex items-center space-x-3">
                           <img
-                            src={employee.image?employee.image:`https://ui-avatars.com/api/?background=random&name=${employee.name}
-                                  `}
+                            src={
+                              employee.image
+                                ? employee.image
+                                : `https://ui-avatars.com/api/?background=random&name=${employee.name}
+                                  `
+                            }
                             alt={employee.name}
                             className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"
                           />
