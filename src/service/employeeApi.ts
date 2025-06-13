@@ -21,7 +21,7 @@ export interface Shift {
   id: number;
   employeeId: number;
   date: string;
-  shiftType: 'DAI1' | 'DAI2' | 'NGAN1' | 'NGAN2' | 'NGAN3' | 'NGAN4';
+  shiftType: "DAI1" | "DAI2" | "NGAN1" | "NGAN2" | "NGAN3" | "NGAN4";
   time_in: string;
   time_out: string;
 }
@@ -30,7 +30,7 @@ export interface EmployeeShiftDTO {
   id?: number;
   employeeId: number;
   date: string;
-  shiftType: 'DAI1' | 'DAI2' | 'NGAN1' | 'NGAN2' | 'NGAN3' | 'NGAN4';
+  shiftType: "DAI1" | "DAI2" | "NGAN1" | "NGAN2" | "NGAN3" | "NGAN4";
   time_in: string;
   time_out: string;
 }
@@ -57,11 +57,15 @@ export const getEmployeeById = async (id: number): Promise<Employee> => {
 
 export const updateEmployeeById = async (employee: Employee) => {
   try {
-    const response = await api.put("/v1/employees/" + employee.id, JSON.stringify(employee), {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await api.put(
+      "/v1/employees/" + employee.id,
+      JSON.stringify(employee),
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     console.log(error);
@@ -79,7 +83,7 @@ export const deleteEmployeeById = async (id: number) => {
   }
 };
 
-export const createEmployee = async (em : Employee) => {
+export const createEmployee = async (em: Employee) => {
   const req = {
     name: em.name,
     address: em.address,
@@ -89,12 +93,12 @@ export const createEmployee = async (em : Employee) => {
     image: em.image,
     phone_number: em.phone_number,
     position: em.position,
-    salary: em.salary
-  }
+    salary: em.salary,
+  };
   try {
     const response = await api.post("/v1/employees", req);
     console.log(response.data);
-    
+
     return response.data.id;
   } catch (error) {
     console.log(error);
@@ -112,9 +116,11 @@ export const getWeeklyShifts = async (date: string): Promise<Shift[]> => {
   }
 };
 
-export const createShift = async (shiftData: EmployeeShiftDTO): Promise<EmployeeShiftDTO> => {
+export const createShift = async (
+  shiftData: EmployeeShiftDTO
+): Promise<EmployeeShiftDTO> => {
   try {
-    const response = await api.post<EmployeeShiftDTO>('/shifts', shiftData);
+    const response = await api.post<EmployeeShiftDTO>("/shifts", shiftData);
     console.log(shiftData);
     console.log(response.data);
     return response.data;
@@ -133,9 +139,15 @@ export const deleteShift = async (id: number): Promise<void> => {
   }
 };
 
-export const updateShift = async (id: number, shiftData: EmployeeShiftDTO): Promise<EmployeeShiftDTO> => {
+export const updateShift = async (
+  id: number,
+  shiftData: EmployeeShiftDTO
+): Promise<EmployeeShiftDTO> => {
   try {
-    const response = await api.put<EmployeeShiftDTO>(`/shifts/${id}`, shiftData);
+    const response = await api.put<EmployeeShiftDTO>(
+      `/shifts/${id}`,
+      shiftData
+    );
     return response.data;
   } catch (error) {
     console.error("Error updating shift:", error);
@@ -143,15 +155,18 @@ export const updateShift = async (id: number, shiftData: EmployeeShiftDTO): Prom
   }
 };
 
-export const getEmployeesByDate = async (date?: string): Promise<Employee[]> => {
+export const getEmployeesByDate = async (
+  date?: string
+): Promise<Employee[]> => {
   try {
-    const targetDate = date || new Date().toISOString().split('T')[0] + 'T00:00:00';
+    const targetDate =
+      date || new Date().toISOString().split("T")[0] + "T00:00:00";
     const response = await api.get(`/shifts/employees/day`, {
       params: { date: targetDate },
     });
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch employees by date:', error);
+    console.error("Failed to fetch employees by date:", error);
     throw error;
   }
 };
@@ -162,20 +177,23 @@ export const registerFace = async (
 ): Promise<{ face_token: string }> => {
   try {
     const response = await api.post(
-      '/faceplusplus/register-face',
+      "/faceplusplus/register-face",
       {
         image_url: imageUrl,
-        outer_id: outerId
+        outer_id: outerId,
       },
       {
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       }
     );
     return response.data;
   } catch (error: any) {
-    console.error('Lỗi khi gọi API /register-face:', error.response?.data || error.message);
+    console.error(
+      "Lỗi khi gọi API /register-face:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 };
@@ -187,10 +205,10 @@ export const searchFace = async (
     const formData = new FormData();
     formData.append("image", imageFile);
 
-    const response = await api.post('/faceplusplus/search-face', formData, {
+    const response = await api.post("/faceplusplus/search-face", formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+        "Content-Type": "multipart/form-data",
+      },
     });
 
     const result = response.data?.results?.[0];
@@ -202,10 +220,13 @@ export const searchFace = async (
     return {
       face_token: result.face_token,
       confidence: result.confidence,
-      user_id: result.user_id || ""
+      user_id: result.user_id || "",
     };
   } catch (error: any) {
-    console.error('Lỗi khi gọi API /search-face:', error.response?.data || error.message);
+    console.error(
+      "Lỗi khi gọi API /search-face:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 };
@@ -218,9 +239,10 @@ export const updateShiftTime = async (
     const res = await api.post(`/shifts/${shiftId}`, null, {
       params: payload,
     });
+    console.log("update shift time", res.data);
     return res.data;
   } catch (err) {
-    console.error('Lỗi khi cập nhật thời gian ca làm:', err);
+    console.error("Lỗi khi cập nhật thời gian ca làm:", err);
     throw err;
   }
 };
