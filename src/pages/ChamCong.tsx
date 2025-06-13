@@ -80,7 +80,8 @@ const ChamCong: React.FC = () => {
     }
   };
 
-  const handleChamCong = async () => {
+ 
+ const handleChamCong = async () => {
     if (!capturedImage) return;
 
     setIsCheck(true);
@@ -101,6 +102,7 @@ const ChamCong: React.FC = () => {
 
       if (confidence > 80 && userId) {
         const matched = employees.find((emp) => emp.id === Number(userId));
+        console.log(matched);
         if (matched) {
           setMatchedEmployee(matched);
           console.log(matched);
@@ -117,10 +119,8 @@ const ChamCong: React.FC = () => {
       setError("Không thể nhận diện khuôn mặt. Vui lòng thử lại.");
     } finally {
       setIsProcessing(false);
-      setLoading(false);
     }
   };
-
   const captureImage = async () => {
     if (!videoRef.current) return;
 
@@ -181,25 +181,56 @@ const ChamCong: React.FC = () => {
   }, [location.pathname]);
 
   const handleDiemDanh = async (type: "in" | "out") => {
-    setLoading(true);
-    handleChamCong();
-    if (!matchedEmployee) {
-      return;
+  if (!capturedImage) return;
+
+  setLoading(true);
+  setIsCheck(true);
+  setError(null);
+
+  try {
+    setIsProcessing(true);
+
+    const blob = await (await fetch(capturedImage)).blob();
+    const file = new File([blob], "capture.jpg", { type: blob.type });
+
+    const res = await searchFace(file);
+    const confidence = res.confidence;
+    const userId = res.user_id;
+
+    console.log("→ Độ tin cậy:", confidence);
+    console.log("→ ID nhân viên:", userId);
+
+    if (confidence > 80 && userId) {
+      const matched = employees.find((emp) => emp.id === Number(userId));
+      if (matched) {
+        setMatchedEmployee(matched);
+
+        // Nếu nhân viên hợp lệ, cập nhật giờ vào/ra
+        const now = new Date().toISOString();
+        const payload = type === "in" ? { time_in: now } : { time_out: now };
+
+        try {
+          await updateShiftTime(matched.employeeShifts[0], payload);
+        } catch (err) {
+          alert("❌ Lỗi khi điểm danh. Vui lòng thử lại.");
+        }
+      } else {
+        setError("Hôm nay bạn không có ca làm.");
+      }
+    } else if (confidence <= 80) {
+      setError("Độ tin cậy nhận diện quá thấp. Vui lòng thử lại.");
+    } else {
+      setError("Không tìm thấy thông tin nhân viên trong hệ thống.");
     }
+  } catch (err) {
+    console.error("Lỗi khi nhận diện khuôn mặt:", err);
+    setError("Không thể nhận diện khuôn mặt. Vui lòng thử lại.");
+  } finally {
+    setIsProcessing(false);
+    setLoading(false);
+  }
+};
 
-    const now = new Date().toISOString(); // ISO format
-
-    const payload = type === "in" ? { time_in: now } : { time_out: now };
-
-    try {
-      await updateShiftTime(matchedEmployee.employeeShifts[0], payload);
-      setLoading(false);
-    } catch (err) {
-      alert("❌ Lỗi khi điểm danh. Vui lòng thử lại.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-4">
